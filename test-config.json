@@ -1,0 +1,33 @@
+{
+  "mcpServers": {
+    "filesystem": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-filesystem",
+        "/Users/elioshinsky/code/envoy"
+      ],
+      "description": "Local filesystem access"
+    },
+    "shell": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "mcp-shell"],
+      "description": "Shell command execution"
+    }
+  },
+  "providers": {
+    "default": "anthropic",
+    "anthropic": {
+      "apiKey": "${ANTHROPIC_API_KEY}",
+      "model": "claude-sonnet-4-20250514",
+      "baseURL": "https://api.anthropic.com/v1"
+    }
+  },
+  "agent": {
+    "maxSteps": 20,
+    "logLevel": "INFO",
+    "logProgress": "assistant"
+  }
+}
