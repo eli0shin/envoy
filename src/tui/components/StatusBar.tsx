@@ -9,7 +9,7 @@ type StatusBarProps = {
 };
 
 export function StatusBar({ status, session }: StatusBarProps) {
-  const statusText = status === 'PROCESSING' ? 'Processing...' : 'Ready';
+  const statusText = status === 'PROCESSING' ? 'Working...' : 'Ready';
   const statusColor = status === 'PROCESSING' ? 'yellow' : 'green';
 
   // Extract provider, model, and auth info from session

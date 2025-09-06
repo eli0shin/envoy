@@ -96,56 +96,49 @@ export function MultiLineInput({
     }
 
     if (key.name === "return") {
-      // Ctrl+Enter submits, regular Enter creates new line
-      if (key.ctrl) {
-        if (value.trim()) {
-          onSubmit(value);
-          onChange('');
-          setEditingLine(0);
-          setCursorPosition(0);
-          onResize?.();
-        }
+      const currentLine = lines[editingLine] || '';
+      
+      // Shift+Enter always creates new line
+      if (key.shift) {
+        const beforeCursor = currentLine.slice(0, cursorPosition);
+        const afterCursor = currentLine.slice(cursorPosition);
+        
+        const newLines = [...lines];
+        newLines[editingLine] = beforeCursor;
+        newLines.splice(editingLine + 1, 0, afterCursor);
+        onChange(newLines.join('\n'));
+        
+        setEditingLine(editingLine + 1);
+        setCursorPosition(0);
+        onResize?.();
         return;
       }
       
-      // Create new line at cursor position
-      const currentLine = lines[editingLine] || '';
-      const beforeCursor = currentLine.slice(0, cursorPosition);
-      const afterCursor = currentLine.slice(cursorPosition);
+      // Check for backslash continuation on Enter
+      if (currentLine.trim().endsWith('\\')) {
+        // Remove backslash and add new line
+        const newLines = [...lines];
+        newLines[editingLine] = currentLine.trim().slice(0, -1);
+        newLines.splice(editingLine + 1, 0, '');
+        onChange(newLines.join('\n'));
+        setEditingLine(editingLine + 1);
+        setCursorPosition(0);
+        onResize?.();
+        return;
+      }
       
-      const newLines = [...lines];
-      newLines[editingLine] = beforeCursor;
-      newLines.splice(editingLine + 1, 0, afterCursor);
-      onChange(newLines.join('\n'));
-      
-      setEditingLine(editingLine + 1);
-      setCursorPosition(0);
-      onResize?.();
+      // Regular Enter - submit message
+      if (value.trim()) {
+        onSubmit(value);
+        onChange('');
+        setEditingLine(0);
+        setCursorPosition(0);
+        onResize?.();
+      }
       return;
     }
   });
 
-  // Handle submission from any line (Ctrl+Enter or backslash continuation)
-  const handleLineSubmit = (lineContent: string) => {
-    // Check if line ends with backslash for continuation
-    if (lineContent.trim().endsWith('\\')) {
-      // Remove backslash and add new line
-      const newLines = [...lines];
-      newLines[editingLine] = lineContent.trim().slice(0, -1);
-      newLines.splice(editingLine + 1, 0, '');
-      onChange(newLines.join('\n'));
-      setEditingLine(editingLine + 1);
-      setCursorPosition(0);
-      onResize?.(); // Trigger resize when height changes
-    } else if (value.trim()) {
-      // Submit the full multi-line content
-      onSubmit(value);
-      onChange('');
-      setEditingLine(0);
-      setCursorPosition(0);
-      onResize?.(); // Trigger resize when content is cleared
-    }
-  };
 
   // Calculate dynamic height
   const height = Math.max(minHeight, lines.length);
@@ -164,7 +157,6 @@ export function MultiLineInput({
                 placeholder={index === 0 && !value ? placeholder : ""}
                 focused={true}
                 onInput={handleLineInput}
-                onSubmit={handleLineSubmit}
                 backgroundColor={backgroundColor}
                 textColor={textColor}
               />

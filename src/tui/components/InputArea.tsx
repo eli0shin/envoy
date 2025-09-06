@@ -25,7 +25,7 @@ export function InputArea({ onSubmit, onResize }: InputAreaProps) {
         onChange={setValue}
         onSubmit={handleSubmit}
         onResize={onResize}
-        placeholder="Type your message... (use \ at end of line for newlines)"
+        placeholder="Type your message... (Shift+Enter or \ for newlines, Enter to send)"
         minHeight={1}
         backgroundColor="#333333"
         textColor="white"

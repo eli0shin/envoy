@@ -39,6 +39,7 @@ export function Message({ message, contentType = "normal", width }: MessageProps
   const textWidth = width - 6; // 6 = scrollbox (2) + padding (2) + margin/border space (2)
 
   // Helper function to wrap text manually by inserting newlines
+  // First splits on existing newlines, then wraps each line individually
   const wrapText = (text: string, maxWidth: number): string => {
     const prefix = `${getPrefix()}: `;
     const prefixLength = prefix.length;
@@ -46,38 +47,50 @@ export function Message({ message, contentType = "normal", width }: MessageProps
     
     if (availableWidth <= 0) return text;
     
-    const words = text.split(' ');
-    const lines: string[] = [];
-    let currentLine = '';
+    // First split by existing newlines to preserve intentional line breaks
+    const existingLines = text.split('\n');
+    const wrappedLines: string[] = [];
     
-    for (const word of words) {
-      const testLine = currentLine ? `${currentLine} ${word}` : word;
-      
-      if (testLine.length <= availableWidth) {
-        currentLine = testLine;
+    // Process each existing line individually
+    for (const line of existingLines) {
+      if (line.length <= availableWidth) {
+        // Line fits within width, keep as is
+        wrappedLines.push(line);
       } else {
+        // Line needs wrapping, wrap by words
+        const words = line.split(' ');
+        let currentLine = '';
+        
+        for (const word of words) {
+          const testLine = currentLine ? `${currentLine} ${word}` : word;
+          
+          if (testLine.length <= availableWidth) {
+            currentLine = testLine;
+          } else {
+            if (currentLine) {
+              wrappedLines.push(currentLine);
+              currentLine = word;
+            } else {
+              // Word is longer than available width, break it
+              let remainingWord = word;
+              while (remainingWord.length > availableWidth) {
+                wrappedLines.push(remainingWord.substring(0, availableWidth));
+                remainingWord = remainingWord.substring(availableWidth);
+              }
+              if (remainingWord) {
+                currentLine = remainingWord;
+              }
+            }
+          }
+        }
+        
         if (currentLine) {
-          lines.push(currentLine);
-          currentLine = word;
-        } else {
-          // Word is longer than available width, break it
-          let remainingWord = word;
-          while (remainingWord.length > availableWidth) {
-            lines.push(remainingWord.substring(0, availableWidth));
-            remainingWord = remainingWord.substring(availableWidth);
-          }
-          if (remainingWord) {
-            currentLine = remainingWord;
-          }
+          wrappedLines.push(currentLine);
         }
       }
     }
     
-    if (currentLine) {
-      lines.push(currentLine);
-    }
-    
-    return lines.join('\n');
+    return wrappedLines.join('\n');
   };
 
   const wrappedContent = wrapText(displayContent, textWidth);
