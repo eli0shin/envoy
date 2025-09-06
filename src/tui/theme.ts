@@ -9,6 +9,7 @@ export const colors = {
   processing: "#DCDCAA",   // Processing status, reasoning content  
   success: "#89d185",      // Ready status, assistant messages
   muted: "#858585",        // Session info display
+  lightGray: "#DCDCDC",   // Slightly muted content text
   accent: "#C586C0",       // Tool-related content
   text: "#D4D4D4",         // Input text color
   
@@ -35,7 +36,7 @@ export const roleColors = {
 
 // Content type color mappings
 export const contentTypeColors = {
-  normal: colors.success,
+  normal: colors.lightGray,
   reasoning: colors.processing,
   tool: colors.accent,
 } as const;
@@ -46,6 +47,7 @@ export const {
   processing, 
   success,
   muted,
+  lightGray,
   accent,
   text,
   backgrounds

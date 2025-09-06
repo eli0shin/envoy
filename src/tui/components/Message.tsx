@@ -114,7 +114,7 @@ export function Message({
         }
         {contentType === "reasoning" 
           ? italic(fg(colors.muted)(parseMarkdown(wrappedContent)))
-          : parseMarkdown(wrappedContent)
+          : fg(colors.lightGray)(parseMarkdown(wrappedContent))
         }
       </text>
     </box>
