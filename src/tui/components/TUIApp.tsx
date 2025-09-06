@@ -19,7 +19,12 @@ type Status = "READY" | "PROCESSING";
 export function TUIApp({ config, session }: TUIAppProps) {
   const [messages, setMessages] = useState<CoreMessage[]>([]);
   const [status, setStatus] = useState<Status>("READY");
+  const [resizeKey, setResizeKey] = useState(0);
   const { width, height } = useTerminalDimensions();
+
+  const handleInputResize = useCallback(() => {
+    setResizeKey(prev => prev + 1);
+  }, []);
 
   // Load existing conversation history if available
   useEffect(() => {
@@ -83,14 +88,16 @@ export function TUIApp({ config, session }: TUIAppProps) {
 
   return (
     <box flexDirection="column" width={width} height={height}>
-      <Header sessionId={session.conversationPersistence?.getSessionId()} />
-      <MessageList
-        messages={messages}
-        height={height - 10} // Reserve space for header, input, status
-        width={width}
-      />
-      <InputArea onSubmit={handleSendMessage} />
-      <StatusBar status={status} />
+      <Header />
+      <box flexGrow={1}>
+        <MessageList
+          key={resizeKey}
+          messages={messages}
+          width={width}
+        />
+      </box>
+      <InputArea onSubmit={handleSendMessage} onResize={handleInputResize} />
+      <StatusBar status={status} session={session} />
     </box>
   );
 }

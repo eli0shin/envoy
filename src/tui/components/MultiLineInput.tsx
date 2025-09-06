@@ -4,6 +4,7 @@ type MultiLineInputProps = {
   value: string;
   onChange: (value: string) => void;
   onSubmit: (value: string) => void;
+  onResize?: () => void;
   placeholder?: string;
   minHeight?: number;
   backgroundColor?: string;
@@ -14,6 +15,7 @@ export function MultiLineInput({
   value,
   onChange,
   onSubmit,
+  onResize,
   placeholder = "Type your message...",
   minHeight = 3,
   backgroundColor = "#333333",
@@ -40,11 +42,13 @@ export function MultiLineInput({
       newLines.splice(editingLine + 1, 0, '');
       onChange(newLines.join('\n'));
       setEditingLine(editingLine + 1);
+      onResize?.(); // Trigger resize when height changes
     } else if (value.trim()) {
       // Submit the full multi-line content
       onSubmit(value);
       onChange('');
       setEditingLine(0);
+      onResize?.(); // Trigger resize when content is cleared
     }
   };
 
@@ -52,26 +56,31 @@ export function MultiLineInput({
   const height = Math.max(minHeight, lines.length);
 
   return (
-    <box height={height} backgroundColor={backgroundColor}>
-      {lines.map((line, index) => (
-        <box key={index} height={1}>
-          {index === editingLine ? (
-            <input
-              value={line}
-              placeholder={index === 0 && !value ? placeholder : ""}
-              focused={true}
-              onInput={handleLineInput}
-              onSubmit={handleLineSubmit}
-              backgroundColor={backgroundColor}
-              textColor={textColor}
-            />
-          ) : (
-            <text>
-              {line || ' '}
-            </text>
-          )}
-        </box>
-      ))}
+    <box height={height} backgroundColor={backgroundColor} flexDirection="row">
+      <box width={3}>
+        <text>{" >"} </text>
+      </box>
+      <box flexGrow={1} flexDirection="column">
+        {lines.map((line, index) => (
+          <box key={index} height={1}>
+            {index === editingLine ? (
+              <input
+                value={line}
+                placeholder={index === 0 && !value ? placeholder : ""}
+                focused={true}
+                onInput={handleLineInput}
+                onSubmit={handleLineSubmit}
+                backgroundColor={backgroundColor}
+                textColor={textColor}
+              />
+            ) : (
+              <text>
+                {line || ' '}
+              </text>
+            )}
+          </box>
+        ))}
+      </box>
     </box>
   );
 }

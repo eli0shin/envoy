@@ -5,11 +5,11 @@ import type { ScrollBoxRenderable } from "@opentui/core";
 
 type MessageListProps = {
   messages: CoreMessage[];
-  height: number;
   width: number;
+  key?: number;
 };
 
-export function MessageList({ messages, height, width }: MessageListProps) {
+export function MessageList({ messages, width }: MessageListProps) {
   const scrollBoxRef = useRef<ScrollBoxRenderable>(null);
 
   const scrollToBottom = () => {
@@ -74,7 +74,6 @@ export function MessageList({ messages, height, width }: MessageListProps) {
       style={{
         rootOptions: {
           flexGrow: 1,
-          height: height,
         },
         contentOptions: {
           flexDirection: "column",
