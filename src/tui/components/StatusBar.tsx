@@ -1,4 +1,5 @@
 import { fg } from '@opentui/core';
+import { statusColors, colors } from '../theme.js';
 import type { AgentSession } from '../../agentSession.js';
 
 type Status = 'READY' | 'PROCESSING';
@@ -10,7 +11,7 @@ type StatusBarProps = {
 
 export function StatusBar({ status, session }: StatusBarProps) {
   const statusText = status === 'PROCESSING' ? 'Working...' : 'Ready';
-  const statusColor = status === 'PROCESSING' ? 'yellow' : 'green';
+  const statusColor = statusColors[status];
 
   // Extract provider, model, and auth info from session
   const modelId = session.model.modelId || 'unknown';
@@ -37,7 +38,7 @@ export function StatusBar({ status, session }: StatusBarProps) {
           {fg(statusColor)(` ${statusText}`)}
         </text>
         <text>
-          {fg('gray')(`${sessionInfo} `)}
+          {fg(colors.muted)(`${sessionInfo} `)}
         </text>
       </box>
       {/* Bottom padding line */}

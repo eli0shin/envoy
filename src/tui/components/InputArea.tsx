@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { MultiLineInput } from "./MultiLineInput";
+import { colors } from "../theme.js";
 
 type InputAreaProps = {
   onSubmit: (message: string) => void;
@@ -17,7 +18,7 @@ export function InputArea({ onSubmit, onResize }: InputAreaProps) {
   return (
     <box flexDirection="column">
       {/* Top padding line */}
-      <box height={1} backgroundColor="#333333">
+      <box height={1} backgroundColor={colors.backgrounds.input}>
         <text> </text>
       </box>
       <MultiLineInput
@@ -27,11 +28,11 @@ export function InputArea({ onSubmit, onResize }: InputAreaProps) {
         onResize={onResize}
         placeholder="Type your message... (Shift+Enter or \ for newlines, Enter to send)"
         minHeight={1}
-        backgroundColor="#333333"
-        textColor="white"
+        backgroundColor={colors.backgrounds.input}
+        textColor={colors.text}
       />
       {/* Bottom padding line */}
-      <box height={1} backgroundColor="#333333">
+      <box height={1} backgroundColor={colors.backgrounds.input}>
         <text> </text>
       </box>
     </box>

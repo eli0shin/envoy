@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useKeyboard } from "@opentui/react";
+import { colors } from "../theme.js";
 
 type MultiLineInputProps = {
   value: string;
@@ -19,8 +20,8 @@ export function MultiLineInput({
   onResize,
   placeholder = "Type your message...",
   minHeight = 3,
-  backgroundColor = "#333333",
-  textColor = "white",
+  backgroundColor = colors.backgrounds.input,
+  textColor = colors.text,
 }: MultiLineInputProps) {
   // Track which line is being edited and cursor position
   const [editingLine, setEditingLine] = useState(0);

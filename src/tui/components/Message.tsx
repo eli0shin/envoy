@@ -1,5 +1,6 @@
 import { bold, fg } from "@opentui/core";
 import { parseMarkdown } from "../utils/markdown.js";
+import { roleColors, contentTypeColors, colors } from "../theme.js";
 import type { CoreMessage } from "ai";
 
 type MessageProps = {
@@ -13,10 +14,8 @@ export function Message({ message, contentType = "normal", width }: MessageProps
 
   // Style based on content type
   const getContentColor = () => {
-    if (isUser) return "cyan";
-    if (contentType === "reasoning") return "yellow";
-    if (contentType === "tool") return "magenta";
-    return "green";
+    if (isUser) return roleColors.user;
+    return contentTypeColors[contentType];
   };
 
   const getPrefix = () => {
@@ -27,7 +26,7 @@ export function Message({ message, contentType = "normal", width }: MessageProps
   };
 
   const getBackgroundColor = () => {
-    return isUser ? "#1a1a2e" : "#0f0f0f";
+    return isUser ? colors.backgrounds.userMessage : colors.backgrounds.assistantMessage;
   };
 
   const displayContent =
