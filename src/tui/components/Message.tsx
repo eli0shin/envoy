@@ -1,4 +1,4 @@
-import { bold, fg } from "@opentui/core";
+import { bold, fg, italic } from "@opentui/core";
 import { parseMarkdown } from "../utils/markdown.js";
 import { roleColors, contentTypeColors, colors } from "../theme.js";
 import type { CoreMessage } from "ai";
@@ -9,7 +9,11 @@ type MessageProps = {
   width: number;
 };
 
-export function Message({ message, contentType = "normal", width }: MessageProps) {
+export function Message({
+  message,
+  contentType = "normal",
+  width,
+}: MessageProps) {
   const isUser = message.role === "user";
 
   // Style based on content type
@@ -19,14 +23,16 @@ export function Message({ message, contentType = "normal", width }: MessageProps
   };
 
   const getPrefix = () => {
-    if (isUser) return "You";
-    if (contentType === "reasoning") return "Assistant (thinking)";
+    if (isUser) return "> ";
+    if (contentType === "reasoning") return "";
     if (contentType === "tool") return "Tool";
-    return "Assistant";
+    return "";
   };
 
   const getBackgroundColor = () => {
-    return isUser ? colors.backgrounds.userMessage : colors.backgrounds.assistantMessage;
+    return isUser
+      ? colors.backgrounds.userMessage
+      : colors.backgrounds.assistantMessage;
   };
 
   const displayContent =
@@ -40,16 +46,16 @@ export function Message({ message, contentType = "normal", width }: MessageProps
   // Helper function to wrap text manually by inserting newlines
   // First splits on existing newlines, then wraps each line individually
   const wrapText = (text: string, maxWidth: number): string => {
-    const prefix = `${getPrefix()}: `;
+    const prefix = getPrefix() ? `${getPrefix()}: ` : "";
     const prefixLength = prefix.length;
     const availableWidth = maxWidth - prefixLength;
-    
+
     if (availableWidth <= 0) return text;
-    
+
     // First split by existing newlines to preserve intentional line breaks
-    const existingLines = text.split('\n');
+    const existingLines = text.split("\n");
     const wrappedLines: string[] = [];
-    
+
     // Process each existing line individually
     for (const line of existingLines) {
       if (line.length <= availableWidth) {
@@ -57,12 +63,12 @@ export function Message({ message, contentType = "normal", width }: MessageProps
         wrappedLines.push(line);
       } else {
         // Line needs wrapping, wrap by words
-        const words = line.split(' ');
-        let currentLine = '';
-        
+        const words = line.split(" ");
+        let currentLine = "";
+
         for (const word of words) {
           const testLine = currentLine ? `${currentLine} ${word}` : word;
-          
+
           if (testLine.length <= availableWidth) {
             currentLine = testLine;
           } else {
@@ -82,35 +88,35 @@ export function Message({ message, contentType = "normal", width }: MessageProps
             }
           }
         }
-        
+
         if (currentLine) {
           wrappedLines.push(currentLine);
         }
       }
     }
-    
-    return wrappedLines.join('\n');
+
+    return wrappedLines.join("\n");
   };
 
   const wrappedContent = wrapText(displayContent, textWidth);
 
   return (
-    <box 
-      marginBottom={1} 
-      padding={1} 
-      backgroundColor={getBackgroundColor()}
-      width={width - 4}
-    >
+    <box padding={1} backgroundColor={getBackgroundColor()} width={width - 4}>
       <text
         style={{
           width: textWidth,
-          flexWrap: "wrap"
+          flexWrap: "wrap",
         }}
       >
-        {bold(fg(getContentColor())(getPrefix()))}:{" "}
-        {parseMarkdown(wrappedContent)}
+        {contentType === "reasoning" 
+          ? italic(fg(colors.muted)(getPrefix()))
+          : bold(fg(getContentColor())(getPrefix()))
+        }
+        {contentType === "reasoning" 
+          ? italic(fg(colors.muted)(parseMarkdown(wrappedContent)))
+          : parseMarkdown(wrappedContent)
+        }
       </text>
     </box>
   );
 }
-
