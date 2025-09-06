@@ -3,21 +3,21 @@
  * All colors used throughout the application should be defined here.
  */
 
-// Named color palette using OpenTUI color names
 export const colors = {
   // Text colors
-  primary: "cyan",      // Header title, user messages
-  processing: "yellow", // Processing status, reasoning content
-  success: "green",     // Ready status, assistant messages
-  muted: "gray",        // Session info display
-  accent: "magenta",    // Tool-related content
-  text: "white",        // Input text color
+  primary: "#4fc1ff",      // Header title, user messages
+  processing: "#DCDCAA",   // Processing status, reasoning content  
+  success: "#89d185",      // Ready status, assistant messages
+  muted: "#858585",        // Session info display
+  accent: "#C586C0",       // Tool-related content
+  text: "#D4D4D4",         // Input text color
   
-  // Background colors (hex values)
+  // Background colors
   backgrounds: {
-    userMessage: "#1a1a2e",     // User message background
-    assistantMessage: "#0f0f0f", // Assistant message background
-    input: "#333333",            // Input area background
+    main: "#1E1E1E",           // Main UI background
+    userMessage: "#2a2d2e",    // User message background
+    assistantMessage: "#1E1E1E", // Assistant message background  
+    input: "#252526",          // Input area background
   }
 } as const;
 

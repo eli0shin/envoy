@@ -4,6 +4,7 @@ import { MessageList } from "./MessageList.js";
 import { InputArea } from "./InputArea.js";
 import { StatusBar } from "./StatusBar.js";
 import { Header } from "./Header.js";
+import { colors } from "../theme.js";
 import { runAgent } from "../../agent/index.js";
 import type { CoreMessage } from "ai";
 import type { RuntimeConfiguration } from "../../config/types.js";
@@ -87,7 +88,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
   );
 
   return (
-    <box flexDirection="column" width={width} height={height}>
+    <box flexDirection="column" width={width} height={height} backgroundColor={colors.backgrounds.main}>
       <Header />
       <MessageList key={resizeKey} messages={messages} width={width} />
       <InputArea onSubmit={handleSendMessage} onResize={handleInputResize} />
