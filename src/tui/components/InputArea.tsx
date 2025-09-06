@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { MultiLineInput } from "./MultiLineInput";
 
 type InputAreaProps = {
   onSubmit: (message: string) => void;
@@ -7,26 +8,21 @@ type InputAreaProps = {
 export function InputArea({ onSubmit }: InputAreaProps) {
   const [value, setValue] = useState("");
 
-  const handleSubmit = () => {
-    const trimmedValue = value.trim();
-    if (trimmedValue) {
-      onSubmit(trimmedValue);
-      setValue("");
-    }
+  const handleSubmit = (submittedValue: string) => {
+    onSubmit(submittedValue.trim());
+    setValue("");
   };
 
   return (
-    <box height={3} borderStyle="single">
-      <input
-        placeholder="Type your message..."
+    <box borderStyle="single">
+      <MultiLineInput
         value={value}
-        focused
-        onInput={setValue}
+        onChange={setValue}
         onSubmit={handleSubmit}
-        style={{
-          width: "100%",
-          backgroundColor: "#333333",
-        }}
+        placeholder="Type your message... (use \ at end of line for newlines)"
+        minHeight={1}
+        backgroundColor="#333333"
+        textColor="white"
       />
     </box>
   );
