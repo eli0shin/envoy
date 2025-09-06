@@ -15,7 +15,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "jsx": "react-jsx",
-    "jsxImportSource": "react"
+    "jsxImportSource": "@opentui/react"
   },
   "include": ["*/**/*"],
   "exclude": ["node_modules", "dist"]

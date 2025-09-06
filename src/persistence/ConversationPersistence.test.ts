@@ -86,6 +86,10 @@ describe("ConversationPersistence", () => {
       expect(conversationPersistence).toBeDefined();
     });
 
+    it("should provide access to session ID via getSessionId()", () => {
+      expect(conversationPersistence.getSessionId()).toBe(testSessionId);
+    });
+
     it("should handle empty session ID", () => {
       expect(
         () => new ConversationPersistence("", testProjectIdentifier),

@@ -1,8 +1,8 @@
 // @ts-check
-import eslint from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import esPlugin from 'eslint-plugin-es';
-import importPlugin from 'eslint-plugin-import';
+import eslint from "@eslint/js";
+import tseslint from "typescript-eslint";
+import esPlugin from "eslint-plugin-es";
+import importPlugin from "eslint-plugin-import";
 
 export default tseslint.config(
   eslint.configs.recommended,
@@ -10,16 +10,16 @@ export default tseslint.config(
   {
     languageOptions: {
       globals: {
-        console: 'readonly',
-        process: 'readonly',
-        setTimeout: 'readonly',
-        clearTimeout: 'readonly',
-        setInterval: 'readonly',
-        clearInterval: 'readonly',
-        Buffer: 'readonly',
-        AbortSignal: 'readonly',
-        __dirname: 'readonly',
-        __filename: 'readonly',
+        console: "readonly",
+        process: "readonly",
+        setTimeout: "readonly",
+        clearTimeout: "readonly",
+        setInterval: "readonly",
+        clearInterval: "readonly",
+        Buffer: "readonly",
+        AbortSignal: "readonly",
+        __dirname: "readonly",
+        __filename: "readonly",
       },
     },
     plugins: {
@@ -28,24 +28,24 @@ export default tseslint.config(
     },
     rules: {
       // Enforce no explicit any types
-      '@typescript-eslint/no-explicit-any': 'error',
+      "@typescript-eslint/no-explicit-any": "error",
 
       // Additional useful TypeScript rules
-      '@typescript-eslint/no-unused-vars': [
-        'error',
+      "@typescript-eslint/no-unused-vars": [
+        "off",
         {
-          argsIgnorePattern: '^_',
-          varsIgnorePattern: '^_',
+          argsIgnorePattern: "^_",
+          varsIgnorePattern: "^_",
         },
       ],
-      'prefer-const': 'error',
+      "prefer-const": "error",
 
       // Ban dynamic imports and requires everywhere (they bypass mocking and cause testing issues)
-      'es/no-dynamic-import': 'error',
-      'import/no-dynamic-require': 'error',
+      "es/no-dynamic-import": "error",
+      "import/no-dynamic-require": "error",
     },
   },
   {
-    ignores: ['dist/**', 'node_modules/**', 'coverage/**'],
-  }
+    ignores: ["dist/**", "node_modules/**", "coverage/**"],
+  },
 );

@@ -20,6 +20,7 @@ import {
   initializeAgentSession,
   cleanupAgentSession,
 } from "../../agentSession.js";
+import { launchTUI } from "../../tui/index.js";
 
 import { createMCPClientWrapper } from "../../mcp/loader.js";
 import {
@@ -353,7 +354,40 @@ export async function main(): Promise<void> {
     // Add message to config for interactive mode detection
     configResult.config.message = message;
 
-    // Interactive mode removed - continue with CLI execution
+    // Check for interactive TUI mode
+    const shouldLaunchTUI =
+      !message &&
+      !options.stdin &&
+      !hasPromptResourceCommands &&
+      !options.resources &&
+      !options.autoResources;
+
+    if (shouldLaunchTUI) {
+      // Update logger settings first
+      setLogLevel(
+        configResult.config.agent.logLevel || options.logLevel || "SILENT",
+      );
+      setLogProgress(
+        configResult.config.agent.logProgress || options.logProgress || "none",
+      );
+
+      // Initialize agent (environment validation)
+      const initSuccess = await initializeAgent(configResult.config);
+      if (!initSuccess) {
+        process.exit(1);
+      }
+
+      // Initialize agent session first
+      const agentSession = await initializeAgentSession(configResult.config);
+
+      // Launch TUI interface
+      launchTUI(configResult.config, agentSession);
+
+      // The TUI will handle its own lifecycle and cleanup
+      return;
+    }
+
+    // Continue with CLI execution
 
     // Update logger with final settings (prioritizing config file over CLI)
     setLogLevel(

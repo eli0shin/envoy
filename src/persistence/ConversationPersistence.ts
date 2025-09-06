@@ -81,6 +81,13 @@ export class ConversationPersistence {
   }
 
   /**
+   * Get the session ID for this conversation
+   */
+  getSessionId(): string {
+    return this.sessionId;
+  }
+
+  /**
    * Persist an array of complete messages to the conversation file
    * Handles all errors internally and never throws
    */
