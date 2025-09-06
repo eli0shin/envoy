@@ -14,7 +14,9 @@ export function MessageList({ messages, width }: MessageListProps) {
 
   const scrollToBottom = () => {
     if (scrollBoxRef.current) {
-      const maxScrollTop = scrollBoxRef.current.scrollHeight - scrollBoxRef.current.viewport.height;
+      const maxScrollTop =
+        scrollBoxRef.current.scrollHeight -
+        scrollBoxRef.current.viewport.height;
       scrollBoxRef.current.scrollTop = Math.max(0, maxScrollTop);
     }
   };
@@ -61,7 +63,13 @@ export function MessageList({ messages, width }: MessageListProps) {
           content: displayContent,
         };
 
-        parts.push(<Message message={partMessage} contentType={contentType} width={width} />);
+        parts.push(
+          <Message
+            message={partMessage}
+            contentType={contentType}
+            width={width}
+          />,
+        );
       }
     }
 
@@ -88,4 +96,3 @@ export function MessageList({ messages, width }: MessageListProps) {
     </scrollbox>
   );
 }
-

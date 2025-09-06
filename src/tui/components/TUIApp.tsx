@@ -23,7 +23,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
   const { width, height } = useTerminalDimensions();
 
   const handleInputResize = useCallback(() => {
-    setResizeKey(prev => prev + 1);
+    setResizeKey((prev) => prev + 1);
   }, []);
 
   // Load existing conversation history if available
@@ -89,16 +89,9 @@ export function TUIApp({ config, session }: TUIAppProps) {
   return (
     <box flexDirection="column" width={width} height={height}>
       <Header />
-      <box flexGrow={1}>
-        <MessageList
-          key={resizeKey}
-          messages={messages}
-          width={width}
-        />
-      </box>
+      <MessageList key={resizeKey} messages={messages} width={width} />
       <InputArea onSubmit={handleSendMessage} onResize={handleInputResize} />
       <StatusBar status={status} session={session} />
     </box>
   );
 }
-
