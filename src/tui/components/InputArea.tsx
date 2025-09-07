@@ -38,4 +38,3 @@ export function InputArea({ onSubmit, onResize }: InputAreaProps) {
     </box>
   );
 }
-

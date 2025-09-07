@@ -3,49 +3,15 @@
  * All colors used throughout the application should be defined here.
  */
 
-import type { StyledText } from "@opentui/core";
-import { parseMarkdown } from "./utils/markdown";
+import { StyledText, stringToStyledText, fg } from "@opentui/core";
+import { parseMarkdown } from "./utils/markdown.js";
 
-export const colors = {
-  // Text colors
-  primary: "#4fc1ff", // Header title, user messages
-  processing: "#DCDCAA", // Processing status, reasoning content
-  success: "#89d185", // Ready status, assistant messages
-  muted: "#858585", // Session info display
-  lightGray: "#DCDCDC", // Slightly muted content text
-  accent: "#C586C0", // Tool-related content
-  text: "#D4D4D4", // Input text color
-
-  // Background colors
-  backgrounds: {
-    main: "#1E1E1E", // Main UI background
-    userMessage: "#2a2d2e", // User message background
-    assistantMessage: "#1E1E1E", // Assistant message background
-    input: "#252526", // Input area background
-  },
-} as const;
-
-// Status-specific color mappings
-export const statusColors = {
-  READY: colors.success,
-  PROCESSING: colors.processing,
-} as const;
-
-// Role-specific color mappings
-export const roleColors = {
-  user: colors.primary,
-  assistant: colors.success,
-} as const;
-
-// Content type color mappings
-export const contentTypeColors = {
-  normal: colors.lightGray,
-  reasoning: colors.processing,
-  tool: colors.accent,
-} as const;
-
-// Export individual color values for convenience
-export const {
+// Re-export colors from the colors module
+export {
+  colors,
+  statusColors,
+  roleColors,
+  contentTypeColors,
   primary,
   processing,
   success,
@@ -54,14 +20,20 @@ export const {
   accent,
   text,
   backgrounds,
-} = colors;
+  type ColorName,
+  type BackgroundColor,
+  type StatusColor,
+  type RoleColor,
+  type ContentTypeColor,
+} from "./colors.js";
+
+import { colors } from "./colors.js";
 
 // Content formatters - handles both parsing and styling for all AI SDK roles
 export const contentFormatters = {
-  "user-normal": (content: string): StyledText => parseMarkdown(`> ${content}`),
-  "user-reasoning": (content: string): StyledText =>
-    parseMarkdown(`> ${content}`),
-  "user-tool": (content: string): StyledText => parseMarkdown(`> ${content}`),
+  "user-normal": (content: string): StyledText => new StyledText([fg(colors.primary)(`> `), fg(colors.lightGray)(content)]),
+  "user-reasoning": (content: string): StyledText => new StyledText([fg(colors.primary)(`> `), fg(colors.lightGray)(content)]),
+  "user-tool": (content: string): StyledText => new StyledText([fg(colors.primary)(`> `), fg(colors.lightGray)(content)]),
   "assistant-normal": (content: string): StyledText => parseMarkdown(content),
   "assistant-reasoning": (content: string): StyledText =>
     parseMarkdown(content),
@@ -106,10 +78,3 @@ export const formatBackground = (
 ): string => {
   return backgroundFormatters[role] ?? defaultBackground;
 };
-
-// Type definitions for theme values
-export type ColorName = keyof typeof colors;
-export type BackgroundColor = keyof typeof colors.backgrounds;
-export type StatusColor = keyof typeof statusColors;
-export type RoleColor = keyof typeof roleColors;
-export type ContentTypeColor = keyof typeof contentTypeColors;

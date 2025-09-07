@@ -4,9 +4,9 @@ import type { CoreMessage } from "ai";
 import type { ScrollBoxRenderable } from "@opentui/core";
 
 type MessageListProps = {
-  messages: CoreMessage[];
+  messages: (CoreMessage & { id: string })[];
   width: number;
-  key?: number;
+  key: string;
 };
 
 export function MessageList({ messages, width }: MessageListProps) {
@@ -26,10 +26,13 @@ export function MessageList({ messages, width }: MessageListProps) {
       scrollToBottom();
     });
   }, [messages]);
-  const renderMessage = (message: CoreMessage, _index: number) => {
+  const renderMessage = (
+    message: CoreMessage & { id: string },
+    _index: number,
+  ) => {
     // Handle content based on type - can be string or array of parts
     if (typeof message.content === "string") {
-      return <Message message={message} width={width} />;
+      return <Message message={message} width={width} key={message.id} />;
     }
 
     // Content is an array of parts - render each part separately
@@ -65,6 +68,7 @@ export function MessageList({ messages, width }: MessageListProps) {
 
         parts.push(
           <Message
+            key={`${message.id}-part-${partIndex}`}
             message={partMessage}
             contentType={contentType}
             width={width}
@@ -92,7 +96,9 @@ export function MessageList({ messages, width }: MessageListProps) {
         },
       }}
     >
-      {messages.map((message, index) => renderMessage(message, index))}
+      {messages.map((message, index) => (
+        <box key={message.id}>{renderMessage(message, index)}</box>
+      ))}
     </scrollbox>
   );
 }

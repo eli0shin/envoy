@@ -11,23 +11,26 @@ import {
 import type { TextChunk } from "@opentui/core";
 import { marked } from "marked";
 import type { Token, Tokens } from "marked";
+import { colors as themeColors } from "../colors.js";
 
+// Markdown-specific color mappings using theme colors
 const colors = {
-  code: "#D4D4D4",
-  codeBackground: "#2D2D30",
-  header1: "#4fc1ff", // primary
-  header2: "#89d185", // success
-  header3: "#DCDCDC", // lightGray
-  link: "#4fc1ff", // primary
-  list: "#DCDCDC", // lightGray
-  quote: "#888888", // dim gray for quotes
-  quoteBorder: "#555555", // darker gray for quote border
-  admonitionNote: "#4fc1ff", // primary for notes
-  admonitionWarning: "#ffb347", // orange for warnings
-  admonitionError: "#ff6b6b", // red for errors
-  admonitionSuccess: "#89d185", // green for success
-  definitionTerm: "#DCDCDC", // light gray for definition terms
-};
+  code: themeColors.text,
+  codeBackground: themeColors.backgrounds.input,
+  header1: themeColors.primary,
+  header2: themeColors.success,
+  header3: themeColors.lightGray,
+  link: themeColors.primary,
+  list: themeColors.lightGray,
+  quote: themeColors.muted,
+  quoteBorder: "#555555" as const, // Keep this slightly darker than muted for visual separation
+  admonitionNote: themeColors.primary,
+  admonitionWarning: "#ffb347" as const, // Orange - could add to theme if needed frequently
+  admonitionError: "#ff6b6b" as const, // Red - could add to theme if needed frequently
+  admonitionSuccess: themeColors.success,
+  definitionTerm: themeColors.lightGray,
+  text: themeColors.lightGray, // Default text color for markdown content
+} as const;
 
 // Helper function to recursively process tokens and apply formatting
 function processTokensRecursively(
@@ -82,7 +85,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         chunks.push(...processTokensRecursively(textToken.tokens, listDepth));
       } else {
         // Simple text token
-        chunks.push(fg("#FFFFFF")(token.text));
+        chunks.push(fg(colors.text)(token.text));
       }
       break;
     }
@@ -158,7 +161,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
 
       chunks.push(bold(fg(headerColor)(headingText)));
       if (trailingWhitespace) {
-        chunks.push(fg("#FFFFFF")(trailingWhitespace));
+        chunks.push(fg(colors.text)(trailingWhitespace));
       }
       break;
     }
@@ -214,9 +217,9 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         }
 
         // Always start list items on a new line
-        chunks.push(fg("#FFFFFF")("\n"));
+        chunks.push(fg(colors.text)("\n"));
 
-        chunks.push(fg("#FFFFFF")(indent));
+        chunks.push(fg(colors.text)(indent));
         chunks.push(fg(colors.list)(bullet));
         chunks.push(...itemChunks);
 
@@ -241,7 +244,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
       } else {
         // Show link text followed by URL in parentheses
         chunks.push(underline(fg(colors.link)(linkText)));
-        chunks.push(fg("#888888")(` (${linkToken.href})`));
+        chunks.push(fg(colors.quote)(` (${linkToken.href})`));
       }
       break;
     }
@@ -257,22 +260,22 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
 
     case "hr": {
       // Horizontal rules - render with proper separator line
-      chunks.push(fg("#FFFFFF")("\n"));
-      chunks.push(fg("#888888")("─".repeat(60))); // 60-character horizontal line
-      chunks.push(fg("#FFFFFF")("\n\n"));
+      chunks.push(fg(colors.text)("\n"));
+      chunks.push(fg(colors.quote)("─".repeat(60))); // 60-character horizontal line
+      chunks.push(fg(colors.text)("\n\n"));
       break;
     }
 
     case "space": {
       // Whitespace/newlines
       const spaceToken = token as Tokens.Space;
-      chunks.push(fg("#FFFFFF")(spaceToken.raw));
+      chunks.push(fg(colors.text)(spaceToken.raw));
       break;
     }
 
     case "br": {
       // Line breaks
-      chunks.push(fg("#FFFFFF")("\n"));
+      chunks.push(fg(colors.text)("\n"));
       break;
     }
 
@@ -288,7 +291,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
       // Check if this is an admonition (starts with [!TYPE])
       const admonitionMatch = quoteText.match(/^\[!(NOTE|WARNING|ERROR|SUCCESS|INFO|TIP|CAUTION)\](.*)/is);
       
-      chunks.push(fg("#FFFFFF")("\n")); // Start with newline
+      chunks.push(fg(colors.text)("\n")); // Start with newline
       
       if (admonitionMatch) {
         // This is an admonition/callout
@@ -296,7 +299,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         const typeUpper = type.toUpperCase();
         
         // Get appropriate color and icon for the admonition type
-        let admonitionColor = colors.admonitionNote; // default
+        let admonitionColor: string = colors.admonitionNote; // default
         let icon = "ℹ️ "; // default info icon
         
         switch (typeUpper) {
@@ -323,16 +326,16 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         
         // Render admonition header
         chunks.push(bg(admonitionColor)(fg("#000000")(`${icon}${typeUpper}`)));
-        chunks.push(fg("#FFFFFF")("\n"));
+        chunks.push(fg(colors.text)("\n"));
         
         // Render admonition content with left border
         const contentLines = content.trim().split("\n");
         for (let i = 0; i < contentLines.length; i++) {
           const line = contentLines[i];
           chunks.push(fg(admonitionColor)("│ "));
-          chunks.push(fg("#FFFFFF")(line));
+          chunks.push(fg(colors.text)(line));
           if (i < contentLines.length - 1) {
-            chunks.push(fg("#FFFFFF")("\n"));
+            chunks.push(fg(colors.text)("\n"));
           }
         }
       } else {
@@ -344,19 +347,19 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
           chunks.push(fg(colors.quoteBorder)("│ ")); // Quote border character
           chunks.push(fg(colors.quote)(line));
           if (i < lines.length - 1) {
-            chunks.push(fg("#FFFFFF")("\n"));
+            chunks.push(fg(colors.text)("\n"));
           }
         }
       }
       
-      chunks.push(fg("#FFFFFF")("\n")); // End with newline
+      chunks.push(fg(colors.text)("\n")); // End with newline
       break;
     }
 
     case "table": {
       // Tables - render with proper box drawing characters
       const tableToken = token as Tokens.Table;
-      chunks.push(fg("#FFFFFF")("\n")); // Start with newline
+      chunks.push(fg(colors.text)("\n")); // Start with newline
 
       // Box drawing characters
       const box = {
@@ -408,11 +411,11 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
           .map((width) => box.horizontal.repeat(width + 2))
           .join(box.topTee) +
         box.topRight;
-      chunks.push(fg("#888888")(topBorder));
-      chunks.push(fg("#FFFFFF")("\n"));
+      chunks.push(fg(colors.quote)(topBorder));
+      chunks.push(fg(colors.text)("\n"));
 
       // Render header row
-      chunks.push(fg("#888888")(box.vertical + " "));
+      chunks.push(fg(colors.quote)(box.vertical + " "));
       for (let colIndex = 0; colIndex < headerRow.length; colIndex++) {
         const header = headerRow[colIndex];
         chunks.push(
@@ -420,11 +423,11 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         );
 
         if (colIndex < headerRow.length - 1) {
-          chunks.push(fg("#888888")(" " + box.vertical + " "));
+          chunks.push(fg(colors.quote)(" " + box.vertical + " "));
         }
       }
-      chunks.push(fg("#888888")(" " + box.vertical));
-      chunks.push(fg("#FFFFFF")("\n"));
+      chunks.push(fg(colors.quote)(" " + box.vertical));
+      chunks.push(fg(colors.text)("\n"));
 
       // Render header separator
       const headerSeparator =
@@ -433,12 +436,12 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
           .map((width) => box.horizontal.repeat(width + 2))
           .join(box.cross) +
         box.rightTee;
-      chunks.push(fg("#888888")(headerSeparator));
-      chunks.push(fg("#FFFFFF")("\n"));
+      chunks.push(fg(colors.quote)(headerSeparator));
+      chunks.push(fg(colors.text)("\n"));
 
       // Render data rows with formatting
       for (const row of dataRows) {
-        chunks.push(fg("#888888")(box.vertical + " "));
+        chunks.push(fg(colors.quote)(box.vertical + " "));
 
         for (let colIndex = 0; colIndex < row.length; colIndex++) {
           const cell = row[colIndex];
@@ -449,20 +452,20 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
             // Add padding to match column width
             const padding = colWidths[colIndex] - cell.text.length;
             if (padding > 0) {
-              chunks.push(fg("#FFFFFF")(" ".repeat(padding)));
+              chunks.push(fg(colors.text)(" ".repeat(padding)));
             }
           } else {
             // Empty cell
-            chunks.push(fg("#FFFFFF")(" ".repeat(colWidths[colIndex])));
+            chunks.push(fg(colors.text)(" ".repeat(colWidths[colIndex])));
           }
 
           if (colIndex < row.length - 1) {
-            chunks.push(fg("#888888")(" " + box.vertical + " "));
+            chunks.push(fg(colors.quote)(" " + box.vertical + " "));
           }
         }
 
-        chunks.push(fg("#888888")(" " + box.vertical));
-        chunks.push(fg("#FFFFFF")("\n"));
+        chunks.push(fg(colors.quote)(" " + box.vertical));
+        chunks.push(fg(colors.text)("\n"));
       }
 
       // Render bottom border
@@ -472,10 +475,10 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
           .map((width) => box.horizontal.repeat(width + 2))
           .join(box.bottomTee) +
         box.bottomRight;
-      chunks.push(fg("#888888")(bottomBorder));
-      chunks.push(fg("#FFFFFF")("\n"));
+      chunks.push(fg(colors.quote)(bottomBorder));
+      chunks.push(fg(colors.text)("\n"));
 
-      chunks.push(fg("#FFFFFF")("\n")); // End with extra newline
+      chunks.push(fg(colors.text)("\n")); // End with extra newline
       break;
     }
 
@@ -484,7 +487,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
       const rawText =
         "raw" in token ? token.raw : "text" in token ? (token as Token & { text?: string }).text : "";
       if (rawText) {
-        chunks.push(fg("#FFFFFF")(rawText));
+        chunks.push(fg(colors.text)(rawText));
       }
       break;
     }

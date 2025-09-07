@@ -5,6 +5,7 @@ type MessageProps = {
   message: CoreMessage;
   contentType?: "normal" | "reasoning" | "tool";
   width: number;
+  key: string;
 };
 
 export function Message({
@@ -12,7 +13,6 @@ export function Message({
   contentType = "normal",
   width,
 }: MessageProps) {
-
   const displayContent =
     typeof message.content === "string"
       ? message.content
@@ -71,7 +71,11 @@ export function Message({
   };
 
   const wrappedContent = wrapText(displayContent, textWidth);
-  const styledContent = formatContent(message.role, contentType, wrappedContent);
+  const styledContent = formatContent(
+    message.role,
+    contentType,
+    wrappedContent,
+  );
   const backgroundColor = formatBackground(message.role);
 
   return (

@@ -18,7 +18,9 @@ type TUIAppProps = {
 type Status = "READY" | "PROCESSING";
 
 export function TUIApp({ config, session }: TUIAppProps) {
-  const [messages, setMessages] = useState<CoreMessage[]>([]);
+  const [messages, setMessages] = useState<(CoreMessage & { id: string })[]>(
+    [],
+  );
   const [status, setStatus] = useState<Status>("READY");
   const [resizeKey, setResizeKey] = useState(0);
   const { width, height } = useTerminalDimensions();
@@ -34,7 +36,11 @@ export function TUIApp({ config, session }: TUIAppProps) {
         const history =
           await session.conversationPersistence.loadConversation();
         if (history) {
-          setMessages(history);
+          const messagesWithIds = history.map((msg, index) => ({
+            ...msg,
+            id: `loaded-${Date.now()}-${index}-${Math.random().toString(36).substring(2, 11)}`,
+          }));
+          setMessages(messagesWithIds);
         }
       }
     }
@@ -69,7 +75,16 @@ export function TUIApp({ config, session }: TUIAppProps) {
         // Process with agent
         await runAgent(newMessages, config, session, true, (message) => {
           setMessages((prev) => {
-            return [...prev, message];
+            return [
+              ...prev,
+              {
+                ...message,
+                id:
+                  "id" in message && typeof message.id === "string"
+                    ? message.id
+                    : `agent-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+              },
+            ];
           });
         });
       } catch (error) {
@@ -88,9 +103,18 @@ export function TUIApp({ config, session }: TUIAppProps) {
   );
 
   return (
-    <box flexDirection="column" width={width} height={height} backgroundColor={colors.backgrounds.main}>
+    <box
+      flexDirection="column"
+      width={width}
+      height={height}
+      backgroundColor={colors.backgrounds.main}
+    >
       <Header />
-      <MessageList key={resizeKey} messages={messages} width={width} />
+      <MessageList
+        key={`${resizeKey}-${messages.length}`}
+        messages={messages}
+        width={width}
+      />
       <InputArea onSubmit={handleSendMessage} onResize={handleInputResize} />
       <StatusBar status={status} session={session} />
     </box>
