@@ -59,9 +59,9 @@ export const {
 
 // Content formatters - handles both parsing and styling for all AI SDK roles
 export const contentFormatters = {
-  "user-normal": (content: string): TextChunk => bold(fg(roleColors.user)(`> ${parseMarkdown(content)}`)),
-  "user-reasoning": (content: string): TextChunk => bold(fg(roleColors.user)(`> ${parseMarkdown(content)}`)),
-  "user-tool": (content: string): TextChunk => bold(fg(roleColors.user)(`> ${parseMarkdown(content)}`)),
+  "user-normal": (content: string): TextChunk => bold(fg(colors.lightGray)(`> ${parseMarkdown(content)}`)),
+  "user-reasoning": (content: string): TextChunk => bold(fg(colors.lightGray)(`> ${parseMarkdown(content)}`)),
+  "user-tool": (content: string): TextChunk => bold(fg(colors.lightGray)(`> ${parseMarkdown(content)}`)),
   "assistant-normal": (content: string): TextChunk => fg(colors.lightGray)(parseMarkdown(content)),
   "assistant-reasoning": (content: string): TextChunk => italic(fg(colors.muted)(parseMarkdown(content))),
   "assistant-tool": (content: string): TextChunk => bold(fg(contentTypeColors.tool)(parseMarkdown(content))),
