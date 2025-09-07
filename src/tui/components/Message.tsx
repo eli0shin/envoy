@@ -1,6 +1,4 @@
-import { bold, fg, italic } from "@opentui/core";
-import { parseMarkdown } from "../utils/markdown.js";
-import { roleColors, contentTypeColors, colors } from "../theme.js";
+import { formatContent, formatBackground } from "../theme.js";
 import type { CoreMessage } from "ai";
 
 type MessageProps = {
@@ -14,26 +12,6 @@ export function Message({
   contentType = "normal",
   width,
 }: MessageProps) {
-  const isUser = message.role === "user";
-
-  // Style based on content type
-  const getContentColor = () => {
-    if (isUser) return roleColors.user;
-    return contentTypeColors[contentType];
-  };
-
-  const getPrefix = () => {
-    if (isUser) return "> ";
-    if (contentType === "reasoning") return "";
-    if (contentType === "tool") return "Tool";
-    return "";
-  };
-
-  const getBackgroundColor = () => {
-    return isUser
-      ? colors.backgrounds.userMessage
-      : colors.backgrounds.assistantMessage;
-  };
 
   const displayContent =
     typeof message.content === "string"
@@ -43,14 +21,9 @@ export function Message({
   // Calculate available width for text (terminal width minus scrollbox, padding, and margins)
   const textWidth = width - 6; // 6 = scrollbox (2) + padding (2) + margin/border space (2)
 
-  // Helper function to wrap text manually by inserting newlines
-  // First splits on existing newlines, then wraps each line individually
+  // Simple text wrapping - formatContent will handle prefixes
   const wrapText = (text: string, maxWidth: number): string => {
-    const prefix = getPrefix() ? `${getPrefix()}: ` : "";
-    const prefixLength = prefix.length;
-    const availableWidth = maxWidth - prefixLength;
-
-    if (availableWidth <= 0) return text;
+    if (maxWidth <= 0) return text;
 
     // First split by existing newlines to preserve intentional line breaks
     const existingLines = text.split("\n");
@@ -58,8 +31,7 @@ export function Message({
 
     // Process each existing line individually
     for (const line of existingLines) {
-      if (line.length <= availableWidth) {
-        // Line fits within width, keep as is
+      if (line.length <= maxWidth) {
         wrappedLines.push(line);
       } else {
         // Line needs wrapping, wrap by words
@@ -69,7 +41,7 @@ export function Message({
         for (const word of words) {
           const testLine = currentLine ? `${currentLine} ${word}` : word;
 
-          if (testLine.length <= availableWidth) {
+          if (testLine.length <= maxWidth) {
             currentLine = testLine;
           } else {
             if (currentLine) {
@@ -78,9 +50,9 @@ export function Message({
             } else {
               // Word is longer than available width, break it
               let remainingWord = word;
-              while (remainingWord.length > availableWidth) {
-                wrappedLines.push(remainingWord.substring(0, availableWidth));
-                remainingWord = remainingWord.substring(availableWidth);
+              while (remainingWord.length > maxWidth) {
+                wrappedLines.push(remainingWord.substring(0, maxWidth));
+                remainingWord = remainingWord.substring(maxWidth);
               }
               if (remainingWord) {
                 currentLine = remainingWord;
@@ -99,23 +71,18 @@ export function Message({
   };
 
   const wrappedContent = wrapText(displayContent, textWidth);
+  const styledContent = formatContent(message.role, contentType, wrappedContent);
+  const backgroundColor = formatBackground(message.role);
 
   return (
-    <box padding={1} backgroundColor={getBackgroundColor()} width={width - 4}>
+    <box padding={1} backgroundColor={backgroundColor} width={width - 4}>
       <text
         style={{
           width: textWidth,
           flexWrap: "wrap",
         }}
       >
-        {contentType === "reasoning" 
-          ? italic(fg(colors.muted)(getPrefix()))
-          : bold(fg(getContentColor())(getPrefix()))
-        }
-        {contentType === "reasoning" 
-          ? italic(fg(colors.muted)(parseMarkdown(wrappedContent)))
-          : fg(colors.lightGray)(parseMarkdown(wrappedContent))
-        }
+        {styledContent}
       </text>
     </box>
   );
