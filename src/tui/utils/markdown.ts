@@ -20,6 +20,13 @@ const colors = {
   header3: "#DCDCDC", // lightGray
   link: "#4fc1ff", // primary
   list: "#DCDCDC", // lightGray
+  quote: "#888888", // dim gray for quotes
+  quoteBorder: "#555555", // darker gray for quote border
+  admonitionNote: "#4fc1ff", // primary for notes
+  admonitionWarning: "#ffb347", // orange for warnings
+  admonitionError: "#ff6b6b", // red for errors
+  admonitionSuccess: "#89d185", // green for success
+  definitionTerm: "#DCDCDC", // light gray for definition terms
 };
 
 // Helper function to recursively process tokens and apply formatting
@@ -63,9 +70,9 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
   const chunks: TextChunk[] = [];
 
   switch (token.type) {
-    case "text":
+    case "text": {
       // Handle text tokens that may contain nested formatting
-      const textToken = token as any; // marked types incomplete for nested text tokens
+      const textToken = token as Token & { tokens?: Token[] }; // marked types incomplete for nested text tokens
       if (
         "tokens" in textToken &&
         textToken.tokens &&
@@ -78,8 +85,9 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         chunks.push(fg("#FFFFFF")(token.text));
       }
       break;
+    }
 
-    case "strong":
+    case "strong": {
       // Bold text - process inner tokens recursively
       const strongToken = token as Tokens.Strong;
       const strongChunks = processTokensRecursively(
@@ -88,38 +96,43 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
       );
       chunks.push(...strongChunks.map((chunk) => bold(chunk.plainText)));
       break;
+    }
 
-    case "em":
+    case "em": {
       // Italic text - process inner tokens recursively
       const emToken = token as Tokens.Em;
       const emChunks = processTokensRecursively(emToken.tokens, listDepth);
       chunks.push(...emChunks.map((chunk) => italic(chunk.plainText)));
       break;
+    }
 
-    case "del":
+    case "del": {
       // Strikethrough text - process inner tokens recursively
       const delToken = token as Tokens.Del;
       const delChunks = processTokensRecursively(delToken.tokens, listDepth);
       chunks.push(...delChunks.map((chunk) => strikethrough(chunk.plainText)));
       break;
+    }
 
-    case "codespan":
+    case "codespan": {
       // Inline code
       const codespanToken = token as Tokens.Codespan;
       chunks.push(
         bg(colors.codeBackground)(fg(colors.code)(` ${codespanToken.text} `)),
       );
       break;
+    }
 
-    case "code":
+    case "code": {
       // Code block
       const codeToken = token as Tokens.Code;
       chunks.push(
         bg(colors.codeBackground)(fg(colors.code)(`\n${codeToken.text}\n`)),
       );
       break;
+    }
 
-    case "heading":
+    case "heading": {
       // Headers - process inner tokens recursively for formatting
       const headingToken = token as Tokens.Heading;
       const level = headingToken.depth;
@@ -148,8 +161,9 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         chunks.push(fg("#FFFFFF")(trailingWhitespace));
       }
       break;
+    }
 
-    case "list":
+    case "list": {
       // Lists - process each list item recursively with proper indentation
       const listToken = token as Tokens.List;
 
@@ -176,9 +190,9 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
             itemToken.tokens
           ) {
             // Handle text tokens that contain nested formatting
-            const textToken = itemToken as any; // marked types are incomplete for nested text tokens
+            const textToken = itemToken as Token & { tokens?: Token[] }; // marked types are incomplete for nested text tokens
             itemChunks.push(
-              ...processTokensRecursively(textToken.tokens, listDepth),
+              ...processTokensRecursively(textToken.tokens || [], listDepth),
             );
           } else {
             // Process other tokens directly
@@ -212,8 +226,9 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         }
       }
       break;
+    }
 
-    case "link":
+    case "link": {
       // Links - process inner tokens recursively and show URL
       const linkToken = token as Tokens.Link;
       const linkChunks = processTokensRecursively(linkToken.tokens, listDepth);
@@ -229,34 +244,116 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         chunks.push(fg("#888888")(` (${linkToken.href})`));
       }
       break;
+    }
 
-    case "paragraph":
+    case "paragraph": {
       // Paragraphs - process inner tokens recursively
       const paragraphToken = token as Tokens.Paragraph;
       chunks.push(
         ...processTokensRecursively(paragraphToken.tokens, listDepth),
       );
       break;
+    }
 
-    case "hr":
+    case "hr": {
       // Horizontal rules - render with proper separator line
       chunks.push(fg("#FFFFFF")("\n"));
       chunks.push(fg("#888888")("─".repeat(60))); // 60-character horizontal line
       chunks.push(fg("#FFFFFF")("\n\n"));
       break;
+    }
 
-    case "space":
+    case "space": {
       // Whitespace/newlines
       const spaceToken = token as Tokens.Space;
       chunks.push(fg("#FFFFFF")(spaceToken.raw));
       break;
+    }
 
-    case "br":
+    case "br": {
       // Line breaks
       chunks.push(fg("#FFFFFF")("\n"));
       break;
+    }
 
-    case "table":
+    case "blockquote": {
+      // Quote blocks - render with left border and indentation
+      // Also handles admonitions/callouts (> [!NOTE], > [!WARNING], etc.)
+      const blockquoteToken = token as Tokens.Blockquote;
+      
+      // Process inner tokens to get the quote content
+      const quoteChunks = processTokensRecursively(blockquoteToken.tokens, listDepth);
+      const quoteText = quoteChunks.map((chunk) => chunk.plainText).join("");
+      
+      // Check if this is an admonition (starts with [!TYPE])
+      const admonitionMatch = quoteText.match(/^\[!(NOTE|WARNING|ERROR|SUCCESS|INFO|TIP|CAUTION)\](.*)/is);
+      
+      chunks.push(fg("#FFFFFF")("\n")); // Start with newline
+      
+      if (admonitionMatch) {
+        // This is an admonition/callout
+        const [, type, content] = admonitionMatch;
+        const typeUpper = type.toUpperCase();
+        
+        // Get appropriate color and icon for the admonition type
+        let admonitionColor = colors.admonitionNote; // default
+        let icon = "ℹ️ "; // default info icon
+        
+        switch (typeUpper) {
+          case "NOTE":
+          case "INFO":
+            admonitionColor = colors.admonitionNote;
+            icon = "ℹ️ ";
+            break;
+          case "WARNING":
+          case "CAUTION":
+            admonitionColor = colors.admonitionWarning;
+            icon = "⚠️ ";
+            break;
+          case "ERROR":
+            admonitionColor = colors.admonitionError;
+            icon = "❌ ";
+            break;
+          case "SUCCESS":
+          case "TIP":
+            admonitionColor = colors.admonitionSuccess;
+            icon = "✅ ";
+            break;
+        }
+        
+        // Render admonition header
+        chunks.push(bg(admonitionColor)(fg("#000000")(`${icon}${typeUpper}`)));
+        chunks.push(fg("#FFFFFF")("\n"));
+        
+        // Render admonition content with left border
+        const contentLines = content.trim().split("\n");
+        for (let i = 0; i < contentLines.length; i++) {
+          const line = contentLines[i];
+          chunks.push(fg(admonitionColor)("│ "));
+          chunks.push(fg("#FFFFFF")(line));
+          if (i < contentLines.length - 1) {
+            chunks.push(fg("#FFFFFF")("\n"));
+          }
+        }
+      } else {
+        // Regular quote block
+        const lines = quoteText.split("\n");
+        
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          chunks.push(fg(colors.quoteBorder)("│ ")); // Quote border character
+          chunks.push(fg(colors.quote)(line));
+          if (i < lines.length - 1) {
+            chunks.push(fg("#FFFFFF")("\n"));
+          }
+        }
+      }
+      
+      chunks.push(fg("#FFFFFF")("\n")); // End with newline
+      break;
+    }
+
+    case "table": {
       // Tables - render with proper box drawing characters
       const tableToken = token as Tokens.Table;
       chunks.push(fg("#FFFFFF")("\n")); // Start with newline
@@ -380,15 +477,17 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
 
       chunks.push(fg("#FFFFFF")("\n")); // End with extra newline
       break;
+    }
 
-    default:
+    default: {
       // Fallback for unhandled tokens - use raw text if available
       const rawText =
-        "raw" in token ? token.raw : "text" in token ? (token as any).text : "";
+        "raw" in token ? token.raw : "text" in token ? (token as Token & { text?: string }).text : "";
       if (rawText) {
         chunks.push(fg("#FFFFFF")(rawText));
       }
       break;
+    }
   }
 
   return chunks;

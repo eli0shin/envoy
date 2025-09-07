@@ -6,8 +6,8 @@ vi.mock("@opentui/core", () => {
     __isChunk: true;
     text: Uint8Array;
     plainText: string;
-    fg?: any;
-    bg?: any;
+    fg?: string;
+    bg?: string;
     attributes?: number;
   };
 
@@ -22,8 +22,8 @@ vi.mock("@opentui/core", () => {
   const createMockChunk = (
     text: string,
     attributes?: number,
-    fg?: any,
-    bg?: any,
+    fg?: string,
+    bg?: string,
   ): MockTextChunk => ({
     __isChunk: true as const,
     text: new TextEncoder().encode(text),
@@ -671,5 +671,110 @@ describe("parseMarkdown", () => {
 
     expect(subtask1Line?.startsWith("  ")).toBe(true); // Should be indented
     expect(subtask2Line?.startsWith("  ")).toBe(true); // Should be indented
+  });
+
+  it("should handle quote blocks", () => {
+    const result = parseMarkdown("> This is a quote\n> with multiple lines");
+    expect(result).toBeDefined();
+
+    const allText = result.chunks.map((chunk) => chunk.plainText).join("");
+
+    // Should contain quote content with border characters
+    expect(allText).toContain("│ This is a quote");
+    expect(allText).toContain("│ with multiple lines");
+
+    // Should have proper line structure with newlines
+    expect(allText.split("\n").filter((line) => line.trim() !== "")).toHaveLength(2);
+  });
+
+  it("should handle nested quotes", () => {
+    const result = parseMarkdown("> Level 1\n>> Level 2 nested quote");
+    expect(result).toBeDefined();
+
+    const allText = result.chunks.map((chunk) => chunk.plainText).join("");
+
+    // Should contain quote border characters
+    expect(allText).toContain("│");
+    expect(allText).toContain("Level 1");
+    expect(allText).toContain("Level 2 nested quote");
+  });
+
+  it("should handle admonition notes", () => {
+    const result = parseMarkdown("> [!NOTE]\n> This is an important note");
+    expect(result).toBeDefined();
+
+    const allText = result.chunks.map((chunk) => chunk.plainText).join("");
+
+    // Should contain the admonition type and content
+    expect(allText).toContain("NOTE");
+    expect(allText).toContain("This is an important note");
+    expect(allText).toContain("│ "); // Should have border character
+
+    // Should have background styling for the header
+    const backgroundChunks = result.chunks.filter((chunk) => chunk.bg);
+    expect(backgroundChunks.length).toBeGreaterThan(0);
+  });
+
+  it("should handle admonition warnings", () => {
+    const result = parseMarkdown("> [!WARNING]\n> This is a warning message");
+    expect(result).toBeDefined();
+
+    const allText = result.chunks.map((chunk) => chunk.plainText).join("");
+
+    expect(allText).toContain("WARNING");
+    expect(allText).toContain("This is a warning message");
+    expect(allText).toContain("│ ");
+
+    // Should have background styling
+    const backgroundChunks = result.chunks.filter((chunk) => chunk.bg);
+    expect(backgroundChunks.length).toBeGreaterThan(0);
+  });
+
+  it("should handle admonition errors", () => {
+    const result = parseMarkdown("> [!ERROR]\n> This is an error message");
+    expect(result).toBeDefined();
+
+    const allText = result.chunks.map((chunk) => chunk.plainText).join("");
+
+    expect(allText).toContain("ERROR");
+    expect(allText).toContain("This is an error message");
+    expect(allText).toContain("│ ");
+  });
+
+  it("should handle admonition success", () => {
+    const result = parseMarkdown("> [!SUCCESS]\n> This completed successfully");
+    expect(result).toBeDefined();
+
+    const allText = result.chunks.map((chunk) => chunk.plainText).join("");
+
+    expect(allText).toContain("SUCCESS");
+    expect(allText).toContain("This completed successfully");
+    expect(allText).toContain("│ ");
+  });
+
+  it("should differentiate between regular quotes and admonitions", () => {
+    const regularQuote = parseMarkdown("> Just a regular quote");
+    const admonition = parseMarkdown("> [!NOTE]\n> This is a note");
+
+    const regularText = regularQuote.chunks.map((chunk) => chunk.plainText).join("");
+    const admonitionText = admonition.chunks.map((chunk) => chunk.plainText).join("");
+
+    // Regular quote should not contain admonition formatting
+    expect(regularText).not.toContain("NOTE");
+    expect(regularText).toContain("Just a regular quote");
+
+    // Admonition should contain the type
+    expect(admonitionText).toContain("NOTE");
+    expect(admonitionText).toContain("This is a note");
+
+    // Both should have border characters but admonitions should have background styling
+    expect(regularText).toContain("│ ");
+    expect(admonitionText).toContain("│ ");
+
+    const regularBgChunks = regularQuote.chunks.filter((chunk) => chunk.bg);
+    const admonitionBgChunks = admonition.chunks.filter((chunk) => chunk.bg);
+
+    expect(regularBgChunks.length).toBe(0); // Regular quotes shouldn't have background
+    expect(admonitionBgChunks.length).toBeGreaterThan(0); // Admonitions should have background
   });
 });
