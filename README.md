@@ -7,7 +7,7 @@
 - **🤖 Multi-Provider Support**: OpenAI, Anthropic, OpenRouter, Google Gemini
 - **💭 Advanced Reasoning**: Dynamic thinking allocation and interleaved thinking
 - **🔧 MCP Integration**: Native Model Context Protocol with tools, prompts, and resources
-- **🖥️ Interactive Mode**: Real-time streaming UI with React Ink
+- **🖥️ Interactive Mode**: Real-time streaming UI with OpenTUI
 - **🛡️ Secure Authentication**: OAuth and API key support with credential management
 - **⚙️ Flexible Configuration**: File-based configuration with environment variable support
 - **🚀 Agent Spawning**: Create and manage sub-agents for parallel processing

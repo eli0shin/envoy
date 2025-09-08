@@ -29,59 +29,6 @@ globalThis.console = {
 // Tests that need to assert on logger calls should use manual mocking
 vi.mock('./src/logger.js', () => createMockLogger());
 
-// Mock Ink's useInput hook to avoid stdin.ref errors in tests
-// This allows us to test components that use useInput without requiring real stdin
-vi.mock('ink', async () => {
-  const actual = await vi.importActual('ink');
-
-  // Define Key type based on Ink's Key interface
-  type Key = {
-    upArrow: boolean;
-    downArrow: boolean;
-    leftArrow: boolean;
-    rightArrow: boolean;
-    pageDown: boolean;
-    pageUp: boolean;
-    return: boolean;
-    escape: boolean;
-    ctrl: boolean;
-    shift: boolean;
-    tab: boolean;
-    backspace: boolean;
-    delete: boolean;
-    meta: boolean;
-  };
-
-  type InputHandler = (input: string, key: Key) => void;
-
-  // Store the handler function so tests can simulate key presses if needed
-  let inputHandler: InputHandler | null = null;
-
-  const mockUseInput = vi.fn(
-    (handler: InputHandler, options?: { isActive?: boolean }) => {
-      // Only store the handler if the hook is active (default true)
-      if (options?.isActive !== false) {
-        inputHandler = handler;
-      }
-    }
-  );
-
-  // Add a way for tests to simulate key presses (if needed in the future)
-  (
-    mockUseInput as typeof mockUseInput & {
-      simulateInput: (input: string, key: Key) => void;
-    }
-  ).simulateInput = (input: string, key: Key) => {
-    if (inputHandler) {
-      inputHandler(input, key);
-    }
-  };
-
-  return {
-    ...actual,
-    useInput: mockUseInput,
-  };
-});
 
 // Global file system mocks for all tests
 vi.mock('fs/promises', () => createFsPromisesMock());

@@ -20,7 +20,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 - `npm run test:interactive` - Run interactive CLI tests with real TTY support
 
-**Testing Interactive CLI Functionality**: To test the interactive mode of this CLI, use the dedicated interactive testing framework. Create test files with the pattern `*.interactive.test.ts` in the `interactive/` directory. These tests use `node-pty` to provide real TTY emulation, enabling full testing of Ink-based interactive UI components.
+**Testing Interactive CLI Functionality**: To test the interactive mode of this CLI, use the dedicated interactive testing framework. Create test files with the pattern `*.interactive.test.ts` in the `interactive/` directory. These tests use `node-pty` to provide real TTY emulation, enabling full testing of OpenTUI-based interactive UI components.
 
 ### Code Quality
 
