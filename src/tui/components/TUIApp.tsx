@@ -6,6 +6,9 @@ import { StatusBar } from "./StatusBar.js";
 import { Header } from "./Header.js";
 import { colors } from "../theme.js";
 import { runAgent } from "../../agent/index.js";
+import { commandRegistry } from "../commands/registry.js";
+import { setCommandCallbacks } from "../commands/builtins.js";
+import "../commands/builtins.js"; // Import to ensure commands are registered
 import type { CoreMessage } from "ai";
 import type { RuntimeConfiguration } from "../../config/types.js";
 import type { AgentSession } from "../../agentSession.js";
@@ -29,7 +32,11 @@ export function TUIApp({ config, session }: TUIAppProps) {
     setResizeKey((prev) => prev + 1);
   }, []);
 
-  // Load existing conversation history if available
+  const handleExit = useCallback(() => {
+    process.exit(0);
+  }, []);
+
+  // Load existing conversation history if available and set command callbacks
   useEffect(() => {
     async function loadHistory() {
       if (session.conversationPersistence) {
@@ -45,7 +52,19 @@ export function TUIApp({ config, session }: TUIAppProps) {
       }
     }
     loadHistory();
-  }, [session]);
+    
+    // Set callbacks for built-in commands (commands are already registered)
+    setCommandCallbacks({
+      onClear: () => {
+        setMessages([]);
+        // Clear persisted conversation if available
+        if (session.conversationPersistence) {
+          session.conversationPersistence.persistMessages([]);
+        }
+      },
+      onExit: handleExit,
+    });
+  }, [session, handleExit]);
 
   // Handle keyboard shortcuts - only Ctrl+C exits
   useKeyboard((key) => {
@@ -54,9 +73,24 @@ export function TUIApp({ config, session }: TUIAppProps) {
     }
   });
 
-  const handleExit = useCallback(() => {
-    process.exit(0);
-  }, []);
+  const handleCommandExecute = useCallback(
+    (commandInput: string, result?: string) => {
+      // Add command invocation to message history
+      const commandMessage = commandRegistry.formatCommandMessage(commandInput);
+      const commandMessageWithId: CoreMessage & { id: string } = {
+        ...commandMessage,
+        id: `command-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+      };
+      
+      setMessages((prev) => [...prev, commandMessageWithId]);
+      
+      // Persist the command message if available
+      if (session.conversationPersistence) {
+        session.conversationPersistence.persistMessages([...messages, commandMessageWithId]);
+      }
+    },
+    [messages, session],
+  );
 
   const handleSendMessage = useCallback(
     async (content: string) => {
@@ -115,7 +149,11 @@ export function TUIApp({ config, session }: TUIAppProps) {
         messages={messages}
         width={width}
       />
-      <InputArea onSubmit={handleSendMessage} onResize={handleInputResize} />
+      <InputArea 
+        onSubmit={handleSendMessage} 
+        onCommandExecute={handleCommandExecute}
+        onResize={handleInputResize} 
+      />
       <StatusBar status={status} session={session} />
     </box>
   );

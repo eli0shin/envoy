@@ -8,6 +8,8 @@ type MultiLineInputProps = {
   onChange: (value: string) => void;
   onSubmit: (value: string) => void;
   onResize?: () => void;
+  onTabKey?: () => boolean; // Returns true if tab was handled
+  onArrowKey?: (direction: "up" | "down") => boolean; // Returns true if arrow was handled
   placeholder?: string;
   minHeight?: number;
   backgroundColor?: string;
@@ -19,6 +21,8 @@ export function MultiLineInput({
   onChange,
   onSubmit,
   onResize,
+  onTabKey,
+  onArrowKey,
   placeholder = "Type your message...",
   minHeight = 3,
   backgroundColor = colors.backgrounds.input,
@@ -83,7 +87,22 @@ export function MultiLineInput({
 
   // Navigate between lines with arrow keys
   useKeyboard((key) => {
+    if (key.name === "tab") {
+      // Allow parent to handle tab for autocomplete
+      if (onTabKey && onTabKey()) {
+        return; // Tab was handled by parent
+      }
+      // Otherwise, let default tab behavior occur
+      return;
+    }
+
     if (key.name === "up") {
+      // Allow parent to handle up arrow for autocomplete navigation
+      if (onArrowKey && onArrowKey("up")) {
+        return; // Arrow was handled by parent
+      }
+      
+      // Default up arrow behavior
       if (editingLine > 0) {
         const newEditingLine = editingLine - 1;
         setEditingLine(newEditingLine);
@@ -94,6 +113,12 @@ export function MultiLineInput({
     }
     
     if (key.name === "down") {
+      // Allow parent to handle down arrow for autocomplete navigation
+      if (onArrowKey && onArrowKey("down")) {
+        return; // Arrow was handled by parent
+      }
+      
+      // Default down arrow behavior
       if (editingLine < lines.length - 1) {
         const newEditingLine = editingLine + 1;
         setEditingLine(newEditingLine);
