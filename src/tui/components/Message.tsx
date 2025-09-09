@@ -13,10 +13,46 @@ export function Message({
   contentType = "normal",
   width,
 }: MessageProps) {
-  const displayContent =
-    typeof message.content === "string"
-      ? message.content
-      : JSON.stringify(message.content);
+  const getDisplayContent = (message: CoreMessage): string => {
+    let content: string;
+    
+    if (typeof message.content === "string") {
+      content = message.content;
+    } else {
+      // Extract text from array of content parts
+      const textParts: string[] = [];
+      for (const part of message.content) {
+        if (part?.type === "text" && "text" in part) {
+          textParts.push(part.text);
+        } else if (part?.type === "reasoning" && "text" in part) {
+          textParts.push(part.text);
+        } else if (part?.type === "redacted-reasoning") {
+          textParts.push("[Reasoning redacted]");
+        } else if (part?.type === "tool-call" && "toolName" in part) {
+          textParts.push(`🔧 Calling ${part.toolName}`);
+        } else if (part?.type === "tool-result" && "toolName" in part) {
+          textParts.push(`✅ ${part.toolName} result`);
+        }
+      }
+      content = textParts.join("\n");
+    }
+    
+    // Only filter user messages for display
+    if (message.role === 'user') {
+      // Remove <user-command> tags but keep contents  
+      content = content.replace(/<user-command>(.*?)<\/user-command>/gs, '$1');
+      
+      // Remove <system-hint> tags and all contents (user doesn't need to see these)
+      content = content.replace(/<system-hint>.*?<\/system-hint>/gs, '');
+      
+      // Clean up extra whitespace
+      content = content.trim();
+    }
+    
+    return content;
+  };
+
+  const displayContent = getDisplayContent(message);
 
   // Calculate available width for text (terminal width minus scrollbox, padding, and margins)
   const textWidth = width - 6; // 6 = scrollbox (2) + padding (2) + margin/border space (2)
