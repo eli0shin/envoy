@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useKeyboard, useTerminalDimensions } from "@opentui/react";
 import { fg } from "@opentui/core";
 import { colors } from "../theme.js";
@@ -14,6 +14,7 @@ type MultiLineInputProps = {
   minHeight?: number;
   backgroundColor?: string;
   textColor?: string;
+  disabled?: boolean;
 };
 
 export function MultiLineInput({
@@ -27,6 +28,7 @@ export function MultiLineInput({
   minHeight = 3,
   backgroundColor = colors.backgrounds.input,
   textColor = colors.text,
+  disabled = false,
 }: MultiLineInputProps) {
   // Track which line is being edited and cursor position
   const [editingLine, setEditingLine] = useState(0);
@@ -87,6 +89,9 @@ export function MultiLineInput({
 
   // Navigate between lines with arrow keys
   useKeyboard((key) => {
+    // Don't process any keyboard input when disabled
+    if (disabled) return;
+    
     if (key.name === "tab") {
       // Allow parent to handle tab for autocomplete
       if (onTabKey && onTabKey()) {
@@ -225,7 +230,7 @@ export function MultiLineInput({
               <input
                 value={line}
                 placeholder={index === 0 && !value ? placeholder : ""}
-                focused={true}
+                focused={!disabled}
                 onInput={handleLineInput}
                 backgroundColor={backgroundColor}
                 textColor={textColor}

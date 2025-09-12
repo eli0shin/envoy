@@ -3,6 +3,7 @@ import { commandRegistry } from "./registry.js";
 // Store callbacks that can be updated
 let clearCallback: (() => void) | null = null;
 let exitCallback: (() => void) | null = null;
+let helpCallback: (() => void) | null = null;
 
 // Register commands immediately when module loads
 commandRegistry.register({
@@ -13,20 +14,16 @@ commandRegistry.register({
       clearCallback();
     }
     return undefined; // Don't send to agent
-  }
+  },
 });
 
 commandRegistry.register({
   name: "help",
   description: "Show available commands",
   handler: () => {
-    const commands = commandRegistry.getAll();
-    const helpText = [
-      "Available commands:",
-      ...commands.map(cmd => `  /${cmd.name} - ${cmd.description}`)
-    ].join("\n");
-    return helpText; // Send help text as user message
-  }
+    helpCallback!(); // Always call, will be set before use
+    return undefined; // Don't send to agent
+  },
 });
 
 commandRegistry.register({
@@ -37,16 +34,17 @@ commandRegistry.register({
       exitCallback();
     }
     return undefined; // Don't send to agent
-  }
+  },
 });
 
 // Set the callbacks after registration
-export function setCommandCallbacks(
-  callbacks: {
-    onClear: () => void;
-    onExit: () => void;
-  }
-): void {
+export function setCommandCallbacks(callbacks: {
+  onClear: () => void;
+  onExit: () => void;
+  onHelp: () => void;
+}): void {
   clearCallback = callbacks.onClear;
   exitCallback = callbacks.onExit;
+  helpCallback = callbacks.onHelp;
 }
+

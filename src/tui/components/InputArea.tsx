@@ -8,9 +8,15 @@ type InputAreaProps = {
   onSubmit: (message: string) => void;
   onCommandExecute: (commandInput: string, result?: string) => void;
   onResize?: () => void;
+  disabled?: boolean;
 };
 
-export function InputArea({ onSubmit, onCommandExecute, onResize }: InputAreaProps) {
+export function InputArea({
+  onSubmit,
+  onCommandExecute,
+  onResize,
+  disabled = false,
+}: InputAreaProps) {
   const [value, setValue] = useState("");
 
   const handleCommandSelect = useCallback((command: string) => {
@@ -18,15 +24,17 @@ export function InputArea({ onSubmit, onCommandExecute, onResize }: InputAreaPro
   }, []);
 
   const handleSubmit = (submittedValue: string) => {
+    if (disabled) return;
+
     const trimmed = submittedValue.trim();
-    
+
     // Check if it's a command
     const { isCommand, result } = commandRegistry.execute(trimmed);
-    
+
     if (isCommand) {
       // Execute command and notify parent
       onCommandExecute(trimmed, result);
-      
+
       // If command returns a string, also send it as a user message
       if (result) {
         onSubmit(result);
@@ -35,25 +43,22 @@ export function InputArea({ onSubmit, onCommandExecute, onResize }: InputAreaPro
       // Regular message or invalid command - send to agent
       onSubmit(trimmed);
     }
-    
+
     setValue("");
   };
 
   return (
     <box flexDirection="column">
       {/* Autocomplete shows above the input in normal flow */}
-      <CommandAutocomplete
-        inputValue={value}
-        onSelect={handleCommandSelect}
-      />
-      
+      <CommandAutocomplete inputValue={value} onSelect={handleCommandSelect} />
+
       {/* Input area with padding */}
       <box flexDirection="column" backgroundColor={colors.backgrounds.input}>
         {/* Top padding line */}
         <box height={1}>
           <text> </text>
         </box>
-        
+
         <MultiLineInput
           value={value}
           onChange={setValue}
@@ -63,8 +68,9 @@ export function InputArea({ onSubmit, onCommandExecute, onResize }: InputAreaPro
           minHeight={1}
           backgroundColor={colors.backgrounds.input}
           textColor={colors.text}
+          disabled={disabled}
         />
-        
+
         {/* Bottom padding line */}
         <box height={1}>
           <text> </text>
@@ -73,3 +79,4 @@ export function InputArea({ onSubmit, onCommandExecute, onResize }: InputAreaPro
     </box>
   );
 }
+
