@@ -235,7 +235,7 @@ export function MultiLineInput({
       </box>
       <box flexGrow={1} flexDirection="column">
         {lines.map((line, index) => (
-          <box key={index} height={1}>
+          <box key={`line-${index}`} height={1} /* eslint-disable-line react/no-array-index-key -- Line position is semantically important for multi-line input */>
             {index === editingLine ? (
               <input
                 value={line}

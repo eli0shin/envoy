@@ -4,10 +4,12 @@ import tseslint from "typescript-eslint";
 import esPlugin from "eslint-plugin-es";
 import importPlugin from "eslint-plugin-import";
 import reactHooksPlugin from "eslint-plugin-react-hooks";
+import reactPlugin from "eslint-plugin-react";
 
 export default tseslint.config(
   eslint.configs.recommended,
   tseslint.configs.recommended,
+  reactPlugin.configs.flat.recommended,
   {
     languageOptions: {
       globals: {
@@ -23,10 +25,16 @@ export default tseslint.config(
         __filename: "readonly",
       },
     },
+    settings: {
+      react: {
+        version: "detect",
+      },
+    },
     plugins: {
       es: esPlugin,
       import: importPlugin,
       "react-hooks": reactHooksPlugin,
+      react: reactPlugin,
     },
     rules: {
       // Ban all console usage
@@ -52,6 +60,11 @@ export default tseslint.config(
       // React Hooks Rules
       "react-hooks/rules-of-hooks": "error",
       "react-hooks/exhaustive-deps": "error",
+
+      // React Rules - manually added (not in recommended config)
+      "react/no-array-index-key": "error",
+      "react/react-in-jsx-scope": "off",
+      "react/no-unknown-property": "off", // Let TypeScript handle prop validation
     },
   },
   {
