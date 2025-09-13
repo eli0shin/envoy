@@ -65,6 +65,7 @@ export default tseslint.config(
       "react/no-array-index-key": "error",
       "react/react-in-jsx-scope": "off",
       "react/no-unknown-property": "off", // Let TypeScript handle prop validation
+      "react/prop-types": "off", // We use TypeScript for prop validation
     },
   },
   {

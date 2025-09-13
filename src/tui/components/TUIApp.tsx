@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useTerminalDimensions } from "@opentui/react";
+import { useTerminalDimensions, useRenderer } from "@opentui/react";
 import { MessageList } from "./MessageList.js";
 import { InputArea } from "./InputArea.js";
 import { StatusBar } from "./StatusBar.js";
@@ -38,15 +38,36 @@ export function TUIApp({ config, session }: TUIAppProps) {
   const [status, setStatus] = useState<Status>("READY");
   const [resizeKey, setResizeKey] = useState(0);
   const [modalState, setModalState] = useState<ModalType>(null);
+  const [historyIndex, setHistoryIndex] = useState(-1);
+  const [originalInput, setOriginalInput] = useState('');
   const { width, height } = useTerminalDimensions();
+  const renderer = useRenderer();
+
+  const getUserMessageHistory = useCallback((messages: (CoreMessage & { id: string })[]): string[] => {
+    return messages
+      .filter(message => message.role === 'user')
+      .map(message => {
+        let content = typeof message.content === 'string' ? message.content : '';
+
+        // Apply same parsing as Message.tsx
+        content = content.replace(/<user-command>(.*?)<\/user-command>/gs, '$1');
+        content = content.replace(/<system-hint>.*?<\/system-hint>/gs, '');
+
+        return content.trim();
+      })
+      .filter(content => content.length > 0);
+  }, []);
 
   const handleInputResize = useCallback(() => {
     setResizeKey((prev) => prev + 1);
   }, []);
 
   const handleExit = useCallback(() => {
+    renderer.destroy();
+    // Move cursor to bottom left of terminal
+    process.stdout.write('\x1b[999B\x1b[1G');
     process.exit(0);
-  }, []);
+  }, [renderer]);
 
   // Load existing conversation history if available and set command callbacks
   useEffect(() => {
@@ -116,6 +137,10 @@ export function TUIApp({ config, session }: TUIAppProps) {
 
   const handleSendMessage = useCallback(
     async (content: string) => {
+      // Reset history navigation state
+      setHistoryIndex(-1);
+      setOriginalInput('');
+
       // Add user message with our own generated id
       const userMessage: CoreMessage & { id: string } = {
         role: "user",
@@ -190,10 +215,15 @@ export function TUIApp({ config, session }: TUIAppProps) {
             messages={messages}
             width={width}
           />
-          <InputArea 
-            onSubmit={handleSendMessage} 
+          <InputArea
+            onSubmit={handleSendMessage}
             onCommandExecute={handleCommandExecute}
             onResize={handleInputResize}
+            userHistory={getUserMessageHistory(messages)}
+            historyIndex={historyIndex}
+            setHistoryIndex={setHistoryIndex}
+            originalInput={originalInput}
+            setOriginalInput={setOriginalInput}
           />
           <StatusBar status={status} session={session} />
           <ModalDisplay />

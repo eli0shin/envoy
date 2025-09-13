@@ -29,11 +29,34 @@ export {
 
 import { colors } from "./colors.js";
 
+// Helper function to format multi-line user content with proper indentation
+const formatUserContent = (content: string): StyledText => {
+  const lines = content.split('\n');
+  if (lines.length === 1) {
+    // Single line - just add the prefix
+    return new StyledText([fg(colors.primary)(`> `), fg(colors.lightGray)(content)]);
+  }
+
+  // Multi-line - build styled chunks for proper indentation
+  const chunks = [];
+
+  // First line with prefix
+  chunks.push(fg(colors.primary)(`> `));
+  chunks.push(fg(colors.lightGray)(lines[0]));
+
+  // Subsequent lines with indentation (2 spaces to align with content after "> ")
+  for (let i = 1; i < lines.length; i++) {
+    chunks.push(fg(colors.lightGray)(`\n  ${lines[i]}`));
+  }
+
+  return new StyledText(chunks);
+};
+
 // Content formatters - handles both parsing and styling for all AI SDK roles
 export const contentFormatters = {
-  "user-normal": (content: string): StyledText => new StyledText([fg(colors.primary)(`> `), fg(colors.lightGray)(content)]),
-  "user-reasoning": (content: string): StyledText => new StyledText([fg(colors.primary)(`> `), fg(colors.lightGray)(content)]),
-  "user-tool": (content: string): StyledText => new StyledText([fg(colors.primary)(`> `), fg(colors.lightGray)(content)]),
+  "user-normal": (content: string): StyledText => formatUserContent(content),
+  "user-reasoning": (content: string): StyledText => formatUserContent(content),
+  "user-tool": (content: string): StyledText => formatUserContent(content),
   "assistant-normal": (content: string): StyledText => parseMarkdown(content),
   "assistant-reasoning": (content: string): StyledText =>
     parseMarkdown(content),

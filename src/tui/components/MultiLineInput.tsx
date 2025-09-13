@@ -3,8 +3,7 @@ import { useTerminalDimensions } from "@opentui/react";
 import { fg } from "@opentui/core";
 import { colors } from "../theme.js";
 import { useKeys, parseKeys } from "../keys/index.js";
-import { usePrefixState, getActivePrefix } from "../keys/prefixContext.js";
-import { logger } from "../../logger.js";
+import { usePrefixState } from "../keys/prefixContext.js";
 
 type MultiLineInputProps = {
   value: string;
@@ -12,7 +11,7 @@ type MultiLineInputProps = {
   onSubmit: (value: string) => void;
   onResize?: () => void;
   onTabKey?: () => boolean; // Returns true if tab was handled
-  onArrowKey?: (direction: "up" | "down") => boolean; // Returns true if arrow was handled
+  onArrowKey?: (direction: "up" | "down", isOnFirstLine: boolean) => boolean; // Returns true if arrow was handled
   placeholder?: string;
   minHeight?: number;
   backgroundColor?: string;
@@ -38,8 +37,9 @@ export function MultiLineInput({
   const [editingLine, setEditingLine] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
 
-  // Treat active prefix as a form of disabled state - use module state for synchronous check
-  const isDisabled = disabled || !!getActivePrefix();
+
+  // Treat active prefix as a form of disabled state
+  const isDisabled = disabled || !!activePrefix;
   const { width: terminalWidth } = useTerminalDimensions();
   const lines = value ? value.split('\n') : [''];
   
@@ -63,9 +63,6 @@ export function MultiLineInput({
   
   // Handle input changes for the current line with overflow detection
   const handleLineInput = (newLineContent: string) => {
-    const currentModulePrefix = getActivePrefix();
-    const currentReactPrefix = activePrefix;
-
     // Don't process input when disabled (including when prefix is active)
     if (isDisabled) {
       return;
@@ -107,9 +104,11 @@ export function MultiLineInput({
     if (isDisabled) return false;
 
     // Cursor movement
+    const isOnFirstLine = editingLine === 0;
+
     if (
       parseKeys(key, 'input.cursorUp', () => {
-        if (onArrowKey && onArrowKey('up')) return; // let parent handle if provided
+        if (onArrowKey && onArrowKey('up', isOnFirstLine)) return; // let parent handle if provided
         if (editingLine > 0) {
           const newEditingLine = editingLine - 1;
           setEditingLine(newEditingLine);
@@ -118,7 +117,7 @@ export function MultiLineInput({
         }
       }, 'input') ||
       parseKeys(key, 'input.cursorDown', () => {
-        if (onArrowKey && onArrowKey('down')) return; // let parent handle if provided
+        if (onArrowKey && onArrowKey('down', isOnFirstLine)) return; // let parent handle if provided
         if (editingLine < lines.length - 1) {
           const newEditingLine = editingLine + 1;
           setEditingLine(newEditingLine);

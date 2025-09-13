@@ -9,12 +9,22 @@ type InputAreaProps = {
   onSubmit: (message: string) => void;
   onCommandExecute: (commandInput: string, result?: string) => void;
   onResize?: () => void;
+  userHistory: string[];
+  historyIndex: number;
+  setHistoryIndex: (index: number) => void;
+  originalInput: string;
+  setOriginalInput: (input: string) => void;
 };
 
 export function InputArea({
   onSubmit,
   onCommandExecute,
   onResize,
+  userHistory,
+  historyIndex,
+  setHistoryIndex,
+  originalInput,
+  setOriginalInput,
 }: InputAreaProps) {
   const [value, setValue] = useState("");
   const { currentModal } = useModalState();
@@ -22,6 +32,40 @@ export function InputArea({
 
   const handleCommandSelect = useCallback((command: string) => {
     setValue(command);
+  }, []);
+
+  const handleInputArrowKey = useCallback((direction: 'up' | 'down', isOnFirstLine: boolean): boolean => {
+    if (direction === 'up' && (historyIndex === -1 ? isOnFirstLine : true)) {
+      // Save original input when first entering history mode
+      if (historyIndex === -1) {
+        setOriginalInput(value);
+      }
+
+      const newIndex = historyIndex + 1;
+      if (newIndex < userHistory.length) {
+        const messageToLoad = userHistory[userHistory.length - 1 - newIndex];
+        setValue(messageToLoad);
+        setHistoryIndex(newIndex);
+        return true;
+      }
+    } else if (direction === 'down' && historyIndex >= 0) {
+      const newIndex = historyIndex - 1;
+      setHistoryIndex(newIndex);
+
+      if (newIndex >= 0) {
+        setValue(userHistory[userHistory.length - 1 - newIndex]);
+      } else {
+        setValue(originalInput);
+      }
+      return true;
+    }
+
+    return false;
+  }, [userHistory, historyIndex, setHistoryIndex, value, originalInput, setOriginalInput]);
+
+  const handleInputChange = useCallback((newValue: string) => {
+    setValue(newValue);
+    // Do NOT reset history on input change - only on submit
   }, []);
 
   const handleSubmit = (submittedValue: string) => {
@@ -55,7 +99,6 @@ export function InputArea({
       
       {/* Input area with padding */}
       <box flexDirection="column" backgroundColor={colors.backgrounds.input}>
-        
         {/* Top padding line */}
         <box height={1}>
           <text> </text>
@@ -63,9 +106,10 @@ export function InputArea({
 
         <MultiLineInput
           value={value}
-          onChange={setValue}
+          onChange={handleInputChange}
           onSubmit={handleSubmit}
           onResize={onResize}
+          onArrowKey={handleInputArrowKey}
           placeholder="Type your message... (Shift+Enter or \ for newlines, Enter to send)"
           minHeight={1}
           backgroundColor={colors.backgrounds.input}
