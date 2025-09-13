@@ -53,6 +53,10 @@ export class KeybindingsRegistry {
     }
     return false;
   }
+
+  getAllBindings(): KeybindingsConfig {
+    return this.bindings;
+  }
 }
 
 export const keybindingsRegistry = new KeybindingsRegistry();

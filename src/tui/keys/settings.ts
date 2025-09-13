@@ -15,9 +15,8 @@ let settings: PrefixSettings = {
 let prefixMatchers: Record<string, ((ev: TUIKeyEvent) => boolean)[]> = {};
 let cancelMatchers: ((ev: TUIKeyEvent) => boolean)[] = [];
 
-export function setKeySettings(newSettings: Partial<PrefixSettings>) {
-  settings = { ...settings, ...newSettings };
-  // Compile matchers
+// Initialize default matchers
+function initializeMatchers() {
   prefixMatchers = {};
   Object.entries(settings.prefixes).forEach(([name, desc]) => {
     const arr = Array.isArray(desc) ? desc : [desc];
@@ -27,6 +26,18 @@ export function setKeySettings(newSettings: Partial<PrefixSettings>) {
     ? settings.prefixCancel
     : [settings.prefixCancel];
   cancelMatchers = cancels.map((d) => parseKeyDescriptor(d));
+}
+
+// Initialize on module load
+initializeMatchers();
+
+export function getKeySettings(): PrefixSettings {
+  return settings;
+}
+
+export function setKeySettings(newSettings: Partial<PrefixSettings>) {
+  settings = { ...settings, ...newSettings };
+  initializeMatchers();
 }
 
 export function getPrefixNames(): string[] {
