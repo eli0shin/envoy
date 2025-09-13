@@ -50,11 +50,12 @@ export function InputArea({
 
   return (
     <box flexDirection="column">
-      {/* Autocomplete shows above the input in normal flow */}
+      {/* Autocomplete positioned absolutely relative to viewport */}
       <CommandAutocomplete inputValue={value} onSelect={handleCommandSelect} />
-
+      
       {/* Input area with padding */}
       <box flexDirection="column" backgroundColor={colors.backgrounds.input}>
+        
         {/* Top padding line */}
         <box height={1}>
           <text> </text>

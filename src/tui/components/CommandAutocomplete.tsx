@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { fg } from "@opentui/core";
-import { useKeyboard } from "@opentui/react";
+import { useKeyboard, useTerminalDimensions } from "@opentui/react";
 import { colors } from "../theme.js";
 import { commandRegistry } from "../commands/registry.js";
 import type { Command } from "../commands/registry.js";
@@ -11,6 +11,7 @@ type CommandAutocompleteProps = {
 };
 
 export function CommandAutocomplete({ inputValue, onSelect }: CommandAutocompleteProps) {
+  const { height: terminalHeight } = useTerminalDimensions();
   const [suggestions, setSuggestions] = useState<Command[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
 
@@ -81,15 +82,22 @@ export function CommandAutocomplete({ inputValue, onSelect }: CommandAutocomplet
 
   // Calculate height including borders
   const boxHeight = visibleSuggestions.length + 2;
+  
+  // Position above the input area at bottom of screen
+  const autocompleteTop = terminalHeight - 5 - boxHeight; // 5 lines for input area
 
   return (
     <box
+      position="absolute"
+      top={autocompleteTop}
+      left={0}
+      right={0}
       height={boxHeight}
       flexDirection="column"
       borderStyle="single"
       borderColor={colors.primary}
       backgroundColor={colors.backgrounds.main}
-      marginBottom={1} // Add spacing between autocomplete and input
+      zIndex={100}
     >
       {visibleSuggestions.map((cmd, index) => (
         <box
