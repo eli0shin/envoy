@@ -1,6 +1,7 @@
 import { useState, useCallback } from "react";
 import { MultiLineInput } from "./MultiLineInput";
 import { CommandAutocomplete } from "./CommandAutocomplete";
+import { useModalState } from "./ModalProvider.js";
 import { colors } from "../theme.js";
 import { commandRegistry } from "../commands/registry.js";
 
@@ -8,16 +9,16 @@ type InputAreaProps = {
   onSubmit: (message: string) => void;
   onCommandExecute: (commandInput: string, result?: string) => void;
   onResize?: () => void;
-  disabled?: boolean;
 };
 
 export function InputArea({
   onSubmit,
   onCommandExecute,
   onResize,
-  disabled = false,
 }: InputAreaProps) {
   const [value, setValue] = useState("");
+  const { currentModal } = useModalState();
+  const disabled = currentModal !== null;
 
   const handleCommandSelect = useCallback((command: string) => {
     setValue(command);

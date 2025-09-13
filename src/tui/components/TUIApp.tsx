@@ -1,10 +1,11 @@
 import { useState, useEffect, useCallback } from "react";
 import { useKeyboard, useTerminalDimensions } from "@opentui/react";
-import { fg } from "@opentui/core";
 import { MessageList } from "./MessageList.js";
 import { InputArea } from "./InputArea.js";
 import { StatusBar } from "./StatusBar.js";
 import { Header } from "./Header.js";
+import { ModalProvider } from "./ModalProvider.js";
+import { ModalDisplay } from "./ModalDisplay.js";
 import { colors } from "../theme.js";
 import { runAgent } from "../../agent/index.js";
 import { commandRegistry } from "../commands/registry.js";
@@ -20,6 +21,7 @@ type TUIAppProps = {
 };
 
 type Status = "READY" | "PROCESSING";
+type ModalType = "help" | null;
 
 export function TUIApp({ config, session }: TUIAppProps) {
   const [messages, setMessages] = useState<(CoreMessage & { id: string })[]>(
@@ -27,7 +29,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
   );
   const [status, setStatus] = useState<Status>("READY");
   const [resizeKey, setResizeKey] = useState(0);
-  const [showHelpModal, setShowHelpModal] = useState(false);
+  const [modalState, setModalState] = useState<ModalType>(null);
   const { width, height } = useTerminalDimensions();
 
   const handleInputResize = useCallback(() => {
@@ -65,19 +67,9 @@ export function TUIApp({ config, session }: TUIAppProps) {
         }
       },
       onExit: handleExit,
-      onHelp: () => setShowHelpModal(true),
+      onHelp: () => setModalState("help"),
     });
-  }, [session, handleExit]);
-
-  // Handle keyboard shortcuts - Ctrl+C exits, ESC closes modal
-  useKeyboard((key) => {
-    if (key.name === "c" && key.ctrl) {
-      handleExit();
-    }
-    if (key.name === "escape" && showHelpModal) {
-      setShowHelpModal(false);
-    }
-  });
+  }, [session, handleExit, setModalState]);
 
   const handleCommandExecute = useCallback(
     (commandInput: string) => {
@@ -142,111 +134,36 @@ export function TUIApp({ config, session }: TUIAppProps) {
     [messages],
   );
 
+  // Handle keyboard shortcuts - Ctrl+C exits
+  useKeyboard((key) => {
+    if (key.name === "c" && key.ctrl) {
+      handleExit();
+    }
+  });
+
   return (
-    <box
-      position="relative"
-      flexDirection="column"
-      width={width}
-      height={height}
-      backgroundColor={colors.backgrounds.main}
-    >
-      <Header />
-      <MessageList
-        key={`${resizeKey}-${messages.length}`}
-        messages={messages}
+    <ModalProvider modalState={modalState} setModalState={setModalState}>
+      <box
+        position="relative"
+        flexDirection="column"
         width={width}
-      />
-      <InputArea 
-        onSubmit={handleSendMessage} 
-        onCommandExecute={handleCommandExecute}
-        onResize={handleInputResize}
-        disabled={showHelpModal}
-      />
-      <StatusBar status={status} session={session} />
-      
-      {/* Help Modal */}
-      {showHelpModal && (() => {
-        const commands = commandRegistry.getAll();
-        
-        // Calculate modal height: commands + header (1) + footer (2: text + spacer) + min scrollbox space
-        // Ensure scrollbox has at least 5 lines visible, max total height of 20
-        const minScrollboxHeight = 5;
-        const headerFooterHeight = 3; // 1 for header, 2 for footer (spacer + text)
-        const modalHeight = Math.min(
-          20, 
-          Math.max(
-            minScrollboxHeight + headerFooterHeight,
-            commands.length + headerFooterHeight
-          )
-        );
-        
-        // Calculate the longest command line (includes "  /" + name + " - " + description)
-        const longestLine = Math.max(
-          "Available Commands:".length,
-          "Press ESC to close".length,
-          ...commands.map(cmd => `  /${cmd.name} - ${cmd.description}`.length)
-        );
-        
-        // Modal width needs to account for:
-        // - Border (2 chars)
-        // - Scrollbar (1 char) 
-        // - ScrollBox padding (2 chars)
-        // - Extra margin (5 chars)
-        // Total: 10 extra chars
-        const modalWidth = Math.min(
-          longestLine + 10,
-          Math.floor(width * 0.9)
-        );
-        
-        return (
-          <box
-            position="absolute"
-            top={Math.floor(height / 2) - Math.floor(modalHeight / 2)}
-            left={Math.floor(width / 2) - Math.floor(modalWidth / 2)}
-            width={modalWidth}
-            height={modalHeight}
-            zIndex={1000}
-            borderStyle="single"
-            borderColor={colors.primary}
-            backgroundColor={colors.backgrounds.main}
-            flexDirection="column"
-          >
-            <box height={1} paddingLeft={1}>
-              <text>{fg(colors.primary)("Available Commands:")}</text>
-            </box>
-            
-            <scrollbox
-              focused={true}
-              style={{
-                rootOptions: {
-                  flexGrow: 1,
-                  paddingLeft: 1,
-                  paddingRight: 1,
-                },
-                contentOptions: {
-                  flexDirection: "column",
-                },
-                scrollbarOptions: {
-                  showArrows: false,
-                },
-              }}
-            >
-              {commands.map((cmd, index) => (
-                <box key={index} height={1}>
-                  <text>  {fg(colors.accent)(`/${cmd.name}`)} - {cmd.description}</text>
-                </box>
-              ))}
-            </scrollbox>
-            
-            <box height={1}>
-              <text> </text>
-            </box>
-            <box height={1} paddingLeft={1}>
-              <text>{fg(colors.muted)("Press ESC to close")}</text>
-            </box>
-          </box>
-        );
-      })()}
-    </box>
+        height={height}
+        backgroundColor={colors.backgrounds.main}
+      >
+        <Header />
+        <MessageList
+          key={`${resizeKey}-${messages.length}`}
+          messages={messages}
+          width={width}
+        />
+        <InputArea 
+          onSubmit={handleSendMessage} 
+          onCommandExecute={handleCommandExecute}
+          onResize={handleInputResize}
+        />
+        <StatusBar status={status} session={session} />
+        <ModalDisplay />
+      </box>
+    </ModalProvider>
   );
 }
