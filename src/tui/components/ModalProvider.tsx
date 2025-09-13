@@ -1,5 +1,5 @@
 import { createContext, useContext, type ReactNode } from "react";
-import { useKeyboard } from "@opentui/react";
+import { useKeys, parseKeys } from "../keys/index.js";
 
 type ModalType = "help" | null;
 
@@ -22,12 +22,11 @@ export function ModalProvider({
   setModalState,
   children,
 }: ModalProviderProps) {
-  // Handle ESC key globally to close any modal
-  useKeyboard((key) => {
-    if (key.name === "escape" && modalState !== null) {
-      setModalState(null);
-    }
-  });
+  // Use keybindings to close modal (modal scope has higher priority)
+  useKeys((key) => {
+    if (modalState === null) return false;
+    return parseKeys(key, 'modal.close', () => setModalState(null), 'modal');
+  }, { scope: 'modal', enabled: () => modalState !== null });
 
   const showModal = (type: ModalType) => {
     setModalState(type);
@@ -57,4 +56,3 @@ export function useModalState(): ModalContextType {
   }
   return context;
 }
-

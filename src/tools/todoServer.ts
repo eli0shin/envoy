@@ -414,7 +414,7 @@ if (process.argv[1] && process.argv[1].endsWith('todoServer.ts')) {
     process.exit(0);
   });
 
-  server.connect(transport).catch(console.error);
+  server.connect(transport).catch(error => process.stderr.write(`Todo server connection error: ${error}\\n`));
 }
 
 export { createTodoServer };

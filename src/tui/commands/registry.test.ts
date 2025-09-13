@@ -44,7 +44,6 @@ describe("CommandRegistry", () => {
 
     it("should return ALL commands when input is just '/'", () => {
       const suggestions = registry.getSuggestions("/");
-      console.log("Suggestions for '/':", suggestions.map(s => s.name));
       
       expect(suggestions).toHaveLength(3);
       expect(suggestions.map(s => s.name)).toContain("clear");
@@ -54,14 +53,12 @@ describe("CommandRegistry", () => {
 
     it("should return ALL commands when input is empty string", () => {
       const suggestions = registry.getSuggestions("");
-      console.log("Suggestions for '':", suggestions.map(s => s.name));
       
       expect(suggestions).toHaveLength(3);
     });
 
     it("should filter commands when partial name provided after slash", () => {
       const suggestions = registry.getSuggestions("/cl");
-      console.log("Suggestions for '/cl':", suggestions.map(s => s.name));
       
       expect(suggestions).toHaveLength(1);
       expect(suggestions[0].name).toBe("clear");
@@ -69,7 +66,6 @@ describe("CommandRegistry", () => {
 
     it("should filter commands when partial name provided after slash", () => {
       const suggestions = registry.getSuggestions("/e");
-      console.log("Suggestions for '/e':", suggestions.map(s => s.name));
       
       expect(suggestions).toHaveLength(1);
       expect(suggestions[0].name).toBe("exit");
@@ -77,7 +73,6 @@ describe("CommandRegistry", () => {
 
     it("should return empty array when no matches", () => {
       const suggestions = registry.getSuggestions("/xyz");
-      console.log("Suggestions for '/xyz':", suggestions.map(s => s.name));
       
       expect(suggestions).toHaveLength(0);
     });

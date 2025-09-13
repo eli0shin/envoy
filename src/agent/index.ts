@@ -193,12 +193,12 @@ export async function runAgent(
               finishReason,
               ...(hasToolErrors && { error: toolErrorMessage }),
             };
-            console.log(JSON.stringify(jsonResult, null, 2));
+            process.stdout.write(JSON.stringify(jsonResult, null, 2) + '\n');
           } else if (
             logger.getCurrentLogProgress() === "none" &&
             !isInteractive
           ) {
-            console.log(ContentExtractor.extractTextContent(text));
+            process.stdout.write(ContentExtractor.extractTextContent(text) + '\n');
           }
 
           return {
@@ -275,7 +275,7 @@ export async function runAgent(
         executionTime,
         ...(hasToolErrors && { error: toolErrorMessage }),
       };
-      console.log(JSON.stringify(jsonResult, null, 2));
+      process.stdout.write(JSON.stringify(jsonResult, null, 2) + '\n');
     }
 
     return {
@@ -305,7 +305,7 @@ export async function runAgent(
         toolCallsCount,
         executionTime,
       };
-      console.log(JSON.stringify(jsonError, null, 2));
+      process.stdout.write(JSON.stringify(jsonError, null, 2) + '\n');
     }
 
     return {

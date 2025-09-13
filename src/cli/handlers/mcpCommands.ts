@@ -40,27 +40,27 @@ export async function handleListPrompts(
   }
 
   if (jsonMode) {
-    console.log(JSON.stringify(allPrompts, null, 2));
+    process.stdout.write(JSON.stringify(allPrompts, null, 2) + '\n');
   } else {
     if (allPrompts.length === 0) {
-      console.log('No prompts available from any MCP server.');
+      process.stdout.write('No prompts available from any MCP server.\n');
     } else {
-      console.log(`\nAvailable Prompts (${allPrompts.length}):\n`);
+      process.stdout.write(`\nAvailable Prompts (${allPrompts.length}):\n\n`);
       for (const prompt of allPrompts) {
-        console.log(`${prompt.server}:${prompt.name}`);
+        process.stdout.write(`${prompt.server}:${prompt.name}\n`);
         if (prompt.description) {
-          console.log(`  Description: ${prompt.description}`);
+          process.stdout.write(`  Description: ${prompt.description}\n`);
         }
         if (prompt.arguments && prompt.arguments.length > 0) {
-          console.log(`  Arguments:`);
+          process.stdout.write(`  Arguments:\n`);
           for (const arg of prompt.arguments) {
             const required = arg.required ? ' (required)' : '';
-            console.log(
-              `    - ${arg.name}${required}: ${arg.description || 'No description'}`
+            process.stdout.write(
+              `    - ${arg.name}${required}: ${arg.description || 'No description'}\n`
             );
           }
         }
-        console.log('');
+        process.stdout.write('\n');
       }
     }
   }
@@ -95,24 +95,24 @@ export async function handleListResources(
   }
 
   if (jsonMode) {
-    console.log(JSON.stringify(allResources, null, 2));
+    process.stdout.write(JSON.stringify(allResources, null, 2) + '\n');
   } else {
     if (allResources.length === 0) {
-      console.log('No resources available from any MCP server.');
+      process.stdout.write('No resources available from any MCP server.\n');
     } else {
-      console.log(`\nAvailable Resources (${allResources.length}):\n`);
+      process.stdout.write(`\nAvailable Resources (${allResources.length}):\n\n`);
       for (const resource of allResources) {
-        console.log(`${resource.server}: ${resource.uri}`);
+        process.stdout.write(`${resource.server}: ${resource.uri}\n`);
         if (resource.name) {
-          console.log(`  Name: ${resource.name}`);
+          process.stdout.write(`  Name: ${resource.name}\n`);
         }
         if (resource.description) {
-          console.log(`  Description: ${resource.description}`);
+          process.stdout.write(`  Description: ${resource.description}\n`);
         }
         if (resource.mimeType) {
-          console.log(`  MIME Type: ${resource.mimeType}`);
+          process.stdout.write(`  MIME Type: ${resource.mimeType}\n`);
         }
-        console.log('');
+        process.stdout.write('\n');
       }
     }
   }
@@ -135,9 +135,9 @@ export async function handleExecutePrompt(
     } catch (error) {
       const message = `Invalid JSON in --prompt-args: ${error instanceof Error ? error.message : String(error)}`;
       if (jsonMode) {
-        console.log(JSON.stringify({ error: message }, null, 2));
+        process.stdout.write(JSON.stringify({ error: message }, null, 2) + '\n');
       } else {
-        console.error(message);
+        process.stderr.write(message + '\n');
       }
       return false;
     }
@@ -154,7 +154,7 @@ export async function handleExecutePrompt(
           const result = await wrapper.getPrompt(promptName, promptArgs);
 
           if (jsonMode) {
-            console.log(
+            process.stdout.write(
               JSON.stringify(
                 {
                   server: wrapper.serverName,
@@ -163,17 +163,17 @@ export async function handleExecutePrompt(
                 },
                 null,
                 2
-              )
+              ) + '\n'
             );
           } else {
-            console.log(`\nPrompt: ${wrapper.serverName}:${promptName}`);
+            process.stdout.write(`\nPrompt: ${wrapper.serverName}:${promptName}\n`);
             if (result.description) {
-              console.log(`Description: ${result.description}\n`);
+              process.stdout.write(`Description: ${result.description}\n\n`);
             }
 
             for (const message of result.messages) {
-              console.log(
-                `[${message.role}] ${message.content.text || JSON.stringify(message.content)}`
+              process.stdout.write(
+                `[${message.role}] ${message.content.text || JSON.stringify(message.content)}\n`
               );
             }
           }
@@ -181,9 +181,9 @@ export async function handleExecutePrompt(
         } catch (error) {
           const message = `Failed to execute prompt '${promptName}': ${error instanceof Error ? error.message : String(error)}`;
           if (jsonMode) {
-            console.log(JSON.stringify({ error: message }, null, 2));
+            process.stdout.write(JSON.stringify({ error: message }, null, 2) + '\n');
           } else {
-            console.error(message);
+            process.stderr.write(message + '\n');
           }
           return false;
         }
@@ -197,9 +197,9 @@ export async function handleExecutePrompt(
 
   const message = `Prompt '${promptName}' not found in any MCP server`;
   if (jsonMode) {
-    console.log(JSON.stringify({ error: message }, null, 2));
+    process.stdout.write(JSON.stringify({ error: message }, null, 2) + '\n');
   } else {
-    console.error(message);
+    process.stderr.write(message + '\n');
   }
   return false;
 }
@@ -242,16 +242,16 @@ export async function handleInteractivePrompt(
   if (allPrompts.length === 0) {
     const message = 'No prompts available from any MCP server.';
     if (jsonMode) {
-      console.log(JSON.stringify({ error: message }, null, 2));
+      process.stdout.write(JSON.stringify({ error: message }, null, 2) + '\n');
     } else {
-      console.log(message);
+      process.stdout.write(message + '\n');
     }
     return false;
   }
 
   if (jsonMode) {
     // In JSON mode, we can't do interactive selection, so return the prompts
-    console.log(
+    process.stdout.write(
       JSON.stringify(
         {
           message:
@@ -265,7 +265,7 @@ export async function handleInteractivePrompt(
         },
         null,
         2
-      )
+      ) + '\n'
     );
     return true;
   }
@@ -291,8 +291,8 @@ export async function handleInteractivePrompt(
       selectedPrompt.prompt.arguments &&
       selectedPrompt.prompt.arguments.length > 0
     ) {
-      console.log(
-        `\nPrompt "${selectedPrompt.displayName}" requires arguments:`
+      process.stdout.write(
+        `\nPrompt "${selectedPrompt.displayName}" requires arguments:\n`
       );
 
       for (const arg of selectedPrompt.prompt.arguments) {
@@ -340,42 +340,42 @@ export async function handleInteractivePrompt(
       w => w.serverName === selectedPrompt.serverName
     );
     if (!wrapper) {
-      console.error(`Error: Server ${selectedPrompt.serverName} not found`);
+      process.stderr.write(`Error: Server ${selectedPrompt.serverName} not found\n`);
       return false;
     }
 
     try {
-      console.log(`\nExecuting prompt: ${selectedPrompt.displayName}\n`);
+      process.stdout.write(`\nExecuting prompt: ${selectedPrompt.displayName}\n\n`);
 
       const result = await wrapper.getPrompt(selectedPrompt.name, args);
 
-      console.log(`Prompt: ${selectedPrompt.displayName}`);
+      process.stdout.write(`Prompt: ${selectedPrompt.displayName}\n`);
       if (result.description) {
-        console.log(`Description: ${result.description}\n`);
+        process.stdout.write(`Description: ${result.description}\n\n`);
       }
 
       for (const message of result.messages) {
-        console.log(
-          `[${message.role}] ${message.content.text || JSON.stringify(message.content)}`
+        process.stdout.write(
+          `[${message.role}] ${message.content.text || JSON.stringify(message.content)}\n`
         );
       }
 
       return true;
     } catch (error) {
-      console.error(
-        `Failed to execute prompt '${selectedPrompt.displayName}': ${error instanceof Error ? error.message : String(error)}`
+      process.stderr.write(
+        `Failed to execute prompt '${selectedPrompt.displayName}': ${error instanceof Error ? error.message : String(error)}\n`
       );
       return false;
     }
   } catch (error) {
     if (error && typeof error === 'object' && 'isTtyError' in error) {
-      console.log(
-        'Interactive mode requires a TTY terminal. Use --list-prompts to see available prompts, then use --prompt <name> to execute one.'
+      process.stdout.write(
+        'Interactive mode requires a TTY terminal. Use --list-prompts to see available prompts, then use --prompt <name> to execute one.\n'
       );
       return true;
     }
-    console.error(
-      `Interactive prompt error: ${error instanceof Error ? error.message : String(error)}`
+    process.stderr.write(
+      `Interactive prompt error: ${error instanceof Error ? error.message : String(error)}\n`
     );
     return false;
   }

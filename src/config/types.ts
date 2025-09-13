@@ -98,6 +98,18 @@ export type ToolsConfig = {
 };
 
 /**
+ * Keybindings configuration for the TUI
+ * Mapping: scope -> action -> one or more descriptors
+ */
+export type TUIKeybindingActionMap = Record<string, string | string[]>;
+export type TUIKeybindings = Partial<
+  Record<'global' | 'modal' | 'autocomplete' | 'input' | 'messages', TUIKeybindingActionMap>
+> & {
+  prefixes?: Record<string, string | string[]>;
+  prefixCancel?: string | string[];
+};
+
+/**
  * Enhanced MCP server configuration with additional options
  */
 export type EnhancedMCPServerConfig = (
@@ -119,6 +131,7 @@ export type Configuration = {
   providers?: ProvidersConfig;
   agent?: AgentConfig;
   tools?: ToolsConfig;
+  keybindings?: TUIKeybindings;
 };
 
 /**

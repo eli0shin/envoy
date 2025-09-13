@@ -30,7 +30,6 @@ describe('MCP Prompt Autocomplete Interactive Test', () => {
 
         // Test 1: Check if MCP server is connected and prompts are loaded
         // Type the beginning of the MCP server prompt command
-        console.log('Testing MCP prompt autocomplete...');
         await process.typeText('/demo-server:sim');
 
         // Give it time to show autocomplete suggestions
@@ -48,7 +47,6 @@ describe('MCP Prompt Autocomplete Interactive Test', () => {
           currentOutput.includes('simple-prompt') ||
           currentOutput.includes('/demo-server:simple-prompt');
 
-        console.log('Has autocomplete suggestions:', hasAutocomplete);
 
         // Test 2: Try completing the prompt name manually
         await process.typeText('ple-prompt');
@@ -67,10 +65,8 @@ describe('MCP Prompt Autocomplete Interactive Test', () => {
 
         // Wait for the prompt to be executed (should show "Working..." or similar)
         await process.waitForText('Working...', TEST_TIMEOUTS.interaction);
-        console.log('Prompt execution started successfully');
 
         const finalOutput = process.getCleanOutput();
-        console.log('Final complete output:', JSON.stringify(finalOutput));
 
         // Basic assertions
         expect(finalOutput).toContain('Press Ctrl+C to exit at any time.');
@@ -106,7 +102,6 @@ describe('MCP Prompt Autocomplete Interactive Test', () => {
         await new Promise(resolve => setTimeout(resolve, 2000));
 
         const helpOutput = process.getCleanOutput();
-        console.log('Help command output:', JSON.stringify(helpOutput));
 
         // Check if MCP prompts appear in help
         expect(helpOutput).toContain('demo-server');

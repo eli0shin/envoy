@@ -2,6 +2,7 @@ import { useRef, useEffect } from "react";
 import { Message } from "./Message.js";
 import type { CoreMessage } from "ai";
 import type { ScrollBoxRenderable } from "@opentui/core";
+import { useKeys, parseKeys } from "../keys/index.js";
 
 type MessageListProps = {
   messages: (CoreMessage & { id: string })[];
@@ -21,11 +22,42 @@ export function MessageList({ messages, width }: MessageListProps) {
     }
   };
 
+  const scrollBy = (delta: number) => {
+    if (!scrollBoxRef.current) return;
+    const maxScrollTop = scrollBoxRef.current.scrollHeight - scrollBoxRef.current.viewport.height;
+    scrollBoxRef.current.scrollTop = Math.max(0, Math.min(maxScrollTop, scrollBoxRef.current.scrollTop + delta));
+  };
+
+  const scrollPage = (direction: 1 | -1) => {
+    if (!scrollBoxRef.current) return;
+    const page = Math.max(1, Math.floor(scrollBoxRef.current.viewport.height * 0.9));
+    scrollBy(direction * page);
+  };
+
+  const scrollTop = () => {
+    if (!scrollBoxRef.current) return;
+    scrollBoxRef.current.scrollTop = 0;
+  };
+
+  const scrollBottom = () => {
+    scrollToBottom();
+  };
+
   useEffect(() => {
     setImmediate(() => {
       scrollToBottom();
     });
   }, [messages]);
+
+  // Keybindings for scrolling the messages area
+  useKeys((key) => {
+    return (
+      parseKeys(key, 'messages.scrollPageUp', () => scrollPage(-1), 'messages') ||
+      parseKeys(key, 'messages.scrollPageDown', () => scrollPage(1), 'messages') ||
+      parseKeys(key, 'messages.scrollTop', () => scrollTop(), 'messages') ||
+      parseKeys(key, 'messages.scrollBottom', () => scrollBottom(), 'messages')
+    );
+  }, { scope: 'messages', enabled: true });
   const renderMessage = (
     message: CoreMessage & { id: string },
     _index: number,

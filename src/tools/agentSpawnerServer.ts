@@ -29,9 +29,8 @@ async function getRuntimeConfiguration(): Promise<RuntimeConfiguration> {
     try {
       return JSON.parse(configJson) as RuntimeConfiguration;
     } catch (error) {
-      console.error(
-        'Failed to parse AGENT_RUNTIME_CONFIG, falling back to configuration resolution:',
-        error
+      process.stderr.write(
+        `Failed to parse AGENT_RUNTIME_CONFIG, falling back to configuration resolution: ${error}\n`
       );
     }
   }
@@ -213,13 +212,13 @@ async function main() {
   const server = createAgentSpawnerServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
-  console.error('Agent Spawner MCP Server started');
+  process.stderr.write('Agent Spawner MCP Server started\n');
 }
 
 // Run if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
   main().catch(error => {
-    console.error('Failed to start Agent Spawner MCP Server:', error);
+    process.stderr.write(`Failed to start Agent Spawner MCP Server: ${error}\n`);
     process.exit(1);
   });
 }

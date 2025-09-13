@@ -1,7 +1,10 @@
 import { useState } from "react";
-import { useKeyboard, useTerminalDimensions } from "@opentui/react";
+import { useTerminalDimensions } from "@opentui/react";
 import { fg } from "@opentui/core";
 import { colors } from "../theme.js";
+import { useKeys, parseKeys } from "../keys/index.js";
+import { usePrefixState, getActivePrefix } from "../keys/prefixContext.js";
+import { logger } from "../../logger.js";
 
 type MultiLineInputProps = {
   value: string;
@@ -30,9 +33,13 @@ export function MultiLineInput({
   textColor = colors.text,
   disabled = false,
 }: MultiLineInputProps) {
+  const { activePrefix } = usePrefixState();
   // Track which line is being edited and cursor position
   const [editingLine, setEditingLine] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
+
+  // Treat active prefix as a form of disabled state - use module state for synchronous check
+  const isDisabled = disabled || !!getActivePrefix();
   const { width: terminalWidth } = useTerminalDimensions();
   const lines = value ? value.split('\n') : [''];
   
@@ -56,6 +63,14 @@ export function MultiLineInput({
   
   // Handle input changes for the current line with overflow detection
   const handleLineInput = (newLineContent: string) => {
+    const currentModulePrefix = getActivePrefix();
+    const currentReactPrefix = activePrefix;
+
+    // Don't process input when disabled (including when prefix is active)
+    if (isDisabled) {
+      return;
+    }
+
     // Check if input exceeds available width
     if (newLineContent.length > availableTextWidth) {
       const splitPoint = findSplitPoint(newLineContent, availableTextWidth);
@@ -87,52 +102,41 @@ export function MultiLineInput({
     setCursorPosition(newLineContent.length);
   };
 
-  // Navigate between lines with arrow keys
-  useKeyboard((key) => {
-    // Don't process any keyboard input when disabled
-    if (disabled) return;
-    
-    if (key.name === "tab") {
-      // Allow parent to handle tab for autocomplete
-      if (onTabKey && onTabKey()) {
-        return; // Tab was handled by parent
-      }
-      // Otherwise, let default tab behavior occur
-      return;
+  // Navigate and edit using keybindings
+  useKeys((key) => {
+    if (isDisabled) return false;
+
+    // Cursor movement
+    if (
+      parseKeys(key, 'input.cursorUp', () => {
+        if (onArrowKey && onArrowKey('up')) return; // let parent handle if provided
+        if (editingLine > 0) {
+          const newEditingLine = editingLine - 1;
+          setEditingLine(newEditingLine);
+          const targetLine = lines[newEditingLine] || '';
+          setCursorPosition(Math.min(cursorPosition, targetLine.length));
+        }
+      }, 'input') ||
+      parseKeys(key, 'input.cursorDown', () => {
+        if (onArrowKey && onArrowKey('down')) return; // let parent handle if provided
+        if (editingLine < lines.length - 1) {
+          const newEditingLine = editingLine + 1;
+          setEditingLine(newEditingLine);
+          const targetLine = lines[newEditingLine] || '';
+          setCursorPosition(Math.min(cursorPosition, targetLine.length));
+        }
+      }, 'input')
+    ) {
+      return true;
     }
 
-    if (key.name === "up") {
-      // Allow parent to handle up arrow for autocomplete navigation
-      if (onArrowKey && onArrowKey("up")) {
-        return; // Arrow was handled by parent
-      }
-      
-      // Default up arrow behavior
-      if (editingLine > 0) {
-        const newEditingLine = editingLine - 1;
-        setEditingLine(newEditingLine);
-        const targetLine = lines[newEditingLine] || '';
-        setCursorPosition(Math.min(cursorPosition, targetLine.length));
-      }
-      return;
-    }
-    
-    if (key.name === "down") {
-      // Allow parent to handle down arrow for autocomplete navigation
-      if (onArrowKey && onArrowKey("down")) {
-        return; // Arrow was handled by parent
-      }
-      
-      // Default down arrow behavior
-      if (editingLine < lines.length - 1) {
-        const newEditingLine = editingLine + 1;
-        setEditingLine(newEditingLine);
-        const targetLine = lines[newEditingLine] || '';
-        setCursorPosition(Math.min(cursorPosition, targetLine.length));
-      }
-      return;
+    // Allow parent to handle tab completion if needed
+    if (key.name === 'tab') {
+      if (onTabKey && onTabKey()) return true;
+      return false;
     }
 
+    // Backspace merging behavior (raw key)
     if (key.name === "backspace") {
       const currentLine = lines[editingLine] || '';
       
@@ -151,7 +155,7 @@ export function MultiLineInput({
         }
         
         onResize?.();
-        return;
+        return true;
       }
       
       // If at start of non-empty line, merge with previous line
@@ -167,30 +171,32 @@ export function MultiLineInput({
         setEditingLine(editingLine - 1);
         setCursorPosition(previousLine.length);
         onResize?.();
-        return;
+        return true;
       }
     }
 
-    if (key.name === "return") {
-      const currentLine = lines[editingLine] || '';
-      
-      // Shift+Enter always creates new line
-      if (key.shift) {
+    // Newline and submit via keybindings
+    if (
+      parseKeys(key, 'input.newline', () => {
+        const currentLine = lines[editingLine] || '';
         const beforeCursor = currentLine.slice(0, cursorPosition);
         const afterCursor = currentLine.slice(cursorPosition);
-        
         const newLines = [...lines];
         newLines[editingLine] = beforeCursor;
         newLines.splice(editingLine + 1, 0, afterCursor);
         onChange(newLines.join('\n'));
-        
         setEditingLine(editingLine + 1);
         setCursorPosition(0);
         onResize?.();
-        return;
-      }
-      
-      // Check for backslash continuation on Enter
+      }, 'input')
+    ) {
+      return true;
+    }
+
+    if (
+      parseKeys(key, 'input.submit', () => {
+      const currentLine = lines[editingLine] || '';
+      // Backslash continuation on submit
       if (currentLine.trim().endsWith('\\')) {
         // Remove backslash and add new line
         const newLines = [...lines];
@@ -211,9 +217,13 @@ export function MultiLineInput({
         setCursorPosition(0);
         onResize?.();
       }
-      return;
+      }, 'input')
+    ) {
+      return true;
     }
-  });
+
+    return false;
+  }, { scope: 'input', enabled: !isDisabled });
 
   // Calculate total height
   const height = Math.max(minHeight, lines.length);
@@ -230,7 +240,7 @@ export function MultiLineInput({
               <input
                 value={line}
                 placeholder={index === 0 && !value ? placeholder : ""}
-                focused={!disabled}
+                focused={!isDisabled}
                 onInput={handleLineInput}
                 backgroundColor={backgroundColor}
                 textColor={textColor}

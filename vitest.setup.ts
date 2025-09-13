@@ -72,7 +72,7 @@ afterEach(() => {
 
 // Handle unhandled promise rejections in tests
 process.on('unhandledRejection', (reason, promise) => {
-  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  process.stderr.write(`Unhandled Rejection at: ${promise}, reason: ${reason}\\n`);
   // Don't exit in tests, but log the error
 });
 

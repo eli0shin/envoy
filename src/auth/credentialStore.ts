@@ -63,7 +63,7 @@ async function loadCredentials(): Promise<Record<string, AuthInfo>> {
     try {
       result[provider] = AuthInfo.parse(credentials);
     } catch {
-      console.warn(`Invalid credentials for provider ${provider}, skipping`);
+      process.stderr.write(`Invalid credentials for provider ${provider}, skipping\\n`);
     }
   }
 

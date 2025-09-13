@@ -81,11 +81,11 @@ export async function handleSessionListing(
         .sort((a, b) => b.sessionId.localeCompare(a.sessionId)); // Latest first (UUID v7 sorts by time)
 
       if (sessions.length === 0) {
-        console.log("No conversation sessions found for this project.");
+        process.stdout.write("No conversation sessions found for this project.\n");
         return { handled: true, success: true };
       }
 
-      console.log(`\nConversation Sessions for ${process.cwd()}:\n`);
+      process.stdout.write(`\nConversation Sessions for ${process.cwd()}:\n\n`);
 
       for (const session of sessions) {
         try {
@@ -103,23 +103,21 @@ export async function handleSessionListing(
           const firstLine = JSON.parse(lines[0]);
           const startTime = new Date(firstLine.timestamp).toLocaleString();
 
-          console.log(`  ${session.sessionId}`);
-          console.log(`    Started: ${startTime}`);
-          console.log(`    Messages: ${lines.length}`);
-          console.log(`    Size: ${(stats.size / 1024).toFixed(1)} KB`);
-          console.log("");
+          process.stdout.write(`  ${session.sessionId}\n`);
+          process.stdout.write(`    Started: ${startTime}\n`);
+          process.stdout.write(`    Messages: ${lines.length}\n`);
+          process.stdout.write(`    Size: ${(stats.size / 1024).toFixed(1)} KB\n\n`);
         } catch {
-          console.log(`  ${session.sessionId} (corrupted)`);
-          console.log("");
+          process.stdout.write(`  ${session.sessionId} (corrupted)\n\n`);
         }
       }
 
-      console.log(`Total: ${sessions.length} conversation(s)`);
-      console.log(`\nTo resume a conversation: --resume <session-id>`);
-      console.log(`To resume latest: --resume`);
+      process.stdout.write(`Total: ${sessions.length} conversation(s)\n`);
+      process.stdout.write(`\nTo resume a conversation: --resume <session-id>\n`);
+      process.stdout.write(`To resume latest: --resume\n`);
     } catch (error) {
       if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-        console.log("No conversation sessions found for this project.");
+        process.stdout.write("No conversation sessions found for this project.\n");
       } else {
         throw error;
       }
@@ -127,8 +125,8 @@ export async function handleSessionListing(
 
     return { handled: true, success: true };
   } catch (error) {
-    console.error(
-      `Error listing sessions: ${error instanceof Error ? error.message : String(error)}`,
+    process.stderr.write(
+      `Error listing sessions: ${error instanceof Error ? error.message : String(error)}\n`
     );
     return { handled: true, success: false };
   }
@@ -167,8 +165,8 @@ export async function handlePromptResourceCommands(
           `Failed to connect to MCP server ${serverConfig.name}: ${error}`,
         );
         if (!options.json) {
-          console.error(
-            `Warning: Could not connect to MCP server '${serverConfig.name}': ${error instanceof Error ? error.message : String(error)}`,
+          process.stderr.write(
+            `Warning: Could not connect to MCP server '${serverConfig.name}': ${error instanceof Error ? error.message : String(error)}\n`
           );
         }
       }
@@ -179,9 +177,9 @@ export async function handlePromptResourceCommands(
         "No MCP servers available for prompts and resources operations";
       logger.error(message);
       if (options.json) {
-        console.log(JSON.stringify({ error: message }, null, 2));
+        process.stdout.write(JSON.stringify({ error: message }, null, 2) + '\n');
       } else {
-        console.error(message);
+        process.stderr.write(message + '\n');
       }
       return { handled: true, success: false };
     }
@@ -223,9 +221,9 @@ export async function handlePromptResourceCommands(
     const message = `Error handling prompt/resource commands: ${error instanceof Error ? error.message : String(error)}`;
     logger.error(message);
     if (options.json) {
-      console.log(JSON.stringify({ error: message }, null, 2));
+      process.stdout.write(JSON.stringify({ error: message }, null, 2) + '\n');
     } else {
-      console.error(message);
+      process.stderr.write(message + '\n');
     }
     return { handled: true, success: false };
   }
@@ -259,7 +257,7 @@ function initializeProcessCleanup(): void {
   // Handle uncaught exceptions (override existing handler)
   process.removeAllListeners("uncaughtException");
   process.on("uncaughtException", (error) => {
-    console.error("Uncaught exception:", error.message);
+    process.stderr.write(`Uncaught exception: ${error.message}\n`);
     processManager.cleanupAll();
     process.exit(1);
   });
@@ -267,7 +265,7 @@ function initializeProcessCleanup(): void {
   // Handle unhandled promise rejections (override existing handler)
   process.removeAllListeners("unhandledRejection");
   process.on("unhandledRejection", (reason, _promise) => {
-    console.error("Unhandled rejection:", String(reason));
+    process.stderr.write(`Unhandled rejection: ${String(reason)}\n`);
     processManager.cleanupAll();
     process.exit(1);
   });
@@ -292,7 +290,7 @@ export async function main(): Promise<void> {
         userMessage = await readStdin();
       } catch {
         logger.error("No input provided via stdin");
-        console.error("Message cannot be empty");
+        process.stderr.write("Message cannot be empty\n");
         process.exit(1);
       }
     } else if (message) {
@@ -339,7 +337,7 @@ export async function main(): Promise<void> {
       (!userMessage || userMessage.trim() === "")
     ) {
       logger.error("Message is empty after validation");
-      console.error("Message cannot be empty");
+      process.stderr.write("Message cannot be empty\n");
       process.exit(1);
     }
 
@@ -421,8 +419,8 @@ export async function main(): Promise<void> {
       agentSession = await initializeAgentSession(configResult.config);
     } catch (error) {
       logger.error("Agent session initialization failed");
-      console.error(
-        `Initialization error: ${error instanceof Error ? error.message : String(error)}`,
+      process.stderr.write(
+        `Initialization error: ${error instanceof Error ? error.message : String(error)}\n`
       );
       process.exit(1);
     }
@@ -544,7 +542,7 @@ export async function main(): Promise<void> {
         !configResult.config.json &&
         configResult.config.agent.logProgress !== "none"
       ) {
-        console.error(formatExecutionSummary(result));
+        process.stderr.write(formatExecutionSummary(result) + '\n');
       }
     } finally {
       // Cleanup agent session resources
@@ -559,7 +557,7 @@ export async function main(): Promise<void> {
 
     logger.error("Fatal CLI error", { error: errorMessage });
 
-    console.error(`Fatal error: ${errorMessage}`);
+    process.stderr.write(`Fatal error: ${errorMessage}\n`);
     process.exit(1);
   }
 }

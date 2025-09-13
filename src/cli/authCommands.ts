@@ -43,7 +43,7 @@ function promptUser(
             stdin.setRawMode?.(false);
             stdin.removeListener('data', onData);
             rl.close();
-            console.log(''); // New line after hidden input
+            process.stdout.write('\n'); // New line after hidden input
             resolve(input);
             break;
           case '\u0003': // Ctrl+C
@@ -83,10 +83,10 @@ async function selectOption(
   question: string,
   options: Array<{ label: string; value: string; hint?: string }>
 ): Promise<string> {
-  console.log(question);
+  process.stdout.write(question + '\n');
   options.forEach((option, index) => {
     const hint = option.hint ? ` (${option.hint})` : '';
-    console.log(`  ${index + 1}. ${option.label}${hint}`);
+    process.stdout.write(`  ${index + 1}. ${option.label}${hint}\n`);
   });
 
   while (true) {
@@ -99,7 +99,7 @@ async function selectOption(
       return options[index].value;
     }
 
-    console.log('Invalid selection. Please try again.');
+    process.stdout.write('Invalid selection. Please try again.\n');
   }
 }
 
@@ -107,7 +107,7 @@ async function selectOption(
  * Login command implementation
  */
 export async function loginCommand(): Promise<void> {
-  console.log('\n🔐 Authentication Setup\n');
+  process.stdout.write('\n🔐 Authentication Setup\n\n');
 
   // For now, we only support Anthropic, but designed for extensibility
   const providers = [
@@ -119,7 +119,7 @@ export async function loginCommand(): Promise<void> {
   if (provider === 'anthropic') {
     await handleAnthropicLogin();
   } else {
-    console.log('❌ Unsupported provider');
+    process.stderr.write('❌ Unsupported provider\n');
     process.exit(1);
   }
 }
@@ -147,39 +147,38 @@ async function handleAnthropicLogin(): Promise<void> {
  */
 async function handleOAuthLogin(): Promise<void> {
   try {
-    console.log('\n🚀 Starting OAuth flow...');
+    process.stdout.write('\n🚀 Starting OAuth flow...\n');
 
     const { url, verifier } = await AnthropicOAuth.authorize();
 
-    console.log('📱 Opening browser for authorization...');
-    console.log("If the browser doesn't open automatically, visit:");
-    console.log(`   ${url}`);
+    process.stdout.write('📱 Opening browser for authorization...\n');
+    process.stdout.write("If the browser doesn't open automatically, visit:\n");
+    process.stdout.write(`   ${url}\n`);
 
     try {
       await open(url);
     } catch {
-      console.log('⚠️  Failed to open browser automatically');
+      process.stdout.write('⚠️  Failed to open browser automatically\n');
     }
 
-    console.log(
-      "\nAfter authorizing, you'll be redirected to a page with an authorization code."
+    process.stdout.write(
+      "\nAfter authorizing, you'll be redirected to a page with an authorization code.\n"
     );
     const code = await promptUser('📋 Paste the authorization code here: ');
 
     if (!code) {
-      console.log('❌ No authorization code provided');
+      process.stderr.write('❌ No authorization code provided\n');
       process.exit(1);
     }
 
-    console.log('🔄 Exchanging code for tokens...');
+    process.stdout.write('🔄 Exchanging code for tokens...\n');
     await AnthropicOAuth.exchange(code, verifier);
 
-    console.log('✅ OAuth login successful!');
-    console.log('🎉 You can now use Claude Pro/Max features');
+    process.stdout.write('✅ OAuth login successful!\n');
+    process.stdout.write('🎉 You can now use Claude Pro/Max features\n');
   } catch (error) {
-    console.error(
-      '❌ OAuth login failed:',
-      error instanceof Error ? error.message : error
+    process.stderr.write(
+      `❌ OAuth login failed: ${error instanceof Error ? error.message : error}\n`
     );
     process.exit(1);
   }
@@ -190,24 +189,24 @@ async function handleOAuthLogin(): Promise<void> {
  */
 async function handleApiKeyLogin(): Promise<void> {
   try {
-    console.log('\n🔑 API Key Setup');
-    console.log('Get your API key from: https://console.anthropic.com/');
+    process.stdout.write('\n🔑 API Key Setup\n');
+    process.stdout.write('Get your API key from: https://console.anthropic.com/\n');
 
     const apiKey = await promptUser('Enter your Anthropic API key: ', true);
 
     if (!apiKey) {
-      console.log('❌ No API key provided');
+      process.stderr.write('❌ No API key provided\n');
       process.exit(1);
     }
 
     // Basic validation - Anthropic API keys start with 'sk-ant-'
     if (!apiKey.startsWith('sk-ant-')) {
-      console.log(
-        '⚠️  Warning: API key format looks unusual (should start with sk-ant-)'
+      process.stdout.write(
+        '⚠️  Warning: API key format looks unusual (should start with sk-ant-)\n'
       );
       const confirm = await promptUser('Continue anyway? (y/N): ');
       if (!confirm.toLowerCase().startsWith('y')) {
-        console.log('❌ Cancelled');
+        process.stderr.write('❌ Cancelled\n');
         process.exit(1);
       }
     }
@@ -217,11 +216,10 @@ async function handleApiKeyLogin(): Promise<void> {
       key: apiKey,
     });
 
-    console.log('✅ API key saved successfully!');
+    process.stdout.write('✅ API key saved successfully!\n');
   } catch (error) {
-    console.error(
-      '❌ API key setup failed:',
-      error instanceof Error ? error.message : error
+    process.stderr.write(
+      `❌ API key setup failed: ${error instanceof Error ? error.message : error}\n`
     );
     process.exit(1);
   }
@@ -236,24 +234,24 @@ export async function logoutCommand(): Promise<void> {
     const providers = Object.keys(credentials);
 
     if (providers.length === 0) {
-      console.log('ℹ️  No stored credentials found');
+      process.stdout.write('ℹ️  No stored credentials found\n');
       return;
     }
 
-    console.log('\n🚪 Logout\n');
+    process.stdout.write('\n🚪 Logout\n\n');
 
     if (providers.length === 1) {
       const provider = providers[0];
       const credential = credentials[provider];
 
-      console.log(`Removing ${provider} credentials (${credential.type})`);
+      process.stdout.write(`Removing ${provider} credentials (${credential.type})\n`);
       const confirm = await promptUser('Are you sure? (y/N): ');
 
       if (confirm.toLowerCase().startsWith('y')) {
         await CredentialStore.remove(provider);
-        console.log('✅ Logged out successfully');
+        process.stdout.write('✅ Logged out successfully\n');
       } else {
-        console.log('❌ Cancelled');
+        process.stdout.write('❌ Cancelled\n');
       }
     } else {
       // Multiple providers - let user choose
@@ -270,15 +268,14 @@ export async function logoutCommand(): Promise<void> {
       const confirm = await promptUser('Are you sure? (y/N): ');
       if (confirm.toLowerCase().startsWith('y')) {
         await CredentialStore.remove(provider);
-        console.log('✅ Logged out successfully');
+        process.stdout.write('✅ Logged out successfully\n');
       } else {
-        console.log('❌ Cancelled');
+        process.stdout.write('❌ Cancelled\n');
       }
     }
   } catch (error) {
-    console.error(
-      '❌ Logout failed:',
-      error instanceof Error ? error.message : error
+    process.stderr.write(
+      `❌ Logout failed: ${error instanceof Error ? error.message : error}\n`
     );
     process.exit(1);
   }
@@ -292,11 +289,11 @@ export async function listCommand(): Promise<void> {
     const credentials = await CredentialStore.list();
     const authFilePath = CredentialStore.getAuthFilePath();
 
-    console.log(`\n📄 Stored Credentials (${authFilePath})\n`);
+    process.stdout.write(`\n📄 Stored Credentials (${authFilePath})\n\n`);
 
     if (Object.keys(credentials).length === 0) {
-      console.log('ℹ️  No stored credentials');
-      console.log('   Run: npx . auth login');
+      process.stdout.write('ℹ️  No stored credentials\n');
+      process.stdout.write('   Run: npx . auth login\n');
       return;
     }
 
@@ -311,12 +308,11 @@ export async function listCommand(): Promise<void> {
         status = '🔑 api-key';
       }
 
-      console.log(`  ${provider}: ${authType} ${status}`);
+      process.stdout.write(`  ${provider}: ${authType} ${status}\n`);
     }
   } catch (error) {
-    console.error(
-      '❌ Failed to list credentials:',
-      error instanceof Error ? error.message : error
+    process.stderr.write(
+      `❌ Failed to list credentials: ${error instanceof Error ? error.message : error}\n`
     );
     process.exit(1);
   }
@@ -327,13 +323,13 @@ export async function listCommand(): Promise<void> {
  */
 export async function statusCommand(): Promise<void> {
   try {
-    console.log('\n📊 Authentication Status\n');
+    process.stdout.write('\n📊 Authentication Status\n\n');
 
     const credentials = await CredentialStore.list();
 
     if (Object.keys(credentials).length === 0) {
-      console.log('❌ No authentication configured');
-      console.log('   Run: npx . auth login');
+      process.stdout.write('❌ No authentication configured\n');
+      process.stdout.write('   Run: npx . auth login\n');
       return;
     }
 
@@ -343,22 +339,21 @@ export async function statusCommand(): Promise<void> {
       if (anthropicCreds.type === 'oauth') {
         const isAuthenticated = await AnthropicOAuth.isAuthenticated();
         if (isAuthenticated) {
-          console.log('✅ Anthropic: OAuth authenticated (Claude Pro/Max)');
+          process.stdout.write('✅ Anthropic: OAuth authenticated (Claude Pro/Max)\n');
         } else {
-          console.log('❌ Anthropic: OAuth token expired/invalid');
-          console.log('   Run: npx . auth login');
+          process.stdout.write('❌ Anthropic: OAuth token expired/invalid\n');
+          process.stdout.write('   Run: npx . auth login\n');
         }
       } else {
-        console.log('✅ Anthropic: API key configured');
+        process.stdout.write('✅ Anthropic: API key configured\n');
       }
     } else {
-      console.log('❌ Anthropic: Not configured');
-      console.log('   Run: npx . auth login');
+      process.stdout.write('❌ Anthropic: Not configured\n');
+      process.stdout.write('   Run: npx . auth login\n');
     }
   } catch (error) {
-    console.error(
-      '❌ Status check failed:',
-      error instanceof Error ? error.message : error
+    process.stderr.write(
+      `❌ Status check failed: ${error instanceof Error ? error.message : error}\n`
     );
     process.exit(1);
   }

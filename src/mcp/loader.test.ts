@@ -59,14 +59,11 @@ import { logMcpTool } from '../logger.js';
 // Mock child_process to eliminate command resolution delays (300ms per test)
 // CRITICAL: Factory function must be inside vi.mock() to avoid hoisting issues
 vi.mock('child_process', () => {
-  console.log('=== VI.MOCK CHILD_PROCESS FACTORY CALLED ===');
   return {
     spawn: vi.fn().mockImplementation((...args: string[]) => {
-      console.log('=== SPAWN MOCK CALLED ===', args);
       const mockProcess = {
         stdout: {
           on: vi.fn((event: string, cb: (data: Buffer) => void) => {
-            console.log('=== STDOUT.ON CALLED ===', event);
             if (event === 'data') {
               // Immediately resolve with a mock command path
               setImmediate(() => cb(Buffer.from('/usr/bin/node\n')));
@@ -96,7 +93,6 @@ vi.mock('child_process', () => {
           pipe: vi.fn(),
         },
         on: vi.fn((event: string, cb: (...args: unknown[]) => void) => {
-          console.log('=== PROCESS.ON CALLED ===', event);
           if (event === 'close') {
             // Successful command resolution (exit code 0)
             setImmediate(() => cb(0));
@@ -114,11 +110,6 @@ vi.mock('child_process', () => {
         spawnfile: args[0],
       };
 
-      console.log('=== SPAWN MOCK RETURNING PROCESS ===');
-      console.log('Has stdout:', !!mockProcess.stdout);
-      console.log('Has stderr:', !!mockProcess.stderr);
-      console.log('Stdout type:', typeof mockProcess.stdout);
-      console.log('Process keys:', Object.keys(mockProcess));
 
       return mockProcess;
     }),
@@ -152,26 +143,18 @@ function createMockMcpClient(
     customCallToolResponse,
   } = options;
 
-  console.log('=== CREATING MOCK MCP CLIENT ===');
-  console.log('Tools provided:', tools);
-  console.log('Should fail connection:', shouldFailConnection);
 
   const mockClient = {
     // Connection management
     connect: vi.fn().mockImplementation(async () => {
-      console.log('=== MOCK CLIENT CONNECT CALLED ===');
       if (shouldFailConnection) {
-        console.log('=== MOCK CLIENT CONNECT FAILING ===');
         throw new Error('Connection failed');
       }
-      console.log('=== MOCK CLIENT CONNECT SUCCESS ===');
       return undefined;
     }),
 
     // MCP Discovery Protocol
     listTools: vi.fn().mockImplementation(async () => {
-      console.log('=== MOCK CLIENT LIST TOOLS CALLED ===');
-      console.log('Returning tools:', tools);
       return { tools };
     }),
     listPrompts: vi.fn().mockResolvedValue({ prompts }),
@@ -262,7 +245,6 @@ describe('mcpLoader', () => {
     mockSpawn.mockClear();
 
     // Configure the mock client for each test (only tools capability to avoid extra prompt/resource tools)
-    console.log('=== SETTING UP MOCK CLIENT FOR TEST ===');
     mockClient = createMockMcpClient({
       tools: [
         {
@@ -285,44 +267,24 @@ describe('mcpLoader', () => {
     clientSpy = (vi as any)
       .spyOn(mcpClient, 'Client')
       .mockImplementation((...args: unknown[]) => {
-        console.log('=== MCP CLIENT CONSTRUCTOR SPY CALLED ===', args);
         return mockClient as never;
       }) as ReturnType<typeof vi.spyOn>;
   });
 
   describe('loadMCPTools', () => {
     it('should verify mock setup is working', async () => {
-      console.log('=== TESTING MOCK SETUP ===');
-      console.log('clientSpy type:', typeof clientSpy);
-      console.log(
-        'clientSpy constructor calls:',
-        clientSpy.mock?.calls?.length || 0
-      );
 
       // Check if the Client mock is working at all
       expect(typeof clientSpy).toBe('function');
       expect(clientSpy).toHaveBeenCalledTimes(0); // Should be 0 at start
 
       // Create a test client directly to see if our mock works
-      console.log('Creating test client...');
       const testClient = new mcpClient.Client(
         { name: 'test-client', version: '1.0.0' },
         { capabilities: {} }
       );
 
-      console.log(
-        'clientSpy calls after creation:',
-        clientSpy.mock?.calls?.length || 0
-      );
-      console.log('testClient:', testClient);
-      console.log('testClient type:', typeof testClient);
 
-      if (testClient) {
-        console.log('testClient keys:', Object.keys(testClient));
-        console.log('testClient has connect:', 'connect' in testClient);
-        console.log('testClient.connect:', testClient.connect);
-        console.log('testClient.connect type:', typeof testClient.connect);
-      }
 
       expect(testClient).toBeDefined();
       expect(clientSpy).toHaveBeenCalledTimes(1);
@@ -336,7 +298,6 @@ describe('mcpLoader', () => {
     });
 
     it('should load tools from stdio servers successfully', async () => {
-      console.log('=== TEST STARTING ===');
 
       const mockTools = [
         {
@@ -354,8 +315,6 @@ describe('mcpLoader', () => {
 
       // Configure the mock client with tools
       mockClient = createMockMcpClient({ tools: mockTools });
-      console.log('=== MOCK CLIENT CONFIGURED ===');
-      console.log('Debug - mockClient configured with tools:', mockTools);
 
       const serverConfigs: StdioMCPServerConfig[] = [
         {
@@ -369,33 +328,13 @@ describe('mcpLoader', () => {
       // Use absolute path to bypass resolveCommand function
       serverConfigs[0].command = '/usr/bin/node';
 
-      console.log('=== BEFORE CALLING loadMCPTools ===');
-      console.log('mockSpawn type:', typeof mockSpawn);
-      console.log('mockSpawn mock calls before:', mockSpawn.mock.calls.length);
-      console.log('clientSpy calls before:', clientSpy.mock.calls.length);
 
       const result = await loadMCPTools(serverConfigs);
 
-      console.log('Debug - loadMCPTools result:', {
-        toolsSize: result.tools.size,
-        toolsKeys: Array.from(result.tools.keys()),
-        errorsLength: result.errors.length,
-        errors: result.errors.map(e => ({
-          serverName: e.serverName,
-          error: e.error,
-        })),
-      });
 
       // Debug: Check if spawn was called (should happen in resolveCommand)
-      console.log('mockSpawn mock calls after:', mockSpawn.mock.calls.length);
-      console.log('clientSpy calls after:', clientSpy.mock.calls.length);
 
       // First check for errors to understand what went wrong
-      console.log('=== ERRORS AND DEBUG INFO ===');
-      console.log('Errors found:', result.errors.length);
-      result.errors.forEach(err => {
-        console.log(`Error - ${err.serverName}: ${err.error}`);
-      });
 
       if (result.errors.length > 0) {
         // Force the test to fail with error details instead of proceeding

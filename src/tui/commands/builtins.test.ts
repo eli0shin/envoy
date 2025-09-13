@@ -5,7 +5,6 @@ import "./builtins.js"; // Import to trigger registration
 describe("Built-in Commands Registration", () => {
   it("should have commands registered when module loads", () => {
     const all = commandRegistry.getAll();
-    console.log("All registered commands:", all.map(c => c.name));
     
     expect(all.length).toBeGreaterThan(0);
     expect(all.map(c => c.name)).toContain("clear");
@@ -15,7 +14,6 @@ describe("Built-in Commands Registration", () => {
 
   it("should return suggestions for '/' input", () => {
     const suggestions = commandRegistry.getSuggestions("/");
-    console.log("Suggestions for '/':", suggestions.map(s => s.name));
     
     expect(suggestions.length).toBe(3);
     expect(suggestions.map(s => s.name)).toContain("clear");
@@ -25,7 +23,6 @@ describe("Built-in Commands Registration", () => {
 
   it("should return filtered suggestions for partial input", () => {
     const suggestions = commandRegistry.getSuggestions("/cl");
-    console.log("Suggestions for '/cl':", suggestions.map(s => s.name));
     
     expect(suggestions.length).toBe(1);
     expect(suggestions[0].name).toBe("clear");
@@ -41,7 +38,6 @@ describe("Built-in Commands Registration", () => {
     expect(result.result).toContain("/help");
     expect(result.result).toContain("/exit");
     
-    console.log("Help output:\n", result.result);
   });
 
   it("clear command should work but return undefined", () => {

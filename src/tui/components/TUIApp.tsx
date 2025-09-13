@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useKeyboard, useTerminalDimensions } from "@opentui/react";
+import { useTerminalDimensions } from "@opentui/react";
 import { MessageList } from "./MessageList.js";
 import { InputArea } from "./InputArea.js";
 import { StatusBar } from "./StatusBar.js";
@@ -11,6 +11,14 @@ import { runAgent } from "../../agent/index.js";
 import { commandRegistry } from "../commands/registry.js";
 import { setCommandCallbacks } from "../commands/builtins.js";
 import "../commands/builtins.js"; // Import to ensure commands are registered
+import { KeyDispatcher } from "../keys/dispatcher.js";
+import { useKeys, parseKeys } from "../keys/index.js";
+import { keybindingsRegistry } from "../keys/index.js";
+import { defaultKeybindings, mergeKeybindings } from "../keys/index.js";
+import type { KeybindingsConfig } from "../keys/index.js";
+import type { TUIKeybindings } from "../../config/types.js";
+import { KeysProvider } from "../keys/prefixContext.js";
+import { setKeySettings } from "../keys/settings.js";
 import type { CoreMessage } from "ai";
 import type { RuntimeConfiguration } from "../../config/types.js";
 import type { AgentSession } from "../../agentSession.js";
@@ -42,6 +50,22 @@ export function TUIApp({ config, session }: TUIAppProps) {
 
   // Load existing conversation history if available and set command callbacks
   useEffect(() => {
+    // Initialize keybindings registry (defaults + user overrides)
+    const overrides: TUIKeybindings | undefined = config.keybindings;
+    const scopedOverrides: KeybindingsConfig = {
+      global: overrides?.global,
+      modal: overrides?.modal,
+      autocomplete: overrides?.autocomplete,
+      input: overrides?.input,
+      messages: overrides?.messages,
+    };
+    keybindingsRegistry.set(mergeKeybindings(defaultKeybindings, scopedOverrides));
+    // Initialize prefix settings (always compile defaults, then apply overrides)
+    setKeySettings({
+      prefixes: overrides?.prefixes ?? { leader: 'C-e' },
+      prefixCancel: overrides?.prefixCancel ?? 'escape',
+    });
+
     async function loadHistory() {
       if (session.conversationPersistence) {
         const history =
@@ -69,7 +93,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
       onExit: handleExit,
       onHelp: () => setModalState("help"),
     });
-  }, [session, handleExit, setModalState]);
+  }, [session, handleExit, setModalState, config.keybindings]);
 
   const handleCommandExecute = useCallback(
     (commandInput: string) => {
@@ -131,39 +155,50 @@ export function TUIApp({ config, session }: TUIAppProps) {
         setStatus("READY");
       }
     },
-    [messages],
+    [messages, config, session],
   );
 
-  // Handle keyboard shortcuts - Ctrl+C exits
-  useKeyboard((key) => {
-    if (key.name === "c" && key.ctrl) {
-      handleExit();
-    }
-  });
+  // Global key actions
+  useKeys((key) => {
+    return (
+      parseKeys(key, 'app.exit', handleExit, 'global') ||
+      parseKeys(
+        key,
+        'help.toggle',
+        () => setModalState((m) => (m === 'help' ? null : 'help')),
+        'global'
+      ) ||
+      // Consume stray escape to avoid unintended exits in the underlying TUI
+      parseKeys(key, 'global.cancel', () => {}, 'global')
+    );
+  }, { scope: 'global', enabled: true });
 
   return (
-    <ModalProvider modalState={modalState} setModalState={setModalState}>
-      <box
-        position="relative"
-        flexDirection="column"
-        width={width}
-        height={height}
-        backgroundColor={colors.backgrounds.main}
-      >
-        <Header />
-        <MessageList
-          key={`${resizeKey}-${messages.length}`}
-          messages={messages}
+    <KeysProvider>
+      <ModalProvider modalState={modalState} setModalState={setModalState}>
+        <KeyDispatcher />
+        <box
+          position="relative"
+          flexDirection="column"
           width={width}
-        />
-        <InputArea 
-          onSubmit={handleSendMessage} 
-          onCommandExecute={handleCommandExecute}
-          onResize={handleInputResize}
-        />
-        <StatusBar status={status} session={session} />
-        <ModalDisplay />
-      </box>
-    </ModalProvider>
+          height={height}
+          backgroundColor={colors.backgrounds.main}
+        >
+          <Header />
+          <MessageList
+            key={`${resizeKey}-${messages.length}`}
+            messages={messages}
+            width={width}
+          />
+          <InputArea 
+            onSubmit={handleSendMessage} 
+            onCommandExecute={handleCommandExecute}
+            onResize={handleInputResize}
+          />
+          <StatusBar status={status} session={session} />
+          <ModalDisplay />
+        </box>
+      </ModalProvider>
+    </KeysProvider>
   );
 }

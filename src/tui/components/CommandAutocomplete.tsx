@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { fg } from "@opentui/core";
-import { useKeyboard, useTerminalDimensions } from "@opentui/react";
+import { useTerminalDimensions } from "@opentui/react";
+import { useKeys, parseKeys } from "../keys/index.js";
 import { colors } from "../theme.js";
 import { commandRegistry } from "../commands/registry.js";
 import type { Command } from "../commands/registry.js";
@@ -10,10 +11,13 @@ type CommandAutocompleteProps = {
   onSelect: (command: string) => void;
 };
 
-export function CommandAutocomplete({ inputValue, onSelect }: CommandAutocompleteProps) {
-  const { height: terminalHeight } = useTerminalDimensions();
+export function CommandAutocomplete({
+  inputValue,
+  onSelect,
+}: CommandAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<Command[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
+  const { height: terminalHeight } = useTerminalDimensions();
 
   // Derive shouldShowAutocomplete from suggestions state
   const shouldShowAutocomplete = suggestions.length > 0;
@@ -40,33 +44,67 @@ export function CommandAutocomplete({ inputValue, onSelect }: CommandAutocomplet
   }, [shouldShowAutocomplete, suggestions, selectedIndex, onSelect]);
 
   // Handle arrow key navigation
-  const handleArrowKey = useCallback((direction: "up" | "down") => {
-    if (!shouldShowAutocomplete || suggestions.length === 0) {
-      return false;
-    }
+  const handleArrowKey = useCallback(
+    (direction: "up" | "down") => {
+      if (!shouldShowAutocomplete || suggestions.length === 0) {
+        return false;
+      }
 
-    if (direction === "up") {
-      setSelectedIndex(prev => 
-        prev > 0 ? prev - 1 : suggestions.length - 1
-      );
-    } else {
-      setSelectedIndex(prev => 
-        prev < suggestions.length - 1 ? prev + 1 : 0
-      );
-    }
-    return true;
-  }, [shouldShowAutocomplete, suggestions]);
+      if (direction === "up") {
+        setSelectedIndex((prev) =>
+          prev > 0 ? prev - 1 : suggestions.length - 1,
+        );
+      } else {
+        setSelectedIndex((prev) =>
+          prev < suggestions.length - 1 ? prev + 1 : 0,
+        );
+      }
+      return true;
+    },
+    [shouldShowAutocomplete, suggestions],
+  );
 
-  // Use keyboard hook to listen for key events directly
-  useKeyboard((key) => {
-    if (key.name === "tab") {
-      handleTabComplete();
-    } else if (key.name === "up") {
-      handleArrowKey("up");
-    } else if (key.name === "down") {
-      handleArrowKey("down");
-    }
-  });
+  // Keybindings for autocomplete
+  useKeys(
+    (key) => {
+      if (!shouldShowAutocomplete) return false;
+      return (
+        parseKeys(
+          key,
+          "command.accept",
+          () => {
+            handleTabComplete();
+          },
+          "autocomplete",
+        ) ||
+        parseKeys(
+          key,
+          "command.prev",
+          () => {
+            handleArrowKey("up");
+          },
+          "autocomplete",
+        ) ||
+        parseKeys(
+          key,
+          "command.next",
+          () => {
+            handleArrowKey("down");
+          },
+          "autocomplete",
+        ) ||
+        parseKeys(
+          key,
+          "command.close",
+          () => {
+            setSuggestions([]);
+          },
+          "autocomplete",
+        )
+      );
+    },
+    { scope: "autocomplete", enabled: () => shouldShowAutocomplete },
+  );
 
   if (!shouldShowAutocomplete) {
     return null;
@@ -82,7 +120,7 @@ export function CommandAutocomplete({ inputValue, onSelect }: CommandAutocomplet
 
   // Calculate height including borders
   const boxHeight = visibleSuggestions.length + 2;
-  
+
   // Position above the input area at bottom of screen
   const autocompleteTop = terminalHeight - 5 - boxHeight; // 5 lines for input area
 
@@ -132,4 +170,3 @@ export function CommandAutocomplete({ inputValue, onSelect }: CommandAutocomplet
     </box>
   );
 }
-

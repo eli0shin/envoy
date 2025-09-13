@@ -22,10 +22,6 @@ describe('PTY Input/Output Test', () => {
 
         await process.waitForText('>', TEST_TIMEOUTS.startup);
 
-        console.log(
-          'Initial output:',
-          JSON.stringify(process.getCleanOutput())
-        );
 
         await process.typeText('what is 2+2?');
         process.sendEnter();
@@ -33,7 +29,6 @@ describe('PTY Input/Output Test', () => {
         await process.waitForText('Working...', TEST_TIMEOUTS.response);
 
         const finalOutput = process.getCleanOutput();
-        console.log('Final output:', JSON.stringify(finalOutput));
 
         expect(finalOutput).toContain('Press Ctrl+C to exit at any time.');
         expect(finalOutput).toContain('what is 2+2?');

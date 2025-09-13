@@ -215,7 +215,7 @@ class Logger {
     }
 
     // Always use stderr for console output to preserve stdout for results
-    console.error(logMessage);
+    process.stderr.write(logMessage + '\n');
   }
 
   error(message: string, metadata?: Record<string, unknown>): void {
@@ -245,27 +245,27 @@ class Logger {
   logUserStep(message: string): void {
     if (this.shouldLogProgress("user") && !this.suppressConsoleOutput) {
       const renderedMessage = this.renderMarkdown(message);
-      console.log(`[user]\n${renderedMessage}\n`);
+      process.stdout.write(`[user]\n${renderedMessage}\n\n`);
     }
   }
 
   logAssistantStep(message: string): void {
     if (this.shouldLogProgress("assistant") && !this.suppressConsoleOutput) {
       const renderedMessage = this.renderMarkdown(message);
-      console.log(`[assistant]\n${renderedMessage}\n`);
+      process.stdout.write(`[assistant]\n${renderedMessage}\n\n`);
     }
   }
 
   logToolCallProgress(toolName: string, args: unknown): void {
     if (this.shouldLogProgress("tool") && !this.suppressConsoleOutput) {
-      console.log(`[tool-call]\n${toolName} ${JSON.stringify(args)}\n`);
+      process.stdout.write(`[tool-call]\n${toolName} ${JSON.stringify(args)}\n\n`);
     }
   }
 
   logThinking(message: string): void {
     if (this.shouldLogProgress("assistant") && !this.suppressConsoleOutput) {
       const renderedMessage = this.renderMarkdown(message);
-      console.log(`[thinking...]\n${renderedMessage}\n`);
+      process.stdout.write(`[thinking...]\n${renderedMessage}\n\n`);
     }
   }
 
