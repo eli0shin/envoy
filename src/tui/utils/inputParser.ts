@@ -8,21 +8,22 @@ export type FilePattern = {
 export function parseFilePattern(input: string, cursorPosition: number): FilePattern | null {
   // Find all @ symbols preceded by space/newline or at start
   const regex = /(^|[\s\n])@([^\s]*)/g;
-  let lastMatch: RegExpExecArray | null = null;
   let match: RegExpExecArray | null;
 
   while ((match = regex.exec(input)) !== null) {
-    if (match.index! + match[0].length <= cursorPosition) {
-      lastMatch = match;
+    const matchStart = match.index! + match[1].length; // Start of @ symbol
+    const matchEnd = match.index! + match[0].length;   // End of the pattern
+
+    // Check if cursor is within the @ pattern (not before or after it)
+    if (matchStart <= cursorPosition && cursorPosition <= matchEnd) {
+      return {
+        fullMatch: match[0],
+        pattern: match[2], // everything after @ until space
+        startIndex: matchStart,
+        endIndex: matchEnd
+      };
     }
   }
 
-  if (!lastMatch) return null;
-
-  return {
-    fullMatch: lastMatch[0],
-    pattern: lastMatch[2], // everything after @ until space
-    startIndex: lastMatch.index! + lastMatch[1].length,
-    endIndex: lastMatch.index! + lastMatch[0].length
-  };
+  return null;
 }

@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useTerminalDimensions } from '@opentui/react';
 import { fg } from '@opentui/core';
+import type { InputRenderable } from '@opentui/core';
 import { colors } from '../theme.js';
 import { useKeys, parseKeys } from '../keys/index.js';
 import { usePrefixState } from '../keys/prefixContext.js';
@@ -13,6 +14,7 @@ type MultiLineInputProps = {
   onTabKey?: () => boolean; // Returns true if tab was handled
   onArrowKey?: (direction: 'up' | 'down', isOnFirstLine: boolean) => boolean; // Returns true if arrow was handled
   onCursorChange?: (position: number) => void; // Reports cursor position in full text
+  externalCursorPosition?: number; // External cursor position to set
   placeholder?: string;
   minHeight?: number;
   backgroundColor?: string;
@@ -28,6 +30,7 @@ export function MultiLineInput({
   onTabKey,
   onArrowKey,
   onCursorChange,
+  externalCursorPosition,
   placeholder = 'Type your message...',
   minHeight = 3,
   backgroundColor = colors.backgrounds.input,
@@ -38,11 +41,12 @@ export function MultiLineInput({
   // Track which line is being edited and cursor position
   const [editingLine, setEditingLine] = useState(0);
   const [cursorPosition, setCursorPosition] = useState(0);
+  const inputRef = useRef<InputRenderable | null>(null);
 
   // Treat active prefix as a form of disabled state
   const isDisabled = disabled || !!activePrefix;
   const { width: terminalWidth } = useTerminalDimensions();
-  const lines = value ? value.split('\n') : [''];
+  const lines = useMemo(() => (value ? value.split('\n') : ['']), [value]);
 
   // Calculate available width for text (terminal width minus prompt area and padding)
   const availableTextWidth = terminalWidth - 6; // 3 for " > " prompt + 3 for padding/borders
@@ -67,6 +71,35 @@ export function MultiLineInput({
     }
   };
 
+  // Sync cursor position to the actual input element
+  useEffect(() => {
+    if (inputRef.current && !isDisabled) {
+      // Set cursor position directly on the InputRenderable instance
+      // This must happen after the value is set
+      inputRef.current.cursorPosition = cursorPosition;
+    }
+  }, [cursorPosition, isDisabled]);
+
+  // Handle external cursor position changes (e.g., from file autocomplete)
+  useEffect(() => {
+    if (externalCursorPosition === undefined || externalCursorPosition < 0) return;
+
+    // When cursor position is set externally, update our internal tracking
+    // Find which line and position the cursor should be at based on the full text position
+    let position = 0;
+    for (let i = 0; i < lines.length; i++) {
+      const lineLength = (lines[i] || '').length;
+      if (position + lineLength >= externalCursorPosition) {
+        // Cursor is on this line
+        const posInLine = Math.min(externalCursorPosition - position, lineLength);
+        setEditingLine(i);
+        setCursorPosition(posInLine);
+        break;
+      }
+      position += lineLength + 1; // +1 for newline
+    }
+  }, [externalCursorPosition, lines]); // React to external cursor position changes
+
   // Find the best split point (last word boundary that fits)
   const findSplitPoint = (text: string, maxWidth: number): number => {
     if (text.length <= maxWidth) return -1; // No split needed
@@ -88,6 +121,10 @@ export function MultiLineInput({
     if (isDisabled) {
       return;
     }
+
+    // Update cursor position to match the new content length
+    const newCursorPos = newLineContent.length;
+    updateCursorPosition(newCursorPos);
 
     // Check if input exceeds available width
     if (newLineContent.length > availableTextWidth) {
@@ -117,7 +154,6 @@ export function MultiLineInput({
     const newLines = [...lines];
     newLines[editingLine] = newLineContent;
     onChange(newLines.join('\n'));
-    updateCursorPosition(newLineContent.length);
   };
 
   // Navigate and edit using keybindings
@@ -284,6 +320,7 @@ export function MultiLineInput({
           >
             {index === editingLine ?
               <input
+                ref={inputRef}
                 value={line}
                 placeholder={index === 0 && !value ? placeholder : ''}
                 focused={!isDisabled}

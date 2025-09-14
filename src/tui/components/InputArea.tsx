@@ -43,7 +43,10 @@ export function InputArea({
       replacement +
       value.slice(end);
     setValue(newValue);
-    setCursorPosition(start + replacement.length);
+    // Use setTimeout to ensure the value update completes before setting cursor
+    setTimeout(() => {
+      setCursorPosition(start + replacement.length);
+    }, 0);
   }, [value]);
 
   const handleCursorChange = useCallback((position: number) => {
@@ -151,6 +154,7 @@ export function InputArea({
           onResize={onResize}
           onArrowKey={handleInputArrowKey}
           onCursorChange={handleCursorChange}
+          externalCursorPosition={cursorPosition}
           placeholder="Type your message... (Shift+Enter or \ for newlines, Enter to send)"
           minHeight={1}
           backgroundColor={colors.backgrounds.input}
