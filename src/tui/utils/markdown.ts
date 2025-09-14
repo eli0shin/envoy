@@ -97,7 +97,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         strongToken.tokens,
         listDepth
       );
-      chunks.push(...strongChunks.map((chunk) => bold(chunk.plainText)));
+      chunks.push(...strongChunks.map((chunk) => bold(chunk.text)));
       break;
     }
 
@@ -105,7 +105,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
       // Italic text - process inner tokens recursively
       const emToken = token as Tokens.Em;
       const emChunks = processTokensRecursively(emToken.tokens, listDepth);
-      chunks.push(...emChunks.map((chunk) => italic(chunk.plainText)));
+      chunks.push(...emChunks.map((chunk) => italic(chunk.text)));
       break;
     }
 
@@ -113,7 +113,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
       // Strikethrough text - process inner tokens recursively
       const delToken = token as Tokens.Del;
       const delChunks = processTokensRecursively(delToken.tokens, listDepth);
-      chunks.push(...delChunks.map((chunk) => strikethrough(chunk.plainText)));
+      chunks.push(...delChunks.map((chunk) => strikethrough(chunk.text)));
       break;
     }
 
@@ -150,7 +150,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         listDepth
       );
       const headingText = headingChunks
-        .map((chunk) => chunk.plainText)
+        .map((chunk) => chunk.text)
         .join('');
 
       // Extract trailing whitespace from raw field
@@ -233,7 +233,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
       // Links - process inner tokens recursively and show URL
       const linkToken = token as Tokens.Link;
       const linkChunks = processTokensRecursively(linkToken.tokens, listDepth);
-      const linkText = linkChunks.map((chunk) => chunk.plainText).join('');
+      const linkText = linkChunks.map((chunk) => chunk.text).join('');
 
       // In terminal, show both link text and URL
       if (linkText === linkToken.href) {
@@ -287,7 +287,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         blockquoteToken.tokens,
         listDepth
       );
-      const quoteText = quoteChunks.map((chunk) => chunk.plainText).join('');
+      const quoteText = quoteChunks.map((chunk) => chunk.text).join('');
 
       // Check if this is an admonition (starts with [!TYPE])
       const admonitionMatch = quoteText.match(
@@ -382,7 +382,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
       // Process header row with formatting
       const headerRow = tableToken.header.map((cell) => {
         const cellChunks = processTokensRecursively(cell.tokens, listDepth);
-        return cellChunks.map((chunk) => chunk.plainText).join('');
+        return cellChunks.map((chunk) => chunk.text).join('');
       });
 
       // Process data rows with formatting
@@ -390,7 +390,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         row.map((cell) => {
           const cellChunks = processTokensRecursively(cell.tokens, listDepth);
           return {
-            text: cellChunks.map((chunk) => chunk.plainText).join(''),
+            text: cellChunks.map((chunk) => chunk.text).join(''),
             chunks: cellChunks,
           };
         })

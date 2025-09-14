@@ -4,8 +4,7 @@ import { describe, it, expect, vi } from 'vitest';
 vi.mock('@opentui/core', () => {
   type MockTextChunk = {
     __isChunk: true;
-    text: Uint8Array;
-    plainText: string;
+    text: string;
     fg?: string;
     bg?: string;
     attributes?: number;
@@ -26,8 +25,7 @@ vi.mock('@opentui/core', () => {
     bg?: string
   ): MockTextChunk => ({
     __isChunk: true as const,
-    text: new TextEncoder().encode(text),
-    plainText: text,
+    text: text,
     attributes,
     fg,
     bg,
@@ -83,7 +81,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown('Hello world');
     expect(result).toBeDefined();
     expect(result.chunks).toHaveLength(1);
-    expect(result.chunks[0].plainText).toBe('Hello world');
+    expect(result.chunks[0].text).toBe('Hello world');
   });
 
   it('should handle bold text', () => {
@@ -91,15 +89,15 @@ describe('parseMarkdown', () => {
     expect(result).toBeDefined();
 
     // The text should be transformed: markdown syntax removed, content preserved
-    const actualText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const actualText = result.chunks.map((chunk) => chunk.text).join('');
     expect(actualText).toBe('This is bold text');
 
     // Should have exactly 3 chunks: "This is ", "bold", " text"
     expect(result.chunks).toHaveLength(3);
-    expect(result.chunks[0].plainText).toBe('This is ');
-    expect(result.chunks[1].plainText).toBe('bold');
+    expect(result.chunks[0].text).toBe('This is ');
+    expect(result.chunks[1].text).toBe('bold');
     expect(result.chunks[1].attributes).toBe(1); // Bold attribute
-    expect(result.chunks[2].plainText).toBe(' text');
+    expect(result.chunks[2].text).toBe(' text');
   });
 
   it('should handle italic text', () => {
@@ -107,14 +105,14 @@ describe('parseMarkdown', () => {
     expect(result).toBeDefined();
 
     // Text should be transformed: *italic* -> italic with styling
-    const actualText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const actualText = result.chunks.map((chunk) => chunk.text).join('');
     expect(actualText).toBe('This is italic text');
 
     expect(result.chunks).toHaveLength(3);
-    expect(result.chunks[0].plainText).toBe('This is ');
-    expect(result.chunks[1].plainText).toBe('italic');
+    expect(result.chunks[0].text).toBe('This is ');
+    expect(result.chunks[1].text).toBe('italic');
     expect(result.chunks[1].attributes).toBe(2); // Italic attribute
-    expect(result.chunks[2].plainText).toBe(' text');
+    expect(result.chunks[2].text).toBe(' text');
   });
 
   it('should handle strikethrough text', () => {
@@ -122,14 +120,14 @@ describe('parseMarkdown', () => {
     expect(result).toBeDefined();
 
     // Text should be transformed: ~~strikethrough~~ -> strikethrough with styling
-    const actualText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const actualText = result.chunks.map((chunk) => chunk.text).join('');
     expect(actualText).toBe('This is strikethrough text');
 
     expect(result.chunks).toHaveLength(3);
-    expect(result.chunks[0].plainText).toBe('This is ');
-    expect(result.chunks[1].plainText).toBe('strikethrough');
+    expect(result.chunks[0].text).toBe('This is ');
+    expect(result.chunks[1].text).toBe('strikethrough');
     expect(result.chunks[1].attributes).toBe(8); // Strikethrough attribute
-    expect(result.chunks[2].plainText).toBe(' text');
+    expect(result.chunks[2].text).toBe(' text');
   });
 
   it('should handle inline code', () => {
@@ -137,14 +135,14 @@ describe('parseMarkdown', () => {
     expect(result).toBeDefined();
 
     // Text should be transformed: `code` -> code with padding and background styling
-    const actualText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const actualText = result.chunks.map((chunk) => chunk.text).join('');
     expect(actualText).toBe('This is  code  text');
 
     expect(result.chunks).toHaveLength(3);
-    expect(result.chunks[0].plainText).toBe('This is ');
-    expect(result.chunks[1].plainText).toBe(' code '); // Code gets padding spaces
+    expect(result.chunks[0].text).toBe('This is ');
+    expect(result.chunks[1].text).toBe(' code '); // Code gets padding spaces
     expect(result.chunks[1].bg).toBeDefined(); // Should have background color
-    expect(result.chunks[2].plainText).toBe(' text');
+    expect(result.chunks[2].text).toBe(' text');
   });
 
   it('should handle code blocks', () => {
@@ -154,13 +152,13 @@ describe('parseMarkdown', () => {
     expect(result).toBeDefined();
 
     // Code block should be transformed: ``` markers removed, content preserved with padding
-    const actualText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const actualText = result.chunks.map((chunk) => chunk.text).join('');
     expect(actualText).toBe(
       '\nfunction hello() {\n  console.log("Hello");\n}\n'
     );
 
     expect(result.chunks).toHaveLength(1);
-    expect(result.chunks[0].plainText).toBe(
+    expect(result.chunks[0].text).toBe(
       '\nfunction hello() {\n  console.log("Hello");\n}\n'
     );
     expect(result.chunks[0].bg).toBeDefined(); // Should have background color
@@ -175,7 +173,7 @@ describe('parseMarkdown', () => {
     expect(headerChunks.length).toBeGreaterThanOrEqual(3); // At least 3 header chunks
 
     // Check that we have the header content somewhere
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
     expect(allText).toContain('Header 1');
     expect(allText).toContain('Header 2');
     expect(allText).toContain('Header 3');
@@ -187,12 +185,12 @@ describe('parseMarkdown', () => {
 
     // Find chunks with bullet points
     const listChunks = result.chunks.filter((chunk) =>
-      chunk.plainText.includes('•')
+      chunk.text.includes('•')
     );
     expect(listChunks.length).toBeGreaterThan(0);
 
     // Check that list content is present
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
     expect(allText).toContain('• Item 1');
     expect(allText).toContain('• Item 2');
   });
@@ -204,15 +202,15 @@ describe('parseMarkdown', () => {
     expect(result).toBeDefined();
 
     // Should show both link text and URL
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
     expect(allText).toBe('Visit OpenTUI (https://example.com) for more info');
 
     expect(result.chunks).toHaveLength(4);
-    expect(result.chunks[0].plainText).toBe('Visit ');
-    expect(result.chunks[1].plainText).toBe('OpenTUI');
+    expect(result.chunks[0].text).toBe('Visit ');
+    expect(result.chunks[1].text).toBe('OpenTUI');
     expect(result.chunks[1].attributes).toBe(4); // Underline attribute
-    expect(result.chunks[2].plainText).toBe(' (https://example.com)');
-    expect(result.chunks[3].plainText).toBe(' for more info');
+    expect(result.chunks[2].text).toBe(' (https://example.com)');
+    expect(result.chunks[3].text).toBe(' for more info');
   });
 
   it('should handle links where text equals URL', () => {
@@ -220,14 +218,14 @@ describe('parseMarkdown', () => {
     expect(result).toBeDefined();
 
     // When link text equals URL, show URL only once
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
     expect(allText).toBe('Visit https://example.com for more info');
 
     expect(result.chunks).toHaveLength(3);
-    expect(result.chunks[0].plainText).toBe('Visit ');
-    expect(result.chunks[1].plainText).toBe('https://example.com');
+    expect(result.chunks[0].text).toBe('Visit ');
+    expect(result.chunks[1].text).toBe('https://example.com');
     expect(result.chunks[1].attributes).toBe(4); // Underline attribute
-    expect(result.chunks[2].plainText).toBe(' for more info');
+    expect(result.chunks[2].text).toBe(' for more info');
   });
 
   it('should handle mixed formatting', () => {
@@ -235,19 +233,19 @@ describe('parseMarkdown', () => {
     expect(result).toBeDefined();
 
     // Should transform all markdown: **bold** -> bold, *italic* -> italic, `code` -> code with padding
-    const actualText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const actualText = result.chunks.map((chunk) => chunk.text).join('');
     expect(actualText).toBe('This has bold and italic and  code ');
 
     // Should have 6 chunks (no final empty chunk since input ends with code)
     expect(result.chunks).toHaveLength(6);
-    expect(result.chunks[0].plainText).toBe('This has ');
-    expect(result.chunks[1].plainText).toBe('bold');
+    expect(result.chunks[0].text).toBe('This has ');
+    expect(result.chunks[1].text).toBe('bold');
     expect(result.chunks[1].attributes).toBe(1); // Bold
-    expect(result.chunks[2].plainText).toBe(' and ');
-    expect(result.chunks[3].plainText).toBe('italic');
+    expect(result.chunks[2].text).toBe(' and ');
+    expect(result.chunks[3].text).toBe('italic');
     expect(result.chunks[3].attributes).toBe(2); // Italic
-    expect(result.chunks[4].plainText).toBe(' and ');
-    expect(result.chunks[5].plainText).toBe(' code '); // Code with padding
+    expect(result.chunks[4].text).toBe(' and ');
+    expect(result.chunks[5].text).toBe(' code '); // Code with padding
     expect(result.chunks[5].bg).toBeDefined(); // Code background
   });
 
@@ -260,7 +258,7 @@ describe('parseMarkdown', () => {
 
     // Should not crash and should produce some reasonable output
     // Note: Perfect nested formatting is complex with regex-based parsing
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
     expect(allText).toContain('bold with');
     expect(allText).toContain('inside');
   });
@@ -270,7 +268,7 @@ describe('parseMarkdown', () => {
     expect(result).toBeDefined();
 
     // Empty input should produce empty output
-    const actualText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const actualText = result.chunks.map((chunk) => chunk.text).join('');
     expect(actualText).toBe('');
 
     expect(result.chunks).toHaveLength(0);
@@ -282,7 +280,7 @@ describe('parseMarkdown', () => {
     // Should fall back to plain text or handle gracefully
     expect(result.chunks.length).toBeGreaterThan(0);
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
     expect(allText).toContain('unclosed bold');
     expect(allText).toContain('unclosed code');
   });
@@ -291,7 +289,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown('Line 1\nLine 2\nLine 3');
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
     expect(allText).toBe('Line 1\nLine 2\nLine 3');
   });
 
@@ -300,7 +298,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown(input);
     expect(result).toBeDefined();
 
-    const actualText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const actualText = result.chunks.map((chunk) => chunk.text).join('');
 
     // Just check that the content is mostly correct with proper line structure
     expect(actualText).toContain('Header 1');
@@ -316,7 +314,7 @@ describe('parseMarkdown', () => {
     expect(headerChunks.length).toBeGreaterThan(0);
 
     const listChunks = result.chunks.filter((chunk) =>
-      chunk.plainText.includes('•')
+      chunk.text.includes('•')
     );
     expect(listChunks).toHaveLength(2);
   });
@@ -328,7 +326,7 @@ describe('parseMarkdown', () => {
     expect(result).toBeDefined();
 
     // Should transform: remove ``` markers, preserve all content
-    const actualText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const actualText = result.chunks.map((chunk) => chunk.text).join('');
     expect(actualText).toBe('\nfirst block\n\n\nSome text\n\n\nsecond block\n');
 
     // The AST parser may create more granular chunks (e.g., separate space tokens)
@@ -340,8 +338,8 @@ describe('parseMarkdown', () => {
     expect(codeChunks).toHaveLength(2);
 
     // Verify code content is preserved
-    expect(codeChunks[0].plainText).toContain('first block');
-    expect(codeChunks[1].plainText).toContain('second block');
+    expect(codeChunks[0].text).toContain('first block');
+    expect(codeChunks[1].text).toContain('second block');
 
     // Verify normal text is preserved somewhere
     expect(actualText).toContain('Some text');
@@ -358,7 +356,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown(tableMarkdown);
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
 
     // Should contain table content
     expect(allText).toContain('Name');
@@ -400,7 +398,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown(tableMarkdown);
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
 
     // Should contain all content
     expect(allText).toContain('Short');
@@ -422,7 +420,7 @@ describe('parseMarkdown', () => {
     );
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
 
     // Should contain bullet points and formatted text
     expect(allText).toContain('• Item with bold text');
@@ -441,8 +439,8 @@ describe('parseMarkdown', () => {
     expect(codeChunks.length).toBeGreaterThan(0);
 
     // Verify specific formatted content
-    expect(boldChunks.some((chunk) => chunk.plainText === 'bold')).toBe(true);
-    expect(italicChunks.some((chunk) => chunk.plainText === 'italic')).toBe(
+    expect(boldChunks.some((chunk) => chunk.text === 'bold')).toBe(true);
+    expect(italicChunks.some((chunk) => chunk.text === 'italic')).toBe(
       true
     );
   });
@@ -458,7 +456,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown(tableMarkdown);
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
 
     // Should contain table content with formatting removed from plain text
     expect(allText).toContain('John');
@@ -483,11 +481,11 @@ describe('parseMarkdown', () => {
     expect(codeChunks.length).toBeGreaterThan(0);
 
     // Verify specific formatted content
-    expect(boldChunks.some((chunk) => chunk.plainText === 'John')).toBe(true);
-    expect(boldChunks.some((chunk) => chunk.plainText === 'Inactive')).toBe(
+    expect(boldChunks.some((chunk) => chunk.text === 'John')).toBe(true);
+    expect(boldChunks.some((chunk) => chunk.text === 'Inactive')).toBe(
       true
     );
-    expect(italicChunks.some((chunk) => chunk.plainText === 'Active')).toBe(
+    expect(italicChunks.some((chunk) => chunk.text === 'Active')).toBe(
       true
     );
   });
@@ -498,7 +496,7 @@ describe('parseMarkdown', () => {
     );
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
     expect(allText).toContain('• List item with bold italic text and  code ');
 
     // Should have various formatting applied
@@ -516,7 +514,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown('Before\n\n---\n\nAfter');
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
 
     // Should contain text before and after
     expect(allText).toContain('Before');
@@ -541,7 +539,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown(nestedListMarkdown);
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
 
     // Should contain different bullet styles for different levels
     expect(allText).toContain('• Item 1');
@@ -571,7 +569,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown(complexNestedMarkdown);
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
 
     // Check that nested items are properly separated
     expect(allText).toContain('• Parent item');
@@ -606,7 +604,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown(taskListMarkdown);
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
 
     // Should contain checkbox characters instead of bullets
     expect(allText).toContain('☐ Incomplete task'); // Empty checkbox
@@ -636,7 +634,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown(mixedListMarkdown);
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
 
     // Should have mix of bullets and checkboxes
     expect(allText).toContain('• Regular item');
@@ -656,7 +654,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown(nestedTaskListMarkdown);
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
 
     // Should have checkboxes at different indentation levels
     expect(allText).toContain('☐ Main task');
@@ -677,7 +675,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown('> This is a quote\n> with multiple lines');
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
 
     // Should contain quote content with border characters
     expect(allText).toContain('│ This is a quote');
@@ -693,7 +691,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown('> Level 1\n>> Level 2 nested quote');
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
 
     // Should contain quote border characters
     expect(allText).toContain('│');
@@ -705,7 +703,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown('> [!NOTE]\n> This is an important note');
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
 
     // Should contain the admonition type and content
     expect(allText).toContain('NOTE');
@@ -721,7 +719,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown('> [!WARNING]\n> This is a warning message');
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
 
     expect(allText).toContain('WARNING');
     expect(allText).toContain('This is a warning message');
@@ -736,7 +734,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown('> [!ERROR]\n> This is an error message');
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
 
     expect(allText).toContain('ERROR');
     expect(allText).toContain('This is an error message');
@@ -747,7 +745,7 @@ describe('parseMarkdown', () => {
     const result = parseMarkdown('> [!SUCCESS]\n> This completed successfully');
     expect(result).toBeDefined();
 
-    const allText = result.chunks.map((chunk) => chunk.plainText).join('');
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
 
     expect(allText).toContain('SUCCESS');
     expect(allText).toContain('This completed successfully');
@@ -759,10 +757,10 @@ describe('parseMarkdown', () => {
     const admonition = parseMarkdown('> [!NOTE]\n> This is a note');
 
     const regularText = regularQuote.chunks
-      .map((chunk) => chunk.plainText)
+      .map((chunk) => chunk.text)
       .join('');
     const admonitionText = admonition.chunks
-      .map((chunk) => chunk.plainText)
+      .map((chunk) => chunk.text)
       .join('');
 
     // Regular quote should not contain admonition formatting
