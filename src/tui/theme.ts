@@ -3,7 +3,7 @@
  * All colors used throughout the application should be defined here.
  */
 
-import { StyledText, stringToStyledText, fg } from '@opentui/core';
+import { StyledText, fg } from '@opentui/core';
 import { parseMarkdown } from './utils/markdown.js';
 
 // Re-export colors from the colors module
@@ -63,7 +63,31 @@ export const contentFormatters = {
   'assistant-normal': (content: string): StyledText => parseMarkdown(content),
   'assistant-reasoning': (content: string): StyledText =>
     parseMarkdown(content),
-  'assistant-tool': (content: string): StyledText => parseMarkdown(content),
+  'assistant-tool': (content: string): StyledText => {
+    // Handle error styling for tool calls
+    if (content.includes('[ERROR]')) {
+      const lines = content.split('\n');
+      const chunks = [];
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+        if (line.startsWith('[ERROR]')) {
+          // Remove the [ERROR] marker and style the error line in red
+          const errorLine = line.substring(7); // Remove "[ERROR]" prefix
+          chunks.push(fg('#FF6B6B')(errorLine)); // Red color for error
+        } else {
+          chunks.push(fg(colors.accent)(line));
+        }
+        // Add newline between lines (except for the last one)
+        if (i < lines.length - 1) {
+          chunks.push(fg(colors.accent)('\n'));
+        }
+      }
+
+      return new StyledText(chunks);
+    }
+    return parseMarkdown(content);
+  },
   'system-normal': (content: string): StyledText =>
     parseMarkdown(`System: ${content}`),
   'system-reasoning': (content: string): StyledText =>

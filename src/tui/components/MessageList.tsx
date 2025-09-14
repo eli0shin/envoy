@@ -3,6 +3,7 @@ import { Message } from './Message.js';
 import type { CoreMessage } from 'ai';
 import type { ScrollBoxRenderable } from '@opentui/core';
 import { useKeys, parseKeys } from '../keys/index.js';
+import { formatToolCall, renderToolCallWithErrorMarkers } from '../utils/toolFormatting.js';
 
 type MessageListProps = {
   messages: (CoreMessage & { id: string })[];
@@ -83,17 +84,21 @@ export function MessageList({ messages, width }: MessageListProps) {
     },
     { scope: 'messages', enabled: true }
   );
+
   const renderMessage = (
     message: CoreMessage & { id: string },
-    _index: number
+    messageIndex: number,
+    allMessages: (CoreMessage & { id: string })[],
+    consumedMessageIndices: Set<number>
   ) => {
     // Handle content based on type - can be string or array of parts
     if (typeof message.content === 'string') {
-      return <Message message={message} width={width} key={message.id} />;
+      return [<Message message={message} width={width} key={message.id} />];
     }
 
-    // Content is an array of parts - render each part separately
+    // Content is an array of parts - process with tool call/result pairing
     const parts = [];
+
     for (let partIndex = 0; partIndex < message.content.length; partIndex++) {
       const part = message.content[partIndex];
 
@@ -109,12 +114,46 @@ export function MessageList({ messages, width }: MessageListProps) {
       } else if (part?.type === 'redacted-reasoning') {
         displayContent = '[Reasoning redacted]';
         contentType = 'reasoning';
-      } else if (part?.type === 'tool-call' && 'toolName' in part) {
-        displayContent = `🔧 Calling ${part.toolName}`;
+      } else if (part?.type === 'tool-call' && 'toolName' in part && 'toolCallId' in part) {
+        // Look ahead to subsequent messages for matching tool result
+        let matchingResult = null;
+        let matchingResultMessageIndex = -1;
+
+        for (let resultMessageIndex = messageIndex + 1; resultMessageIndex < allMessages.length; resultMessageIndex++) {
+          const resultMessage = allMessages[resultMessageIndex];
+
+          // Look for tool role messages
+          if (resultMessage.role === 'tool' && Array.isArray(resultMessage.content)) {
+            for (const resultPart of resultMessage.content) {
+              if (
+                resultPart?.type === 'tool-result' &&
+                'toolCallId' in resultPart &&
+                resultPart.toolCallId === part.toolCallId
+              ) {
+                matchingResult = resultPart;
+                matchingResultMessageIndex = resultMessageIndex;
+                break;
+              }
+            }
+            if (matchingResult) break;
+          }
+        }
+
+        // Format the tool call with or without result
+        const formatted = formatToolCall(
+          part.toolName,
+          part.args,
+          matchingResult ? ('result' in matchingResult ? matchingResult.result : undefined) : undefined,
+          matchingResult ? ('isError' in matchingResult ? matchingResult.isError : false) : undefined
+        );
+
+        displayContent = renderToolCallWithErrorMarkers(formatted);
         contentType = 'tool';
-      } else if (part?.type === 'tool-result' && 'toolName' in part) {
-        displayContent = `✅ ${part.toolName} result`;
-        contentType = 'tool';
+
+        // Mark result message as consumed if we found one
+        if (matchingResultMessageIndex >= 0) {
+          consumedMessageIndices.add(matchingResultMessageIndex);
+        }
       }
 
       if (displayContent) {
@@ -137,6 +176,25 @@ export function MessageList({ messages, width }: MessageListProps) {
     return parts;
   };
 
+  // Process messages and pair tool calls with results
+  const processedMessages = [];
+  const consumedMessageIndices = new Set<number>();
+
+  for (let messageIndex = 0; messageIndex < messages.length; messageIndex++) {
+    const message = messages[messageIndex];
+
+    // Skip if this message was already consumed as a tool result
+    if (consumedMessageIndices.has(messageIndex)) {
+      continue;
+    }
+
+    processedMessages.push({
+      message,
+      messageIndex,
+      renderedParts: renderMessage(message, messageIndex, messages, consumedMessageIndices)
+    });
+  }
+
   return (
     <scrollbox
       ref={scrollBoxRef}
@@ -153,8 +211,8 @@ export function MessageList({ messages, width }: MessageListProps) {
         },
       }}
     >
-      {messages.map((message, index) => (
-        <box key={message.id}>{renderMessage(message, index)}</box>
+      {processedMessages.map(({ message, renderedParts }) => (
+        <box key={message.id}>{renderedParts}</box>
       ))}
     </scrollbox>
   );

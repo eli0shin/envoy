@@ -114,8 +114,17 @@ export function Message({
   );
   const backgroundColor = formatBackground(message.role);
 
+  // Use reduced padding for tool messages to avoid extra spacing
+  const boxPadding = contentType === 'tool' ? 0 : 1;
+
   return (
-    <box padding={1} backgroundColor={backgroundColor} width={width - 4}>
+    <box
+      padding={boxPadding}
+      paddingLeft={1}
+      paddingRight={1}
+      backgroundColor={backgroundColor}
+      width={width - 4}
+    >
       <text
         style={{
           width: textWidth,
