@@ -12,6 +12,7 @@ type MultiLineInputProps = {
   onResize?: () => void;
   onTabKey?: () => boolean; // Returns true if tab was handled
   onArrowKey?: (direction: 'up' | 'down', isOnFirstLine: boolean) => boolean; // Returns true if arrow was handled
+  onCursorChange?: (position: number) => void; // Reports cursor position in full text
   placeholder?: string;
   minHeight?: number;
   backgroundColor?: string;
@@ -26,6 +27,7 @@ export function MultiLineInput({
   onResize,
   onTabKey,
   onArrowKey,
+  onCursorChange,
   placeholder = 'Type your message...',
   minHeight = 3,
   backgroundColor = colors.backgrounds.input,
@@ -44,6 +46,26 @@ export function MultiLineInput({
 
   // Calculate available width for text (terminal width minus prompt area and padding)
   const availableTextWidth = terminalWidth - 6; // 3 for " > " prompt + 3 for padding/borders
+
+  // Helper to calculate absolute cursor position in the full text
+  const getAbsoluteCursorPosition = (lineIndex: number, positionInLine: number): number => {
+    let position = 0;
+    for (let i = 0; i < lineIndex; i++) {
+      position += (lines[i] || '').length + 1; // +1 for newline character
+    }
+    position += positionInLine;
+    return position;
+  };
+
+  // Helper to update cursor position and notify parent
+  const updateCursorPosition = (newCursorPosition: number, newEditingLine?: number) => {
+    setCursorPosition(newCursorPosition);
+    if (onCursorChange) {
+      const lineToUse = newEditingLine ?? editingLine;
+      const absolutePosition = getAbsoluteCursorPosition(lineToUse, newCursorPosition);
+      onCursorChange(absolutePosition);
+    }
+  };
 
   // Find the best split point (last word boundary that fits)
   const findSplitPoint = (text: string, maxWidth: number): number => {
@@ -85,7 +107,7 @@ export function MultiLineInput({
 
         // Move to the next line (the remaining part)
         setEditingLine(editingLine + 1);
-        setCursorPosition(remainingPart.length);
+        updateCursorPosition(remainingPart.length, editingLine + 1);
         onResize?.();
         return;
       }
@@ -95,7 +117,7 @@ export function MultiLineInput({
     const newLines = [...lines];
     newLines[editingLine] = newLineContent;
     onChange(newLines.join('\n'));
-    setCursorPosition(newLineContent.length);
+    updateCursorPosition(newLineContent.length);
   };
 
   // Navigate and edit using keybindings
@@ -116,7 +138,7 @@ export function MultiLineInput({
               const newEditingLine = editingLine - 1;
               setEditingLine(newEditingLine);
               const targetLine = lines[newEditingLine] || '';
-              setCursorPosition(Math.min(cursorPosition, targetLine.length));
+              updateCursorPosition(Math.min(cursorPosition, targetLine.length), newEditingLine);
             }
           },
           'input'
@@ -130,7 +152,7 @@ export function MultiLineInput({
               const newEditingLine = editingLine + 1;
               setEditingLine(newEditingLine);
               const targetLine = lines[newEditingLine] || '';
-              setCursorPosition(Math.min(cursorPosition, targetLine.length));
+              updateCursorPosition(Math.min(cursorPosition, targetLine.length), newEditingLine);
             }
           },
           'input'
@@ -160,7 +182,7 @@ export function MultiLineInput({
             const newEditingLine = editingLine - 1;
             setEditingLine(newEditingLine);
             const targetLine = newLines[newEditingLine] || '';
-            setCursorPosition(targetLine.length);
+            updateCursorPosition(targetLine.length, newEditingLine);
           }
 
           onResize?.();
@@ -178,7 +200,7 @@ export function MultiLineInput({
           onChange(newLines.join('\n'));
 
           setEditingLine(editingLine - 1);
-          setCursorPosition(previousLine.length);
+          updateCursorPosition(previousLine.length, editingLine - 1);
           onResize?.();
           return true;
         }
@@ -198,7 +220,7 @@ export function MultiLineInput({
             newLines.splice(editingLine + 1, 0, afterCursor);
             onChange(newLines.join('\n'));
             setEditingLine(editingLine + 1);
-            setCursorPosition(0);
+            updateCursorPosition(0, editingLine + 1);
             onResize?.();
           },
           'input'
@@ -221,7 +243,7 @@ export function MultiLineInput({
               newLines.splice(editingLine + 1, 0, '');
               onChange(newLines.join('\n'));
               setEditingLine(editingLine + 1);
-              setCursorPosition(0);
+              updateCursorPosition(0, editingLine + 1);
               onResize?.();
               return;
             }
@@ -231,7 +253,7 @@ export function MultiLineInput({
               onSubmit(value);
               onChange('');
               setEditingLine(0);
-              setCursorPosition(0);
+              updateCursorPosition(0, 0);
               onResize?.();
             }
           },

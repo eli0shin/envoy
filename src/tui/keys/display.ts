@@ -178,7 +178,7 @@ export function getKeyboardShortcuts(): KeyShortcut[] {
 
       // Use the first descriptor for display (primary binding)
       const primaryDescriptor = descriptorArray[0];
-      if (typeof primaryDescriptor === 'string') {
+      if (typeof primaryDescriptor === 'string' && primaryDescriptor.trim()) {
         shortcuts.push({
           keys: formatKeyForDisplay(primaryDescriptor),
           action: action as KeyAction,

@@ -1,9 +1,11 @@
 import { useState, useCallback } from 'react';
 import { MultiLineInput } from './MultiLineInput';
 import { CommandAutocomplete } from './CommandAutocomplete';
+import { FileAutocomplete } from './FileAutocomplete';
 import { useModalState } from './ModalProvider.js';
 import { colors } from '../theme.js';
 import { commandRegistry } from '../commands/registry.js';
+import { parseFilePattern } from '../utils/inputParser.js';
 
 type InputAreaProps = {
   onSubmit: (message: string) => void;
@@ -27,12 +29,31 @@ export function InputArea({
   setOriginalInput,
 }: InputAreaProps) {
   const [value, setValue] = useState('');
+  const [cursorPosition, setCursorPosition] = useState(0);
   const { currentModal } = useModalState();
   const disabled = currentModal !== null;
 
   const handleCommandSelect = useCallback((command: string) => {
     setValue(command);
   }, []);
+
+  const handleFileSelect = useCallback((replacement: string, start: number, end: number) => {
+    const newValue =
+      value.slice(0, start) +
+      replacement +
+      value.slice(end);
+    setValue(newValue);
+    setCursorPosition(start + replacement.length);
+  }, [value]);
+
+  const handleCursorChange = useCallback((position: number) => {
+    setCursorPosition(position);
+  }, []);
+
+  // Determine which autocomplete to show
+  const showCommandAutocomplete = value.startsWith('/');
+  const filePattern = parseFilePattern(value, cursorPosition);
+  const showFileAutocomplete = filePattern !== null;
 
   const handleInputArrowKey = useCallback(
     (direction: 'up' | 'down', isOnFirstLine: boolean): boolean => {
@@ -105,7 +126,16 @@ export function InputArea({
   return (
     <box flexDirection="column">
       {/* Autocomplete positioned absolutely relative to viewport */}
-      <CommandAutocomplete inputValue={value} onSelect={handleCommandSelect} />
+      {showCommandAutocomplete && !showFileAutocomplete && (
+        <CommandAutocomplete inputValue={value} onSelect={handleCommandSelect} />
+      )}
+      {showFileAutocomplete && (
+        <FileAutocomplete
+          inputValue={value}
+          cursorPosition={cursorPosition}
+          onSelect={handleFileSelect}
+        />
+      )}
 
       {/* Input area with padding */}
       <box flexDirection="column" backgroundColor={colors.backgrounds.input}>
@@ -120,6 +150,7 @@ export function InputArea({
           onSubmit={handleSubmit}
           onResize={onResize}
           onArrowKey={handleInputArrowKey}
+          onCursorChange={handleCursorChange}
           placeholder="Type your message... (Shift+Enter or \ for newlines, Enter to send)"
           minHeight={1}
           backgroundColor={colors.backgrounds.input}
