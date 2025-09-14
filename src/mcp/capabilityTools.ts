@@ -94,9 +94,9 @@ export function createPromptTools(
         return {
           result:
             'Error: ' +
-            (error instanceof Error
-              ? error.message
-              : 'Failed to execute prompt'),
+            (error instanceof Error ?
+              error.message
+            : 'Failed to execute prompt'),
         };
       }
     },
@@ -154,9 +154,9 @@ export function createResourceTools(
         return {
           result:
             'Error: ' +
-            (error instanceof Error
-              ? error.message
-              : 'Failed to read resource'),
+            (error instanceof Error ?
+              error.message
+            : 'Failed to read resource'),
         };
       }
     },

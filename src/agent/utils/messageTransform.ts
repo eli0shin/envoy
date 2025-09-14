@@ -29,7 +29,7 @@ export function transformMessagesForAnthropic(
   // Convert array system prompts to system messages if provided
   if (systemPrompts && systemPrompts.length > 0) {
     // Convert all system prompts to system messages (without cache control initially)
-    const systemMessages: CoreMessage[] = systemPrompts.map(content => ({
+    const systemMessages: CoreMessage[] = systemPrompts.map((content) => ({
       role: 'system',
       content,
     }));
@@ -40,10 +40,10 @@ export function transformMessagesForAnthropic(
 
   // Apply cache control strategy: first 2 system + last 2 non-system
   const systemMessages = transformed
-    .filter(msg => msg.role === 'system')
+    .filter((msg) => msg.role === 'system')
     .slice(0, 2);
   const finalMessages = transformed
-    .filter(msg => msg.role !== 'system')
+    .filter((msg) => msg.role !== 'system')
     .slice(-2);
 
   // Apply cache control to the strategic messages (deduplicated)

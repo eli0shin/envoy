@@ -3,39 +3,39 @@
  * Main functions for loading and creating complete configurations
  */
 
-import { access } from "fs/promises";
+import { access } from 'fs/promises';
 import type {
   Configuration,
   CLIConfigOverrides,
   ConfigLoadResult,
   RuntimeConfiguration,
-} from "./types.js";
-import type { CLIOptions } from "../types/index.js";
-import { logger } from "../logger.js";
+} from './types.js';
+import type { CLIOptions } from '../types/index.js';
+import { logger } from '../logger.js';
 import {
   MAX_STEPS,
   TOOL_TIMEOUT_MS,
   GENERATION_TIMEOUT_MS,
-} from "../constants.js";
+} from '../constants.js';
 
 // Import all the modularized functions
-import { getDefaultConfiguration } from "./defaults.js";
+import { getDefaultConfiguration } from './defaults.js';
 import {
   getConfigFilePaths,
   loadConfigFile,
   loadSystemPromptFile,
   isFilePath,
-} from "./files.js";
-import { mergeConfigurations } from "./merging.js";
-import { applyCLIOverrides } from "./overrides.js";
-import { expandConfigEnvironmentVariables } from "./environment.js";
-import { inferMCPServerType } from "./mcpServers.js";
+} from './files.js';
+import { mergeConfigurations } from './merging.js';
+import { applyCLIOverrides } from './overrides.js';
+import { expandConfigEnvironmentVariables } from './environment.js';
+import { inferMCPServerType } from './mcpServers.js';
 
 /**
  * Main configuration loading function
  */
 export async function loadConfiguration(
-  cliOverrides: CLIConfigOverrides = {},
+  cliOverrides: CLIConfigOverrides = {}
 ): Promise<ConfigLoadResult> {
   const errors: string[] = [];
   const loadedFrom: string[] = [];
@@ -45,17 +45,17 @@ export async function loadConfiguration(
   const defaultConfig = getDefaultConfiguration();
   configs.push(defaultConfig);
 
-  logger.debug("Configuration loading started", {
+  logger.debug('Configuration loading started', {
     defaultProvider: defaultConfig.providers?.default,
     hasCliOverrides: Object.keys(cliOverrides).length > 0,
-    cliProvider: cliOverrides.provider || "none",
-    cliModel: cliOverrides.model || "none",
+    cliProvider: cliOverrides.provider || 'none',
+    cliModel: cliOverrides.model || 'none',
   });
 
   // Load configuration files in order of precedence
   const configPaths = getConfigFilePaths();
 
-  logger.debug("Searching for configuration files", {
+  logger.debug('Searching for configuration files', {
     searchPaths: configPaths,
   });
 
@@ -64,7 +64,7 @@ export async function loadConfiguration(
 
     if (error) {
       errors.push(error);
-      logger.debug("Configuration file load failed", {
+      logger.debug('Configuration file load failed', {
         filePath,
         error,
       });
@@ -72,13 +72,13 @@ export async function loadConfiguration(
       configs.push(config);
       loadedFrom.push(filePath);
       logger.info(
-        `Config file loaded: ${filePath} -> provider=${config.providers?.default || "none"}`,
+        `Config file loaded: ${filePath} -> provider=${config.providers?.default || 'none'}`,
         {
           filePath,
           hasProviders: !!config.providers,
           configuredProvider: config.providers?.default,
           allProviders: config.providers ? Object.keys(config.providers) : [],
-        },
+        }
       );
     }
   }
@@ -86,7 +86,7 @@ export async function loadConfiguration(
   // Merge all configurations
   let mergedConfig = mergeConfigurations(configs);
 
-  logger.debug("Configurations merged", {
+  logger.debug('Configurations merged', {
     configCount: configs.length,
     mergedProvider: mergedConfig.providers?.default,
     loadedFromFiles: loadedFrom,
@@ -96,7 +96,7 @@ export async function loadConfiguration(
   if (mergedConfig.mcpServers) {
     const inferredServers: Record<
       string,
-      import("./types.js").EnhancedMCPServerConfig
+      import('./types.js').EnhancedMCPServerConfig
     > = {};
     for (const [name, config] of Object.entries(mergedConfig.mcpServers)) {
       inferredServers[name] = inferMCPServerType(config);
@@ -119,23 +119,23 @@ export async function loadConfiguration(
 
   // Apply environment overrides first (lower precedence than CLI)
   if (Object.keys(envOverrides).length > 0) {
-    logger.debug("Applying environment variable overrides", { envOverrides });
+    logger.debug('Applying environment variable overrides', { envOverrides });
     mergedConfig = applyCLIOverrides(mergedConfig, envOverrides);
   }
 
   // Apply CLI overrides (highest precedence)
-  logger.debug("Applying CLI overrides", {
+  logger.debug('Applying CLI overrides', {
     beforeProvider: mergedConfig.providers?.default,
     cliOverrides,
   });
   mergedConfig = applyCLIOverrides(mergedConfig, cliOverrides);
 
   const finalProvider = mergedConfig.providers?.default;
-  const source = cliOverrides.provider
-    ? "CLI override"
-    : loadedFrom.length > 0
-      ? `config file (${loadedFrom[loadedFrom.length - 1]})`
-      : "default";
+  const source =
+    cliOverrides.provider ? 'CLI override'
+    : loadedFrom.length > 0 ?
+      `config file (${loadedFrom[loadedFrom.length - 1]})`
+    : 'default';
 
   logger.info(
     `Configuration resolved: provider=${finalProvider} from ${source}`,
@@ -143,8 +143,8 @@ export async function loadConfiguration(
       finalProvider,
       source,
       loadedFiles: loadedFrom,
-      cliProvider: cliOverrides.provider || "none",
-    },
+      cliProvider: cliOverrides.provider || 'none',
+    }
   );
 
   return {
@@ -160,7 +160,7 @@ export async function loadConfiguration(
  * Throws error if configuration is provided but fails to load
  */
 export async function loadSystemPromptContent(systemPromptConfig?: {
-  mode: "replace" | "append" | "prepend";
+  mode: 'replace' | 'append' | 'prepend';
   value: string;
 }): Promise<string | null> {
   if (!systemPromptConfig) {
@@ -184,7 +184,7 @@ export async function loadSystemPromptContent(systemPromptConfig?: {
  * This is the single source of truth for the entire application
  */
 export async function createRuntimeConfiguration(
-  cliOptions: CLIOptions,
+  cliOptions: CLIOptions
 ): Promise<{
   config: RuntimeConfiguration;
   loadedFrom?: string[];
@@ -203,7 +203,7 @@ export async function createRuntimeConfiguration(
     // Persistence options removed with UI deletion
   });
 
-  logger.debug("Runtime configuration creation", {
+  logger.debug('Runtime configuration creation', {
     loadedConfigProvider: configResult.config.providers?.default,
     cliProvider: cliOptions.provider,
     willApplyFallback: !configResult.config.providers?.default,
@@ -221,36 +221,37 @@ export async function createRuntimeConfiguration(
     providers: {
       default: (() => {
         const configProvider = configResult.config.providers?.default;
-        const resolvedProvider = configProvider || "anthropic";
+        const resolvedProvider = configProvider || 'anthropic';
         // Debug logging handled by logger.debug below
         logger.info(
-          `Runtime provider resolution: ${configProvider || "none"} -> ${resolvedProvider}`,
+          `Runtime provider resolution: ${configProvider || 'none'} -> ${resolvedProvider}`,
           {
             configProvider,
             appliedFallback: !configProvider,
             resolvedProvider,
-            fallbackReason: !configProvider
-              ? "no provider in config"
-              : "config provider used",
-          },
+            fallbackReason:
+              !configProvider ?
+                'no provider in config'
+              : 'config provider used',
+          }
         );
         return resolvedProvider;
       })(),
       openai: {
-        model: "gpt-4",
+        model: 'gpt-4',
         ...configResult.config.providers?.openai,
       },
       openrouter: {
-        model: "google/gemini-2.5-flash-preview-05-20",
+        model: 'google/gemini-2.5-flash-preview-05-20',
         ...configResult.config.providers?.openrouter,
       },
       anthropic: {
-        model: "claude-sonnet-4-20250514",
+        model: 'claude-sonnet-4-20250514',
         ...configResult.config.providers?.anthropic,
       },
       google: {
-        model: "gemini-2.5-pro",
-        authType: "api-key",
+        model: 'gemini-2.5-pro',
+        authType: 'api-key',
         ...configResult.config.providers?.google,
       },
       ...configResult.config.providers,
@@ -259,8 +260,8 @@ export async function createRuntimeConfiguration(
     agent: {
       maxSteps: MAX_STEPS,
       timeout: GENERATION_TIMEOUT_MS,
-      logLevel: "SILENT" as const,
-      logProgress: "none" as const,
+      logLevel: 'SILENT' as const,
+      logProgress: 'none' as const,
       streaming: true,
       ...configResult.config.agent,
     },
@@ -281,7 +282,7 @@ export async function createRuntimeConfiguration(
       await access(runtimeConfig.agent.conversationPersistence.projectPath);
     } catch {
       throw new Error(
-        `Persistence project path does not exist: ${runtimeConfig.agent.conversationPersistence.projectPath}`,
+        `Persistence project path does not exist: ${runtimeConfig.agent.conversationPersistence.projectPath}`
       );
     }
   }
@@ -302,11 +303,11 @@ export function getProviderFromConfig(config: Configuration): {
   apiKey?: string;
   baseURL?: string;
 } {
-  const defaultProvider = config.providers?.default || "openrouter";
+  const defaultProvider = config.providers?.default || 'openrouter';
   const providerConfig =
     config.providers?.[defaultProvider as keyof typeof config.providers];
   const typedProviderConfig =
-    typeof providerConfig === "object" ? providerConfig : {};
+    typeof providerConfig === 'object' ? providerConfig : {};
 
   return {
     provider: defaultProvider,
@@ -322,13 +323,13 @@ export function getProviderFromConfig(config: Configuration): {
 export function getAgentConfigFromConfig(config: Configuration): {
   maxSteps: number;
   timeout: number;
-  logLevel: "DEBUG" | "INFO" | "WARN" | "ERROR" | "SILENT";
-  logProgress: "none" | "assistant" | "tool" | "all";
+  logLevel: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'SILENT';
+  logProgress: 'none' | 'assistant' | 'tool' | 'all';
 } {
   return {
     maxSteps: config.agent?.maxSteps || MAX_STEPS,
     timeout: config.agent?.timeout || GENERATION_TIMEOUT_MS,
-    logLevel: config.agent?.logLevel || "SILENT",
-    logProgress: config.agent?.logProgress || "none",
+    logLevel: config.agent?.logLevel || 'SILENT',
+    logProgress: config.agent?.logProgress || 'none',
   };
 }

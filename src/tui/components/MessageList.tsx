@@ -1,8 +1,8 @@
-import { useRef, useEffect } from "react";
-import { Message } from "./Message.js";
-import type { CoreMessage } from "ai";
-import type { ScrollBoxRenderable } from "@opentui/core";
-import { useKeys, parseKeys } from "../keys/index.js";
+import { useRef, useEffect } from 'react';
+import { Message } from './Message.js';
+import type { CoreMessage } from 'ai';
+import type { ScrollBoxRenderable } from '@opentui/core';
+import { useKeys, parseKeys } from '../keys/index.js';
 
 type MessageListProps = {
   messages: (CoreMessage & { id: string })[];
@@ -24,13 +24,20 @@ export function MessageList({ messages, width }: MessageListProps) {
 
   const scrollBy = (delta: number) => {
     if (!scrollBoxRef.current) return;
-    const maxScrollTop = scrollBoxRef.current.scrollHeight - scrollBoxRef.current.viewport.height;
-    scrollBoxRef.current.scrollTop = Math.max(0, Math.min(maxScrollTop, scrollBoxRef.current.scrollTop + delta));
+    const maxScrollTop =
+      scrollBoxRef.current.scrollHeight - scrollBoxRef.current.viewport.height;
+    scrollBoxRef.current.scrollTop = Math.max(
+      0,
+      Math.min(maxScrollTop, scrollBoxRef.current.scrollTop + delta)
+    );
   };
 
   const scrollPage = (direction: 1 | -1) => {
     if (!scrollBoxRef.current) return;
-    const page = Math.max(1, Math.floor(scrollBoxRef.current.viewport.height * 0.9));
+    const page = Math.max(
+      1,
+      Math.floor(scrollBoxRef.current.viewport.height * 0.9)
+    );
     scrollBy(direction * page);
   };
 
@@ -50,20 +57,38 @@ export function MessageList({ messages, width }: MessageListProps) {
   }, [messages]);
 
   // Keybindings for scrolling the messages area
-  useKeys((key) => {
-    return (
-      parseKeys(key, 'messages.scrollPageUp', () => scrollPage(-1), 'messages') ||
-      parseKeys(key, 'messages.scrollPageDown', () => scrollPage(1), 'messages') ||
-      parseKeys(key, 'messages.scrollTop', () => scrollTop(), 'messages') ||
-      parseKeys(key, 'messages.scrollBottom', () => scrollBottom(), 'messages')
-    );
-  }, { scope: 'messages', enabled: true });
+  useKeys(
+    (key) => {
+      return (
+        parseKeys(
+          key,
+          'messages.scrollPageUp',
+          () => scrollPage(-1),
+          'messages'
+        ) ||
+        parseKeys(
+          key,
+          'messages.scrollPageDown',
+          () => scrollPage(1),
+          'messages'
+        ) ||
+        parseKeys(key, 'messages.scrollTop', () => scrollTop(), 'messages') ||
+        parseKeys(
+          key,
+          'messages.scrollBottom',
+          () => scrollBottom(),
+          'messages'
+        )
+      );
+    },
+    { scope: 'messages', enabled: true }
+  );
   const renderMessage = (
     message: CoreMessage & { id: string },
-    _index: number,
+    _index: number
   ) => {
     // Handle content based on type - can be string or array of parts
-    if (typeof message.content === "string") {
+    if (typeof message.content === 'string') {
       return <Message message={message} width={width} key={message.id} />;
     }
 
@@ -73,28 +98,28 @@ export function MessageList({ messages, width }: MessageListProps) {
       const part = message.content[partIndex];
 
       // Extract displayable content from different part types
-      let displayContent = "";
-      let contentType: "normal" | "reasoning" | "tool" = "normal";
+      let displayContent = '';
+      let contentType: 'normal' | 'reasoning' | 'tool' = 'normal';
 
-      if (part?.type === "text" && "text" in part) {
+      if (part?.type === 'text' && 'text' in part) {
         displayContent = part.text;
-      } else if (part?.type === "reasoning" && "text" in part) {
+      } else if (part?.type === 'reasoning' && 'text' in part) {
         displayContent = part.text;
-        contentType = "reasoning";
-      } else if (part?.type === "redacted-reasoning") {
-        displayContent = "[Reasoning redacted]";
-        contentType = "reasoning";
-      } else if (part?.type === "tool-call" && "toolName" in part) {
+        contentType = 'reasoning';
+      } else if (part?.type === 'redacted-reasoning') {
+        displayContent = '[Reasoning redacted]';
+        contentType = 'reasoning';
+      } else if (part?.type === 'tool-call' && 'toolName' in part) {
         displayContent = `🔧 Calling ${part.toolName}`;
-        contentType = "tool";
-      } else if (part?.type === "tool-result" && "toolName" in part) {
+        contentType = 'tool';
+      } else if (part?.type === 'tool-result' && 'toolName' in part) {
         displayContent = `✅ ${part.toolName} result`;
-        contentType = "tool";
+        contentType = 'tool';
       }
 
       if (displayContent) {
         const partMessage: CoreMessage = {
-          role: "assistant",
+          role: 'assistant',
           content: displayContent,
         };
 
@@ -104,7 +129,7 @@ export function MessageList({ messages, width }: MessageListProps) {
             message={partMessage}
             contentType={contentType}
             width={width}
-          />,
+          />
         );
       }
     }
@@ -120,7 +145,7 @@ export function MessageList({ messages, width }: MessageListProps) {
           flexGrow: 1,
         },
         contentOptions: {
-          flexDirection: "column",
+          flexDirection: 'column',
           padding: 1,
         },
         scrollbarOptions: {

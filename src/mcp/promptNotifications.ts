@@ -3,15 +3,15 @@
  * Handles notifications when prompt lists change and updates the prompt registry
  */
 
-import type { MCPClientWrapper } from "../types/index.js";
+import type { MCPClientWrapper } from '../types/index.js';
 // PromptRegistry removed with UI - notifications disabled
-import { logger } from "../logger.js";
+import { logger } from '../logger.js';
 
 /**
  * Sets up prompt list change notifications for a single MCP client
  */
 export function setupPromptNotificationsForClient(
-  wrapper: MCPClientWrapper,
+  wrapper: MCPClientWrapper
 ): void {
   try {
     // Access the underlying MCP client to set up notification handlers
@@ -25,7 +25,7 @@ export function setupPromptNotificationsForClient(
     // Set up handler for prompt list changes
     client.setNotificationHandler(
       {
-        method: "notifications/prompts/list_changed",
+        method: 'notifications/prompts/list_changed',
         params: {
           _meta: {},
         },
@@ -35,13 +35,13 @@ export function setupPromptNotificationsForClient(
 
         // Prompt registry removed with UI - just log the change
         logger.debug(
-          `Prompts list changed for server: ${wrapper.serverName} (no action taken)`,
+          `Prompts list changed for server: ${wrapper.serverName} (no action taken)`
         );
-      },
+      }
     );
   } catch (error) {
     logger.warn(
-      `Failed to set up notification handlers for ${wrapper.serverName}: ${error}`,
+      `Failed to set up notification handlers for ${wrapper.serverName}: ${error}`
     );
   }
 }
@@ -50,7 +50,7 @@ export function setupPromptNotificationsForClient(
  * Sets up prompt notifications for all MCP clients
  */
 export function setupPromptNotificationsForAllClients(
-  mcpClients: MCPClientWrapper[],
+  mcpClients: MCPClientWrapper[]
 ): void {
   for (const wrapper of mcpClients) {
     setupPromptNotificationsForClient(wrapper);

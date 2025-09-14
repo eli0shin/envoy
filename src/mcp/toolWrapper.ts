@@ -57,9 +57,9 @@ export function convertMCPSchemaToZod(
       return z.boolean();
     case 'array':
       return z.array(
-        schema.items
-          ? convertMCPSchemaToZod(schema.items as Record<string, unknown>)
-          : z.unknown()
+        schema.items ?
+          convertMCPSchemaToZod(schema.items as Record<string, unknown>)
+        : z.unknown()
       );
     default:
       return z.unknown();
@@ -75,8 +75,9 @@ export function createWrappedTool(
   serverName: string
 ): WrappedTool {
   // Convert MCP tool schema to AI SDK CoreTool format for validation
-  const parameters = tool.inputSchema
-    ? convertMCPSchemaToZod(tool.inputSchema as Record<string, unknown>)
+  const parameters =
+    tool.inputSchema ?
+      convertMCPSchemaToZod(tool.inputSchema as Record<string, unknown>)
     : z.object({});
 
   const execute = async (args: unknown) => {
@@ -149,7 +150,7 @@ export function createWrappedTool(
           resource?: { uri: string };
         }>
       )
-        .map(item => {
+        .map((item) => {
           if (item.type === 'text') {
             return item.text;
           } else if (item.type === 'image') {

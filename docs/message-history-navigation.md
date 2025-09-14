@@ -1,23 +1,27 @@
 # Message History Navigation Feature
 
 ## Overview
+
 Implement up/down arrow navigation through user message history when input is focused and cursor is on the first/last line.
 
 ## Requirements
 
 ### Core Behavior
+
 - When input is focused and up arrow is pressed while cursor is on first line:
   - Fill input with last user-submitted message
   - Move cursor to end of line
   - Apply same parsing as Message component (strip user command decorations)
 
 ### Navigation Sequence
+
 - **Index mapping**: `-1` = current input, `0` = last message, `1` = second-to-last, etc.
 - **Up/Up/Down behavior**: Should navigate -1 → 0 → 1 → 0 (current → last → second-to-last → last)
 - **Down arrow**: Move back toward current input (decrease index)
 - **Reset on submit**: Clear history index back to -1 when message is submitted
 
 ### Edge Cases
+
 - **Empty history**: No navigation if no user messages exist
 - **Single message**: Up goes to that message, down returns to current input
 - **User starts typing**: Reset to current input mode (index -1)
@@ -26,19 +30,25 @@ Implement up/down arrow navigation through user message history when input is fo
 ## Implementation Plan
 
 ### 1. State Management (TUIApp.tsx)
+
 Add minimal state for history navigation:
+
 ```typescript
 const [historyIndex, setHistoryIndex] = useState(-1);
 const [originalInput, setOriginalInput] = useState('');
 ```
 
 ### 2. Message History Extraction
+
 Create helper function to extract user messages:
+
 ```typescript
-const getUserMessageHistory = (messages: (CoreMessage & { id: string })[]): string[] => {
+const getUserMessageHistory = (
+  messages: (CoreMessage & { id: string })[]
+): string[] => {
   return messages
-    .filter(message => message.role === 'user')
-    .map(message => {
+    .filter((message) => message.role === 'user')
+    .map((message) => {
       let content = typeof message.content === 'string' ? message.content : '';
 
       // Apply same parsing as Message.tsx
@@ -47,14 +57,20 @@ const getUserMessageHistory = (messages: (CoreMessage & { id: string })[]): stri
 
       return content.trim();
     })
-    .filter(content => content.length > 0);
+    .filter((content) => content.length > 0);
 };
 ```
 
 ### 3. Navigation Logic (InputArea.tsx)
+
 Implement arrow key handler:
+
 ```typescript
-const handleInputArrowKey = (direction: 'up' | 'down', isOnFirstLine: boolean, isOnLastLine: boolean): boolean => {
+const handleInputArrowKey = (
+  direction: 'up' | 'down',
+  isOnFirstLine: boolean,
+  isOnLastLine: boolean
+): boolean => {
   const userHistory = getUserMessageHistory(messages);
 
   if (direction === 'up' && isOnFirstLine) {
@@ -88,7 +104,9 @@ const handleInputArrowKey = (direction: 'up' | 'down', isOnFirstLine: boolean, i
 ```
 
 ### 4. Input Change Handling
+
 Reset history mode when user types:
+
 ```typescript
 const handleInputChange = (value: string) => {
   setInputValue(value);
@@ -102,7 +120,9 @@ const handleInputChange = (value: string) => {
 ```
 
 ### 5. Submit Handling
+
 Clear history state on message submission:
+
 ```typescript
 const handleSendMessage = async (content: string) => {
   // Reset history navigation state
@@ -114,7 +134,9 @@ const handleSendMessage = async (content: string) => {
 ```
 
 ### 6. MultiLineInput Integration
+
 Extend MultiLineInput to provide line position info:
+
 ```typescript
 // In MultiLineInput component
 const isOnFirstLine = editingLine === 0;
@@ -127,6 +149,7 @@ onArrowKey?.(direction, isOnFirstLine, isOnLastLine);
 ## Files to Modify
 
 ### Required Changes
+
 1. **`src/tui/components/TUIApp.tsx`**
    - Add history state (`historyIndex`, `originalInput`)
    - Add `getUserMessageHistory` helper
@@ -142,6 +165,7 @@ onArrowKey?.(direction, isOnFirstLine, isOnLastLine);
    - Pass `isOnFirstLine`/`isOnLastLine` to callback
 
 ### Optional Enhancements
+
 4. **`src/tui/keys/types.ts`**
    - Add `input.historyUp`/`input.historyDown` key actions
 
@@ -151,30 +175,35 @@ onArrowKey?.(direction, isOnFirstLine, isOnLastLine);
 ## Testing Scenarios
 
 ### Basic Navigation
+
 - [ ] Up arrow on first line loads last message
 - [ ] Cursor moves to end after navigation
 - [ ] Down arrow returns to previous state
 - [ ] Navigation wraps correctly at boundaries
 
 ### Edge Cases
+
 - [ ] Empty history (no user messages)
 - [ ] Single message in history
 - [ ] Very long messages
 - [ ] Messages with command decorations are cleaned
 
 ### State Management
+
 - [ ] History index resets on submit
 - [ ] Typing during navigation resets to current input
 - [ ] Original input is preserved and restored
 - [ ] Navigation state survives input focus changes
 
 ### Integration
+
 - [ ] Works with existing multi-line input
 - [ ] Doesn't interfere with normal cursor navigation
 - [ ] Works with existing keybinding system
 - [ ] Persists across app restarts (via message persistence)
 
 ## Benefits
+
 - **No state duplication**: Uses existing messages array
 - **Automatic sync**: History updates when messages change
 - **Consistent parsing**: Same logic as Message display

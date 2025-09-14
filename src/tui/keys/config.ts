@@ -1,4 +1,9 @@
-import type { KeybindingsConfig, KeyScope, KeyAction, KeyDescriptor } from './types.js';
+import type {
+  KeybindingsConfig,
+  KeyScope,
+  KeyAction,
+  KeyDescriptor,
+} from './types.js';
 
 export function ensureArray<T>(v: T | T[] | undefined): T[] {
   if (!v) return [];
@@ -19,13 +24,19 @@ export function mergeKeybindings(
   ]);
 
   scopes.forEach((scope) => {
-    const dScope = (defaults[scope] || {}) as Partial<Record<KeyAction, KeyDescriptor | KeyDescriptor[]>>;
-    const oScope = (overrides[scope] || {}) as Partial<Record<KeyAction, KeyDescriptor | KeyDescriptor[]>>;
+    const dScope = (defaults[scope] || {}) as Partial<
+      Record<KeyAction, KeyDescriptor | KeyDescriptor[]>
+    >;
+    const oScope = (overrides[scope] || {}) as Partial<
+      Record<KeyAction, KeyDescriptor | KeyDescriptor[]>
+    >;
     const actions = new Set<KeyAction>([
       ...Object.keys(dScope),
       ...Object.keys(oScope),
     ] as KeyAction[]);
-    const scopeResult: Partial<Record<KeyAction, KeyDescriptor | KeyDescriptor[]>> = {};
+    const scopeResult: Partial<
+      Record<KeyAction, KeyDescriptor | KeyDescriptor[]>
+    > = {};
     actions.forEach((action) => {
       const d = ensureArray(dScope[action]);
       const o = ensureArray(oScope[action]);

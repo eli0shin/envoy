@@ -3,9 +3,9 @@
  * Defines interfaces for MCP server configurations and tool wrappers
  */
 
-import type { z } from "zod";
-import type { ChildProcess } from "child_process";
-import type { CoreMessage } from "ai";
+import type { z } from 'zod';
+import type { ChildProcess } from 'child_process';
+import type { CoreMessage } from 'ai';
 
 /**
  * Base MCP server configuration
@@ -23,7 +23,7 @@ export type BaseMCPServerConfig = {
  * Configuration for stdio-based MCP servers (local processes)
  */
 export type StdioMCPServerConfig = BaseMCPServerConfig & {
-  type: "stdio";
+  type: 'stdio';
   command: string;
   args?: string[];
   env?: Record<string, string>;
@@ -34,7 +34,7 @@ export type StdioMCPServerConfig = BaseMCPServerConfig & {
  * Configuration for SSE-based MCP servers (remote HTTP endpoints)
  */
 export type SSEMCPServerConfig = BaseMCPServerConfig & {
-  type: "sse";
+  type: 'sse';
   url: string;
   headers?: Record<string, string>;
   timeout?: number;
@@ -123,7 +123,7 @@ export type MCPClientWrapper = {
   listPrompts(): Promise<MCPPrompt[]>;
   getPrompt(
     name: string,
-    args?: Record<string, unknown>,
+    args?: Record<string, unknown>
   ): Promise<PromptResult>;
   listResources(): Promise<MCPResource[]>;
   readResource(uri: string): Promise<ResourceContent>;
@@ -160,13 +160,13 @@ export type CLIOptions = {
   stdin?: boolean;
   provider?: string;
   model?: string;
-  logLevel?: "DEBUG" | "INFO" | "WARN" | "ERROR" | "SILENT";
-  logProgress?: "none" | "assistant" | "tool" | "all";
+  logLevel?: 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'SILENT';
+  logProgress?: 'none' | 'assistant' | 'tool' | 'all';
   json?: boolean;
   maxSteps?: number;
   systemPrompt?: string;
   systemPromptFile?: string;
-  systemPromptMode?: "replace" | "append" | "prepend";
+  systemPromptMode?: 'replace' | 'append' | 'prepend';
   // MCP Prompts and Resources CLI options
   listPrompts?: boolean;
   listResources?: boolean;
@@ -196,7 +196,7 @@ export type AgentResult = {
  * Step output formatting
  */
 export type StepOutput = {
-  type: "assistant-step" | "tool-call" | "assistant";
+  type: 'assistant-step' | 'tool-call' | 'assistant';
   content: string;
   timestamp?: Date;
 };
@@ -288,7 +288,7 @@ export type MCPInitializeResponse = {
  * Extended message interface for thinking messages with signatures
  */
 export type ThinkingMessage = {
-  role: "assistant";
+  role: 'assistant';
   content: string;
   thinking: true;
   isThinkingComplete: boolean;
@@ -303,11 +303,11 @@ export type ThinkingMessage = {
  * Authentication information for providers
  */
 export type AuthenticationInfo = {
-  method: "api-key" | "oauth";
-  source: "environment" | "config" | "oauth-credentials";
+  method: 'api-key' | 'oauth';
+  source: 'environment' | 'config' | 'oauth-credentials';
   details: {
     envVarName?: string;
-    oauthStatus?: "active" | "refresh-failed";
+    oauthStatus?: 'active' | 'refresh-failed';
     hasOAuthCredentials?: boolean;
   };
 };
@@ -316,11 +316,11 @@ export type AuthenticationInfo = {
  * Extended message type with provider metadata
  */
 export type ExtendedCoreMessage = {
-  role: "user" | "assistant" | "system" | "tool";
+  role: 'user' | 'assistant' | 'system' | 'tool';
   content: string;
   providerMetadata?: {
     anthropic?: {
-      cacheControl?: { type: "ephemeral" };
+      cacheControl?: { type: 'ephemeral' };
     };
   };
 };

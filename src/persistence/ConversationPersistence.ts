@@ -2,17 +2,17 @@
  * ConversationPersistence service for saving and loading conversation history
  */
 
-import { promises as fs } from "fs";
-import { join } from "path";
-import { ensureDirectory } from "../shared/fileOperations.js";
-import type { CoreMessage } from "ai";
+import { promises as fs } from 'fs';
+import { join } from 'path';
+import { ensureDirectory } from '../shared/fileOperations.js';
+import type { CoreMessage } from 'ai';
 
 import {
   logger,
   getConversationDirectory,
   getProjectConversationDirectory,
   getProjectConversationFile,
-} from "../logger.js";
+} from '../logger.js';
 
 /**
  * Entry format for conversation JSONL files
@@ -20,7 +20,7 @@ import {
 type ConversationEntry = {
   timestamp: string;
   messageIndex: number;
-  messageType: "conversation" | "session-meta";
+  messageType: 'conversation' | 'session-meta';
   sessionId: string;
   message: CoreMessage;
 };
@@ -99,11 +99,11 @@ export class ConversationPersistence {
 
       // Filter to only complete messages
       const completeMessages = messages.filter((msg) =>
-        ConversationPersistence.isMessageComplete(msg),
+        ConversationPersistence.isMessageComplete(msg)
       );
 
       if (completeMessages.length === 0) {
-        logger.debug("No complete messages to persist", {
+        logger.debug('No complete messages to persist', {
           sessionId: this.sessionId,
           totalMessages: messages.length,
         });
@@ -115,7 +115,7 @@ export class ConversationPersistence {
       const newMessages = completeMessages.slice(this.messageIndex);
 
       if (newMessages.length === 0) {
-        logger.debug("No new messages to persist", {
+        logger.debug('No new messages to persist', {
           sessionId: this.sessionId,
           totalMessages: messages.length,
           completeMessages: completeMessages.length,
@@ -131,33 +131,33 @@ export class ConversationPersistence {
       const entries = newMessages.map((message, index) => ({
         timestamp: new Date().toISOString(),
         messageIndex: this.messageIndex + index,
-        messageType: "conversation" as const,
+        messageType: 'conversation' as const,
         sessionId: this.sessionId,
         message: this.sanitizeMessage(message),
       }));
 
       // Convert to JSONL format
       const jsonlContent =
-        entries.map((entry) => JSON.stringify(entry)).join("\n") + "\n";
+        entries.map((entry) => JSON.stringify(entry)).join('\n') + '\n';
 
       // Write to conversation file
       const conversationFile = getProjectConversationFile(
         this.projectIdentifier,
-        this.sessionId,
+        this.sessionId
       );
-      await fs.appendFile(conversationFile, jsonlContent, "utf8");
+      await fs.appendFile(conversationFile, jsonlContent, 'utf8');
 
       // Update message index
       this.messageIndex += newMessages.length;
 
-      logger.debug("Successfully persisted conversation messages", {
+      logger.debug('Successfully persisted conversation messages', {
         sessionId: this.sessionId,
         messageCount: newMessages.length,
         totalIndex: this.messageIndex,
       });
     } catch (error) {
       // Log the error but never throw - persistence failures should not break agent execution
-      logger.warn("Failed to persist conversation messages", {
+      logger.warn('Failed to persist conversation messages', {
         sessionId: this.sessionId,
         error: error instanceof Error ? error.message : String(error),
         messageCount: messages.length,
@@ -172,7 +172,7 @@ export class ConversationPersistence {
     const targetSessionId = sessionId || this.sessionId;
     const conversationFile = getProjectConversationFile(
       this.projectIdentifier,
-      targetSessionId,
+      targetSessionId
     );
 
     try {
@@ -180,29 +180,29 @@ export class ConversationPersistence {
       await fs.access(conversationFile);
 
       // Read and parse JSONL file
-      const fileContent = await fs.readFile(conversationFile, "utf8");
+      const fileContent = await fs.readFile(conversationFile, 'utf8');
       return this.parseConversationFile(fileContent, targetSessionId);
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         // Project-scoped file doesn't exist, check for legacy file
         const legacyConversationFile = join(
           getConversationDirectory(),
-          `${targetSessionId}.jsonl`,
+          `${targetSessionId}.jsonl`
         );
 
         try {
           await fs.access(legacyConversationFile);
           const legacyContent = await fs.readFile(
             legacyConversationFile,
-            "utf8",
+            'utf8'
           );
 
           // Migrate legacy file to project-scoped location
           await ensureDirectory(this.conversationDir);
-          await fs.writeFile(conversationFile, legacyContent, "utf8");
+          await fs.writeFile(conversationFile, legacyContent, 'utf8');
           await fs.unlink(legacyConversationFile);
 
-          logger.debug("Migrated legacy conversation during load", {
+          logger.debug('Migrated legacy conversation during load', {
             sessionId: targetSessionId,
             projectIdentifier: this.projectIdentifier,
             from: legacyConversationFile,
@@ -211,7 +211,7 @@ export class ConversationPersistence {
 
           return this.parseConversationFile(legacyContent, targetSessionId);
         } catch (legacyError) {
-          if ((legacyError as NodeJS.ErrnoException).code === "ENOENT") {
+          if ((legacyError as NodeJS.ErrnoException).code === 'ENOENT') {
             // Neither file exists, return empty conversation
             return [];
           }
@@ -230,9 +230,9 @@ export class ConversationPersistence {
    */
   private parseConversationFile(
     fileContent: string,
-    sessionId: string,
+    sessionId: string
   ): CoreMessage[] {
-    const lines = fileContent.trim().split("\n");
+    const lines = fileContent.trim().split('\n');
     const messages: CoreMessage[] = [];
 
     for (const line of lines) {
@@ -242,19 +242,19 @@ export class ConversationPersistence {
         const entry = JSON.parse(line) as ConversationEntry;
 
         // Only load conversation messages, skip session metadata
-        if (entry.messageType === "conversation" && entry.message) {
+        if (entry.messageType === 'conversation' && entry.message) {
           messages.push(entry.message);
         }
       } catch (parseError) {
         // Skip malformed lines
-        logger.warn("Skipping malformed JSONL line", {
+        logger.warn('Skipping malformed JSONL line', {
           sessionId,
           error: parseError,
         });
       }
     }
 
-    logger.debug("Loaded conversation", {
+    logger.debug('Loaded conversation', {
       sessionId,
       messageCount: messages.length,
     });
@@ -267,12 +267,12 @@ export class ConversationPersistence {
    * last assistant message, and actual message count
    */
   async getConversationPreview(
-    sessionId?: string,
+    sessionId?: string
   ): Promise<ConversationPreview> {
     const targetSessionId = sessionId || this.sessionId;
     const conversationFile = getProjectConversationFile(
       this.projectIdentifier,
-      targetSessionId,
+      targetSessionId
     );
 
     try {
@@ -280,25 +280,25 @@ export class ConversationPersistence {
       await fs.access(conversationFile);
 
       // Read and parse JSONL file
-      const fileContent = await fs.readFile(conversationFile, "utf8");
+      const fileContent = await fs.readFile(conversationFile, 'utf8');
       return this.extractConversationPreview(fileContent);
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         // Project-scoped file doesn't exist, check for legacy file
         const legacyConversationFile = join(
           getConversationDirectory(),
-          `${targetSessionId}.jsonl`,
+          `${targetSessionId}.jsonl`
         );
 
         try {
           await fs.access(legacyConversationFile);
           const legacyContent = await fs.readFile(
             legacyConversationFile,
-            "utf8",
+            'utf8'
           );
           return this.extractConversationPreview(legacyContent);
         } catch (legacyError) {
-          if ((legacyError as NodeJS.ErrnoException).code === "ENOENT") {
+          if ((legacyError as NodeJS.ErrnoException).code === 'ENOENT') {
             // Neither file exists, return empty preview
             return {
               actualMessageCount: 0,
@@ -318,7 +318,7 @@ export class ConversationPersistence {
    * Extract conversation preview from file content
    */
   private extractConversationPreview(fileContent: string): ConversationPreview {
-    const lines = fileContent.trim().split("\n");
+    const lines = fileContent.trim().split('\n');
     let firstMessage: string | undefined;
     let lastAssistantMessage: string | undefined;
     let actualMessageCount = 0;
@@ -330,25 +330,25 @@ export class ConversationPersistence {
         const entry = JSON.parse(line) as ConversationEntry;
 
         // Only process conversation messages, skip session metadata
-        if (entry.messageType === "conversation" && entry.message) {
+        if (entry.messageType === 'conversation' && entry.message) {
           actualMessageCount++;
 
           // Extract first user message
-          if (!firstMessage && entry.message.role === "user") {
+          if (!firstMessage && entry.message.role === 'user') {
             firstMessage = this.truncateContent(entry.message.content, 100);
           }
 
           // Always update last assistant message (to get the most recent one)
-          if (entry.message.role === "assistant") {
+          if (entry.message.role === 'assistant') {
             lastAssistantMessage = this.truncateContent(
               entry.message.content,
-              100,
+              100
             );
           }
         }
       } catch (parseError) {
         // Skip malformed lines (same pattern as parseConversationFile)
-        logger.warn("Skipping malformed JSONL line in preview extraction", {
+        logger.warn('Skipping malformed JSONL line in preview extraction', {
           error: parseError,
         });
       }
@@ -368,20 +368,20 @@ export class ConversationPersistence {
     // Handle different content types
     let textContent: string;
 
-    if (typeof content === "string") {
+    if (typeof content === 'string') {
       textContent = content;
-    } else if (content && typeof content === "object") {
+    } else if (content && typeof content === 'object') {
       // For complex content (like tool calls), convert to string
       textContent = JSON.stringify(content);
     } else {
-      textContent = String(content || "");
+      textContent = String(content || '');
     }
 
     if (textContent.length <= maxLength) {
       return textContent;
     }
 
-    return textContent.substring(0, maxLength) + "...";
+    return textContent.substring(0, maxLength) + '...';
   }
 
   /**
@@ -396,14 +396,14 @@ export class ConversationPersistence {
       await fs.access(this.conversationDir);
       const projectFiles = await fs.readdir(this.conversationDir);
       projectSessionIds = projectFiles
-        .filter((file) => file.endsWith(".jsonl"))
-        .map((file) => file.replace(".jsonl", ""))
+        .filter((file) => file.endsWith('.jsonl'))
+        .map((file) => file.replace('.jsonl', ''))
         .filter((sessionId) => {
           // Validate UUID format (basic check)
-          return sessionId.length === 36 && sessionId.includes("-");
+          return sessionId.length === 36 && sessionId.includes('-');
         });
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
         throw error;
       }
       // Directory doesn't exist, continue to check legacy
@@ -415,15 +415,15 @@ export class ConversationPersistence {
       await fs.access(baseConversationDir);
       const legacyFiles = await fs.readdir(baseConversationDir);
       legacySessionIds = legacyFiles
-        .filter((file) => file.endsWith(".jsonl"))
-        .map((file) => file.replace(".jsonl", ""))
+        .filter((file) => file.endsWith('.jsonl'))
+        .map((file) => file.replace('.jsonl', ''))
         .filter((sessionId) => {
           // Validate UUID format (basic check)
-          return sessionId.length === 36 && sessionId.includes("-");
+          return sessionId.length === 36 && sessionId.includes('-');
         })
         .filter((sessionId) => !projectSessionIds.includes(sessionId)); // Exclude already migrated
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code !== "ENOENT") {
+      if ((error as NodeJS.ErrnoException).code !== 'ENOENT') {
         throw error;
       }
       // Legacy directory doesn't exist, that's fine
@@ -441,7 +441,7 @@ export class ConversationPersistence {
    * Validate session ID format (UUID v7)
    */
   static isValidSessionId(sessionId: string): boolean {
-    if (!sessionId || typeof sessionId !== "string") {
+    if (!sessionId || typeof sessionId !== 'string') {
       return false;
     }
 
@@ -455,13 +455,13 @@ export class ConversationPersistence {
    * Convert project path to a safe directory identifier
    */
   static getProjectIdentifier(projectPath: string): string {
-    if (!projectPath || typeof projectPath !== "string") {
-      throw new Error("Project path must be a non-empty string");
+    if (!projectPath || typeof projectPath !== 'string') {
+      throw new Error('Project path must be a non-empty string');
     }
 
     return projectPath
-      .replace(/^\//, "") // Remove leading slash
-      .replace(/[/\\]/g, "_"); // Replace slashes and backslashes with underscores
+      .replace(/^\//, '') // Remove leading slash
+      .replace(/[/\\]/g, '_'); // Replace slashes and backslashes with underscores
   }
 
   /**
@@ -469,12 +469,12 @@ export class ConversationPersistence {
    */
   static isMessageComplete(message: CoreMessage): boolean {
     switch (message.role) {
-      case "user":
-      case "assistant":
-      case "system":
+      case 'user':
+      case 'assistant':
+      case 'system':
         return true; // Standard messages are always complete
 
-      case "tool": {
+      case 'tool': {
         // Tool messages are complete when they have meaningful content
         if (!message.content) return false;
 
@@ -507,7 +507,7 @@ export class ConversationPersistence {
       const baseConversationDir = getConversationDirectory();
       const legacyConversationFile = join(
         baseConversationDir,
-        `${this.sessionId}.jsonl`,
+        `${this.sessionId}.jsonl`
       );
 
       // Check if legacy conversation file exists
@@ -520,7 +520,7 @@ export class ConversationPersistence {
 
       const newConversationFile = getProjectConversationFile(
         this.projectIdentifier,
-        this.sessionId,
+        this.sessionId
       );
 
       // Check if new file already exists
@@ -534,13 +534,13 @@ export class ConversationPersistence {
       }
 
       // Read legacy file and write to new location
-      const legacyContent = await fs.readFile(legacyConversationFile, "utf8");
-      await fs.writeFile(newConversationFile, legacyContent, "utf8");
+      const legacyContent = await fs.readFile(legacyConversationFile, 'utf8');
+      await fs.writeFile(newConversationFile, legacyContent, 'utf8');
 
       // Remove legacy file after successful migration
       await fs.unlink(legacyConversationFile);
 
-      logger.debug("Migrated legacy conversation", {
+      logger.debug('Migrated legacy conversation', {
         sessionId: this.sessionId,
         projectIdentifier: this.projectIdentifier,
         from: legacyConversationFile,
@@ -548,7 +548,7 @@ export class ConversationPersistence {
       });
     } catch (error) {
       // Migration failures should not break normal operation
-      logger.warn("Failed to migrate legacy conversation", {
+      logger.warn('Failed to migrate legacy conversation', {
         sessionId: this.sessionId,
         projectIdentifier: this.projectIdentifier,
         error: error instanceof Error ? error.message : String(error),
@@ -586,7 +586,7 @@ export class ConversationPersistence {
 
       return oldSessions;
     } catch (error) {
-      logger.warn("Failed to get old conversations", {
+      logger.warn('Failed to get old conversations', {
         projectIdentifier: this.projectIdentifier,
         daysThreshold,
         error: error instanceof Error ? error.message : String(error),
@@ -605,19 +605,19 @@ export class ConversationPersistence {
       const files = await fs.readdir(this.conversationDir);
 
       return files
-        .filter((file) => file.endsWith(".jsonl"))
-        .map((file) => file.replace(".jsonl", ""))
+        .filter((file) => file.endsWith('.jsonl'))
+        .map((file) => file.replace('.jsonl', ''))
         .filter((sessionId) =>
-          ConversationPersistence.isValidSessionId(sessionId),
+          ConversationPersistence.isValidSessionId(sessionId)
         )
         .sort()
         .reverse(); // Latest first
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
         // Directory doesn't exist, return empty array
         return [];
       }
-      logger.warn("Failed to get all conversations", {
+      logger.warn('Failed to get all conversations', {
         projectIdentifier: this.projectIdentifier,
         error: error instanceof Error ? error.message : String(error),
       });
@@ -631,7 +631,7 @@ export class ConversationPersistence {
   async getConversationStats(sessionId: string): Promise<ConversationStats> {
     const conversationFile = getProjectConversationFile(
       this.projectIdentifier,
-      sessionId,
+      sessionId
     );
 
     try {
@@ -643,7 +643,7 @@ export class ConversationPersistence {
         age,
       };
     } catch (error) {
-      logger.warn("Failed to get conversation stats", {
+      logger.warn('Failed to get conversation stats', {
         sessionId,
         projectIdentifier: this.projectIdentifier,
         error: error instanceof Error ? error.message : String(error),
@@ -656,20 +656,20 @@ export class ConversationPersistence {
    * Delete a single conversation file
    */
   async deleteConversation(
-    sessionId: string,
+    sessionId: string
   ): Promise<ConversationDeleteResult> {
     if (!ConversationPersistence.isValidSessionId(sessionId)) {
       return {
         success: false,
         sessionId,
         sizeFreed: 0,
-        error: "Invalid session ID format",
+        error: 'Invalid session ID format',
       };
     }
 
     const conversationFile = getProjectConversationFile(
       this.projectIdentifier,
-      sessionId,
+      sessionId
     );
 
     try {
@@ -680,7 +680,7 @@ export class ConversationPersistence {
       // Delete the file
       await fs.unlink(conversationFile);
 
-      logger.debug("Deleted conversation", {
+      logger.debug('Deleted conversation', {
         sessionId,
         projectIdentifier: this.projectIdentifier,
         sizeFreed,
@@ -694,7 +694,7 @@ export class ConversationPersistence {
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      logger.warn("Failed to delete conversation", {
+      logger.warn('Failed to delete conversation', {
         sessionId,
         projectIdentifier: this.projectIdentifier,
         error: errorMessage,
@@ -728,10 +728,10 @@ export class ConversationPersistence {
     const deletedCount = successes.length;
     const totalSizeFreed = successes.reduce(
       (total, result) => total + result.sizeFreed,
-      0,
+      0
     );
 
-    logger.debug("Batch conversation deletion completed", {
+    logger.debug('Batch conversation deletion completed', {
       projectIdentifier: this.projectIdentifier,
       totalRequested: sessionIds.length,
       deletedCount,
@@ -753,7 +753,7 @@ export class ConversationPersistence {
   private async getConversationAge(sessionId: string): Promise<number> {
     const conversationFile = getProjectConversationFile(
       this.projectIdentifier,
-      sessionId,
+      sessionId
     );
 
     try {
@@ -762,7 +762,7 @@ export class ConversationPersistence {
       const ageDays = ageMs / (1000 * 60 * 60 * 24);
       return ageDays;
     } catch (error) {
-      logger.warn("Failed to get conversation age", {
+      logger.warn('Failed to get conversation age', {
         sessionId,
         projectIdentifier: this.projectIdentifier,
         error: error instanceof Error ? error.message : String(error),

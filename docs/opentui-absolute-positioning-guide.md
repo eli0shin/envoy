@@ -9,8 +9,9 @@ OpenTUI uses the **Yoga Layout Engine** (Facebook's CSS Flexbox implementation) 
 ### Position Types
 
 OpenTUI supports three position types:
+
 - `"relative"` (default) - Elements flow normally, children positioned relative to parent
-- `"absolute"` - Removed from normal flow, positioned relative to nearest positioned ancestor  
+- `"absolute"` - Removed from normal flow, positioned relative to nearest positioned ancestor
 - `"static"` - Exists but behaves like relative
 
 **Note:** There is no `position: "fixed"` in OpenTUI.
@@ -47,7 +48,7 @@ In our slash command autocomplete implementation, we discovered that **absolute 
 // Parent must be positioned for absolute children to position relative to it
 <box position="relative">
   {/* This will position relative to the parent box */}
-  <box 
+  <box
     position="absolute"
     top={-10}
     left={0}
@@ -73,7 +74,7 @@ If no parent has `position="relative"` or `position="absolute"`, the absolutely 
 ### Example
 
 ```typescript
-// Parent A (z-index: 100) 
+// Parent A (z-index: 100)
 <box position="relative" zIndex={100}>
   <box zIndex={1}>This renders above everything in Parent B</box>
 </box>
@@ -92,7 +93,7 @@ If no parent has `position="relative"` or `position="absolute"`, the absolutely 
 <box position="relative">
   <input />
   {showDropdown && (
-    <box 
+    <box
       position="absolute"
       top={inputHeight + 2}  // Position below input
       left={0}
@@ -109,7 +110,7 @@ If no parent has `position="relative"` or `position="absolute"`, the absolutely 
 ### Overlay/Modal
 
 ```typescript
-<box 
+<box
   position="absolute"
   top={0}
   left={0}
@@ -171,6 +172,7 @@ If no parent has `position="relative"` or `position="absolute"`, the absolutely 
 **Problem:** Need to position above/outside parent.
 
 **Solution:** Use negative values for `top` or `left`:
+
 ```typescript
 top={-(height + margin)} // Position above parent
 ```

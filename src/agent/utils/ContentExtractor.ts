@@ -19,7 +19,7 @@ export class ContentExtractor {
       return text
         .filter((part: { type?: string }) => part.type === 'text')
         .map((part: { text?: string }) => part.text || '')
-        .filter(text => text) // Remove empty strings
+        .filter((text) => text) // Remove empty strings
         .join('');
     }
 

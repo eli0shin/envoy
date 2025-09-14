@@ -23,7 +23,10 @@ export function normalizeKeyName(name: string | undefined): string {
   return NAME_ALIASES[lower] || lower;
 }
 
-function parsePrefixed(descriptor: string): { requiredPrefix: string | null; rest: string } {
+function parsePrefixed(descriptor: string): {
+  requiredPrefix: string | null;
+  rest: string;
+} {
   const trimmed = descriptor.trim();
   if (trimmed.startsWith('<')) {
     const end = trimmed.indexOf('>');
@@ -36,7 +39,9 @@ function parsePrefixed(descriptor: string): { requiredPrefix: string | null; res
   return { requiredPrefix: null, rest: trimmed };
 }
 
-export function compileDescriptor(descriptor: KeyDescriptor): CompiledDescriptor {
+export function compileDescriptor(
+  descriptor: KeyDescriptor
+): CompiledDescriptor {
   const { rest } = parsePrefixed(descriptor);
   const base = rest || '';
   let ctrl = false,
@@ -51,7 +56,8 @@ export function compileDescriptor(descriptor: KeyDescriptor): CompiledDescriptor
     const p = keyParts[i].toLowerCase();
     if (p === 'c' || p === 'ctrl' || p === 'control') ctrl = true;
     else if (p === 's' || p === 'shift') shift = true;
-    else if (p === 'm' || p === 'alt' || p === 'meta') option = true; // treat M-/alt as option
+    else if (p === 'm' || p === 'alt' || p === 'meta')
+      option = true; // treat M-/alt as option
     else if (p === 'cmd' || p === 'command') meta = true;
   }
 
@@ -60,7 +66,10 @@ export function compileDescriptor(descriptor: KeyDescriptor): CompiledDescriptor
   return compiled;
 }
 
-export function matchCompiled(ev: TUIKeyEvent, cd: CompiledDescriptor): boolean {
+export function matchCompiled(
+  ev: TUIKeyEvent,
+  cd: CompiledDescriptor
+): boolean {
   const evName = normalizeKeyName(ev?.name);
   const nameMatch = evName === cd.name;
   const ctrlMatch = !!ev.ctrl === cd.ctrl;
@@ -68,12 +77,15 @@ export function matchCompiled(ev: TUIKeyEvent, cd: CompiledDescriptor): boolean 
   const optionMatch = !!ev.option === cd.option;
   const metaMatch = !!ev.meta === cd.meta;
 
-  const result = nameMatch && ctrlMatch && shiftMatch && optionMatch && metaMatch;
+  const result =
+    nameMatch && ctrlMatch && shiftMatch && optionMatch && metaMatch;
 
   return result;
 }
 
-export function parseKeyDescriptor(descriptor: KeyDescriptor): (ev: TUIKeyEvent) => boolean {
+export function parseKeyDescriptor(
+  descriptor: KeyDescriptor
+): (ev: TUIKeyEvent) => boolean {
   const { requiredPrefix } = parsePrefixed(descriptor);
   const compiled = compileDescriptor(descriptor);
   return (ev: TUIKeyEvent) => {

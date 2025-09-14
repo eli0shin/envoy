@@ -1,4 +1,9 @@
-export type KeyScope = 'global' | 'modal' | 'autocomplete' | 'input' | 'messages';
+export type KeyScope =
+  | 'global'
+  | 'modal'
+  | 'autocomplete'
+  | 'input'
+  | 'messages';
 
 // Keep actions as string literals for flexibility and config friendliness
 export type KeyAction =

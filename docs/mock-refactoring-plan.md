@@ -399,7 +399,6 @@ Analyzed test files with MCPClientWrapper mock patterns and found scattered mock
    ```
 
 2. **Replaced scattered mock creation** in test files:
-
    - `src/cli/handlers/mcpCommands.test.ts` - replaced inline mock objects with centralized function
    - `src/cli/handlers/executionFlow.test.ts` - replaced 2 large inline mock objects
    - `src/cli/index.test.ts` - replaced 3 mock objects and removed all type casting
@@ -448,7 +447,6 @@ Followed the **standard pattern** established for logger mocks:
 ### Implementation
 
 1. **Created centralized helper functions** in `createMocks.ts`:
-
    - `createFsPromisesMock()` - Complete fs/promises mock with all common methods
    - `createFsMock()` - Complete fs mock with promises object
    - Functions return consistently structured mock objects with vi.fn() for all methods
@@ -462,7 +460,6 @@ Followed the **standard pattern** established for logger mocks:
    ```
 
 3. **Removed all inline fs mocks** from test files:
-
    - `src/config.test.ts` - removed fs/promises mock
    - `src/config.persistence.test.ts` - removed fs/promises mock
    - `src/config/files.test.ts` - removed fs/promises mock

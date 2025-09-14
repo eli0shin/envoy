@@ -159,7 +159,7 @@ describe('Capability Tool Factories', () => {
       expect(tools).toHaveLength(2);
 
       // Check list_prompts tool
-      const listTool = tools.find(t => t.toolName === 'list_prompts');
+      const listTool = tools.find((t) => t.toolName === 'list_prompts');
       expect(listTool).toBeDefined();
       expect(listTool?.description).toBe(
         'List available prompts from test-server'
@@ -168,7 +168,7 @@ describe('Capability Tool Factories', () => {
       expect(listTool?.parameters).toBeInstanceOf(z.ZodObject);
 
       // Check get_prompt tool
-      const getTool = tools.find(t => t.toolName === 'get_prompt');
+      const getTool = tools.find((t) => t.toolName === 'get_prompt');
       expect(getTool).toBeDefined();
       expect(getTool?.description).toBe(
         'Get and execute a prompt from test-server'
@@ -184,7 +184,7 @@ describe('Capability Tool Factories', () => {
         mockPrompts
       );
 
-      const listTool = tools.find(t => t.toolName === 'list_prompts')!;
+      const listTool = tools.find((t) => t.toolName === 'list_prompts')!;
       const result = await listTool.execute({});
 
       expect(result.result).toBe(JSON.stringify(mockPrompts, null, 2));
@@ -208,7 +208,7 @@ describe('Capability Tool Factories', () => {
         mockPrompts
       );
 
-      const getTool = tools.find(t => t.toolName === 'get_prompt')!;
+      const getTool = tools.find((t) => t.toolName === 'get_prompt')!;
       const result = await getTool.execute({
         name: 'test-prompt',
         arguments: { input: 'test' },
@@ -230,7 +230,7 @@ describe('Capability Tool Factories', () => {
         mockPrompts
       );
 
-      const getTool = tools.find(t => t.toolName === 'get_prompt')!;
+      const getTool = tools.find((t) => t.toolName === 'get_prompt')!;
       const result = await getTool.execute({
         name: 'failing-prompt',
       });
@@ -255,7 +255,7 @@ describe('Capability Tool Factories', () => {
         mockPrompts
       );
 
-      const getTool = tools.find(t => t.toolName === 'get_prompt')!;
+      const getTool = tools.find((t) => t.toolName === 'get_prompt')!;
       const result = await getTool.execute({
         name: 'test-prompt',
       });
@@ -300,7 +300,7 @@ describe('Capability Tool Factories', () => {
       expect(tools).toHaveLength(2);
 
       // Check list_resources tool
-      const listTool = tools.find(t => t.toolName === 'list_resources');
+      const listTool = tools.find((t) => t.toolName === 'list_resources');
       expect(listTool).toBeDefined();
       expect(listTool?.description).toBe(
         'List available resources from test-server'
@@ -309,7 +309,7 @@ describe('Capability Tool Factories', () => {
       expect(listTool?.parameters).toBeInstanceOf(z.ZodObject);
 
       // Check read_resource tool
-      const readTool = tools.find(t => t.toolName === 'read_resource');
+      const readTool = tools.find((t) => t.toolName === 'read_resource');
       expect(readTool).toBeDefined();
       expect(readTool?.description).toBe(
         'Read content from a resource in test-server'
@@ -325,7 +325,7 @@ describe('Capability Tool Factories', () => {
         mockResources
       );
 
-      const listTool = tools.find(t => t.toolName === 'list_resources')!;
+      const listTool = tools.find((t) => t.toolName === 'list_resources')!;
       const result = await listTool.execute({});
 
       expect(result.result).toBe(JSON.stringify(mockResources, null, 2));
@@ -350,7 +350,7 @@ describe('Capability Tool Factories', () => {
         mockResources
       );
 
-      const readTool = tools.find(t => t.toolName === 'read_resource')!;
+      const readTool = tools.find((t) => t.toolName === 'read_resource')!;
       const result = await readTool.execute({
         uri: 'file://test.txt',
       });
@@ -370,7 +370,7 @@ describe('Capability Tool Factories', () => {
         mockResources
       );
 
-      const readTool = tools.find(t => t.toolName === 'read_resource')!;
+      const readTool = tools.find((t) => t.toolName === 'read_resource')!;
       const result = await readTool.execute({
         uri: 'file://missing.txt',
       });
@@ -387,7 +387,7 @@ describe('Capability Tool Factories', () => {
         mockResources
       );
 
-      const readTool = tools.find(t => t.toolName === 'read_resource')!;
+      const readTool = tools.find((t) => t.toolName === 'read_resource')!;
       const result = await readTool.execute({
         uri: 'file://problematic.txt',
       });
@@ -415,7 +415,7 @@ describe('Capability Tool Factories', () => {
       );
 
       // Test list_resources originalExecute
-      const listTool = tools.find(t => t.toolName === 'list_resources')!;
+      const listTool = tools.find((t) => t.toolName === 'list_resources')!;
       expect(listTool.originalExecute).toBeInstanceOf(Function);
 
       const listResult = await listTool.originalExecute({});
@@ -427,7 +427,7 @@ describe('Capability Tool Factories', () => {
       };
       mockClient.readResource.mockResolvedValue(mockContent);
 
-      const readTool = tools.find(t => t.toolName === 'read_resource')!;
+      const readTool = tools.find((t) => t.toolName === 'read_resource')!;
       expect(readTool.originalExecute).toBeInstanceOf(Function);
 
       const readResult = await readTool.originalExecute({
@@ -462,8 +462,8 @@ describe('Capability Tool Factories', () => {
 
       // Each tool should have unique names
       const allToolNames = [
-        ...promptTools.map(t => t.toolName),
-        ...resourceTools.map(t => t.toolName),
+        ...promptTools.map((t) => t.toolName),
+        ...resourceTools.map((t) => t.toolName),
       ];
       expect(new Set(allToolNames).size).toBe(4); // Should be unique
     });

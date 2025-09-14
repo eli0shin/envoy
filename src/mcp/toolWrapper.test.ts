@@ -348,7 +348,9 @@ describe('Tool Wrapper Module', () => {
         // Mock a long-running operation that would timeout
         mockClient.callTool.mockImplementation(
           () =>
-            new Promise(resolve => setTimeout(resolve, TOOL_TIMEOUT_MS + 1000))
+            new Promise((resolve) =>
+              setTimeout(resolve, TOOL_TIMEOUT_MS + 1000)
+            )
         );
 
         const wrappedTool = createWrappedTool(

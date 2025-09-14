@@ -3,20 +3,20 @@
  * Handles logic for determining when to activate interactive CLI mode
  */
 
-import type { CLIOptions } from "../../types/index.js";
-import type { RuntimeConfiguration } from "../../config/types.js";
+import type { CLIOptions } from '../../types/index.js';
+import type { RuntimeConfiguration } from '../../config/types.js';
 
 /**
  * Determines if interactive mode should be activated
  */
 export function shouldActivateInteractiveMode(
   config: RuntimeConfiguration,
-  options: CLIOptions,
+  options: CLIOptions
 ): boolean {
   // Don't activate interactive mode in test environment
   // unless explicitly enabled for E2E testing
-  if (process.env.NODE_ENV === "test" || process.env.VITEST === "true") {
-    return process.env.ENABLE_INTERACTIVE_E2E_TESTING === "true";
+  if (process.env.NODE_ENV === 'test' || process.env.VITEST === 'true') {
+    return process.env.ENABLE_INTERACTIVE_E2E_TESTING === 'true';
   }
 
   // Activate interactive mode if:

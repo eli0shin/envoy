@@ -73,7 +73,7 @@ export function getMCPPromptCommands(
         handler: async (session, args) => {
           await executeMCPPrompt(client, prompt.name, args, session);
         },
-        arguments: prompt.arguments?.map(arg => ({
+        arguments: prompt.arguments?.map((arg) => ({
           name: arg.name,
           description: arg.description || '',
           required: arg.required || false,
@@ -102,7 +102,7 @@ async function executeMCPPrompt(
     if (session && result.messages.length > 0) {
       const promptContent = result.messages
         .map(
-          msg =>
+          (msg) =>
             `[${msg.role}] ${msg.content.text || JSON.stringify(msg.content)}`
         )
         .join('\n');
@@ -167,7 +167,7 @@ export function setupMCPPromptNotifications(
             })
             .optional(),
         },
-        async notification => {
+        async (notification) => {
           logger.debug(
             `Prompts list changed for server: ${wrapper.serverName}`
           );
@@ -273,10 +273,10 @@ export async function getSuggestions(
   if (parts.length === 1) {
     // Complete command name
     return Array.from(registry.commandCache.values())
-      .filter(cmd =>
+      .filter((cmd) =>
         cmd.command.toLowerCase().startsWith(commandPart.toLowerCase())
       )
-      .map(cmd => ({
+      .map((cmd) => ({
         value: cmd.command,
         description: cmd.description,
         type: 'command' as const,

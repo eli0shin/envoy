@@ -153,13 +153,11 @@ Our MCP client (`src/mcpLoader.ts`) now:
 ### Core Primitives ✅ **ALL IMPLEMENTED**
 
 1. **Tools** (Model-controlled) ✅ **COMPLETE**
-
    - Functions that LLMs can call to perform actions
    - Executed during model inference
    - **Working**: Full implementation with validation, logging, error handling
 
 2. **Prompts** (User-controlled) ✅ **COMPLETE**
-
    - Pre-defined templates for optimal tool/resource usage
    - Selected before running inference
    - Can have parameters for customization
@@ -196,21 +194,18 @@ Our MCP client (`src/mcpLoader.ts`) now:
 **Outstanding Features:**
 
 - ❌ **Interactive prompt selection**: Placeholder only (`--interactive-prompt`)
-
   - Shows "not implemented" message
   - Could be enhanced with rich terminal UI (inquirer.js, blessed, etc.)
   - Could add prompt search and filtering
   - Could add argument auto-completion
 
 - ❌ **Auto-resource discovery**: Placeholder only (`--auto-resources`)
-
   - Argument exists but no functionality implemented
   - Could implement content analysis for relevance scoring
   - Could use embeddings/ML for smarter resource matching
   - Could add resource caching and indexing
 
 - ❌ **Resource inclusion**: Placeholder only (`--resources`)
-
   - Argument exists but no functionality implemented
   - Could implement `--resources "uri1,uri2"` for specific resource inclusion
   - Could add resource filtering and search capabilities
@@ -525,7 +520,7 @@ function createPromptTools(
         };
       }
     },
-    originalExecute: async args => {
+    originalExecute: async (args) => {
       const result = await executePrompt(client, args.name, args.arguments);
       return { result: JSON.stringify(result, null, 2) };
     },
@@ -622,7 +617,7 @@ function createResourceTools(
         };
       }
     },
-    originalExecute: async args => {
+    originalExecute: async (args) => {
       const result = await readResource(client, args.uri);
       return { result: JSON.stringify(result, null, 2) };
     },
@@ -687,7 +682,7 @@ async function handleListPrompts(clientWrappers: MCPClientWrapper[]) {
         if (prompt.arguments && prompt.arguments.length > 0) {
           console.log(
             `    Arguments: ${prompt.arguments
-              .map(arg => `${arg.name}${arg.required ? '*' : ''}`)
+              .map((arg) => `${arg.name}${arg.required ? '*' : ''}`)
               .join(', ')}`
           );
         }
@@ -758,7 +753,8 @@ function isResourceRelevant(message: string, resource: MCPResource): boolean {
   // Simple keyword matching - can be enhanced with ML/embeddings
   const keywords = ['log', 'config', 'doc', 'readme', 'error', 'debug'];
   return keywords.some(
-    keyword => messageLower.includes(keyword) && resourceLower.includes(keyword)
+    (keyword) =>
+      messageLower.includes(keyword) && resourceLower.includes(keyword)
   );
 }
 ```
@@ -798,7 +794,7 @@ async function handleInteractivePrompt(clientWrappers: MCPClientWrapper[]) {
       type: 'list',
       name: 'selectedPrompt',
       message: 'Select a prompt to use:',
-      choices: allPrompts.map(p => ({
+      choices: allPrompts.map((p) => ({
         name: `${p.name} - ${p.description}`,
         value: p,
       })),
@@ -817,8 +813,9 @@ async function handleInteractivePrompt(clientWrappers: MCPClientWrapper[]) {
           type: 'input',
           name: 'value',
           message: `Enter value for ${arg.name}${arg.required ? ' (required)' : ''}:`,
-          validate: arg.required
-            ? (input: string) => input.length > 0 || 'This field is required'
+          validate:
+            arg.required ?
+              (input: string) => input.length > 0 || 'This field is required'
             : undefined,
         },
       ]);
@@ -828,7 +825,7 @@ async function handleInteractivePrompt(clientWrappers: MCPClientWrapper[]) {
 
   // Execute the prompt
   const wrapper = clientWrappers.find(
-    w => w.serverName === selectedPrompt.serverName
+    (w) => w.serverName === selectedPrompt.serverName
   );
   if (wrapper) {
     try {
@@ -961,13 +958,11 @@ export async function createMCPClientWrapper(
 #### 6.2 Testing Strategy
 
 1. **Unit Tests**
-
    - Test prompt/resource discovery functions
    - Test CLI argument parsing
    - Test context enhancement logic
 
 2. **Integration Tests**
-
    - Test with MCP servers that expose prompts/resources
    - Test end-to-end prompt execution
    - Test resource reading and context injection

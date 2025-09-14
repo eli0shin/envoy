@@ -265,17 +265,14 @@ Update the default model fallback logic:
 
 ```typescript
 const model =
-  typeof providerConfig === 'object' && providerConfig.model
-    ? providerConfig.model
-    : defaultProvider === 'openrouter'
-      ? 'google/gemini-2.5-flash-preview-05-20'
-      : defaultProvider === 'anthropic'
-        ? 'claude-sonnet-4-20250514'
-        : defaultProvider === 'openai'
-          ? 'o4-mini'
-          : defaultProvider === 'google'
-            ? 'gemini-2.5-pro' // New fallback
-            : 'gemini-2.5-pro'; // New default fallback
+  typeof providerConfig === 'object' && providerConfig.model ?
+    providerConfig.model
+  : defaultProvider === 'openrouter' ? 'google/gemini-2.5-flash-preview-05-20'
+  : defaultProvider === 'anthropic' ? 'claude-sonnet-4-20250514'
+  : defaultProvider === 'openai' ? 'o4-mini'
+  : defaultProvider === 'google' ?
+    'gemini-2.5-pro' // New fallback
+  : 'gemini-2.5-pro'; // New default fallback
 ```
 
 Update supported providers error message:

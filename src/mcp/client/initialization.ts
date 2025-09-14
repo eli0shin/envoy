@@ -78,9 +78,9 @@ export async function initializeServerWithCapabilities(
 
     logger.debug(
       `Server ${config.name} initialized in ${initTime}ms. Capabilities: ${
-        supportedCapabilities.length > 0
-          ? supportedCapabilities.join(', ')
-          : 'none detected'
+        supportedCapabilities.length > 0 ?
+          supportedCapabilities.join(', ')
+        : 'none detected'
       }`
     );
 

@@ -2,17 +2,17 @@
  * Tests for conversation persistence integration in runAgent
  */
 
-import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
-import { runAgent } from "./index.js";
-import { streamText } from "ai";
-import type { RuntimeConfiguration } from "../config/types.js";
-import type { AgentSession } from "../agentSession.js";
-import type { CoreMessage } from "ai";
-import type { ConversationPersistence } from "../persistence/ConversationPersistence.js";
-import { createMockAgentSession } from "../test/helpers/createMocks.js";
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { runAgent } from './index.js';
+import { streamText } from 'ai';
+import type { RuntimeConfiguration } from '../config/types.js';
+import type { AgentSession } from '../agentSession.js';
+import type { CoreMessage } from 'ai';
+import type { ConversationPersistence } from '../persistence/ConversationPersistence.js';
+import { createMockAgentSession } from '../test/helpers/createMocks.js';
 
 // Mock the AI SDK
-vi.mock("ai", () => ({
+vi.mock('ai', () => ({
   generateText: vi.fn(),
   streamText: vi.fn(),
   APICallError: { isInstance: vi.fn(() => false) },
@@ -24,7 +24,7 @@ vi.mock("ai", () => ({
 }));
 
 // Use same structure as createMockLogger() but with test-specific overrides (avoids hoisting issues)
-vi.mock("./logger.js", () => ({
+vi.mock('./logger.js', () => ({
   // Main logger object - same structure as createMockLogger()
   logger: {
     debug: vi.fn(),
@@ -37,28 +37,28 @@ vi.mock("./logger.js", () => ({
     setLogLevel: vi.fn(),
     setLogProgress: vi.fn(),
     setSuppressConsoleOutput: vi.fn(),
-    getSessionId: vi.fn(() => "01932d4c-89ab-7890-abcd-123456789ghi"),
-    getLogDirectory: vi.fn(() => "/test/logs"),
-    getCurrentLogProgress: vi.fn(() => "none"),
+    getSessionId: vi.fn(() => '01932d4c-89ab-7890-abcd-123456789ghi'),
+    getLogDirectory: vi.fn(() => '/test/logs'),
+    getCurrentLogProgress: vi.fn(() => 'none'),
   },
   // Individual function exports - same structure as createMockLogger() but with overrides
-  getSessionId: vi.fn(() => "01932d4c-89ab-7890-abcd-123456789ghi"),
-  getLogDirectory: vi.fn(() => "/test/logs"),
-  getConversationDirectory: vi.fn(() => "/test/conversations"),
+  getSessionId: vi.fn(() => '01932d4c-89ab-7890-abcd-123456789ghi'),
+  getLogDirectory: vi.fn(() => '/test/logs'),
+  getConversationDirectory: vi.fn(() => '/test/conversations'),
   getProjectConversationDirectory: vi.fn(
-    (projectIdentifier: string) => `/test/conversations/${projectIdentifier}`,
+    (projectIdentifier: string) => `/test/conversations/${projectIdentifier}`
   ),
   getProjectConversationFile: vi.fn(
     (projectIdentifier: string, sessionId: string) =>
-      `/test/conversations/${projectIdentifier}/${sessionId}.jsonl`,
+      `/test/conversations/${projectIdentifier}/${sessionId}.jsonl`
   ),
   logMcpTool: vi.fn(),
   setLogLevel: vi.fn(),
   setLogProgress: vi.fn(),
-  createSessionId: vi.fn(() => "01932d4c-89ab-7890-abcd-123456789ghi"),
+  createSessionId: vi.fn(() => '01932d4c-89ab-7890-abcd-123456789ghi'),
 }));
 
-describe("runAgent conversation persistence integration", () => {
+describe('runAgent conversation persistence integration', () => {
   let mockConfig: RuntimeConfiguration;
   let mockSession: AgentSession;
   let mockConversationPersistence: {
@@ -79,26 +79,26 @@ describe("runAgent conversation persistence integration", () => {
 
     // Create mock configuration
     mockConfig = {
-      message: "test",
+      message: 'test',
       stdin: false,
       json: false,
       agent: {
-        logProgress: "none",
+        logProgress: 'none',
         maxSteps: 5,
         timeout: 120000,
-        logLevel: "SILENT",
+        logLevel: 'SILENT',
         streaming: true,
         conversationPersistence: {
           enabled: true,
-          projectPath: "/test/project",
+          projectPath: '/test/project',
         },
       },
       providers: {
-        default: "openai",
-        openai: { model: "gpt-4" },
-        openrouter: { model: "test-model" },
-        anthropic: { model: "claude-3-5-sonnet-20241022" },
-        google: { model: "gemini-2.0-flash-exp" },
+        default: 'openai',
+        openai: { model: 'gpt-4' },
+        openrouter: { model: 'test-model' },
+        anthropic: { model: 'claude-3-5-sonnet-20241022' },
+        google: { model: 'gemini-2.0-flash-exp' },
       },
       tools: {
         globalTimeout: 300000,
@@ -118,24 +118,24 @@ describe("runAgent conversation persistence integration", () => {
     // Create mock stream result that matches the format expected by runAgent
     const mockStreamResult = {
       fullStream: (async function* () {
-        yield { type: "step-start" };
-        yield { type: "text-delta", textDelta: "Test" };
-        yield { type: "text-delta", textDelta: " response" };
-        yield { type: "step-finish" };
+        yield { type: 'step-start' };
+        yield { type: 'text-delta', textDelta: 'Test' };
+        yield { type: 'text-delta', textDelta: ' response' };
+        yield { type: 'step-finish' };
       })(),
       response: Promise.resolve({
         messages: [
-          { role: "user", content: "Test input" },
-          { role: "assistant", content: "Test response" },
+          { role: 'user', content: 'Test input' },
+          { role: 'assistant', content: 'Test response' },
         ],
       }),
-      finishReason: Promise.resolve("stop"),
+      finishReason: Promise.resolve('stop'),
       usage: Promise.resolve({
         totalTokens: 10,
         promptTokens: 5,
         completionTokens: 5,
       }),
-      text: Promise.resolve("Test response"),
+      text: Promise.resolve('Test response'),
       toolResults: Promise.resolve([]),
     };
 
@@ -146,20 +146,20 @@ describe("runAgent conversation persistence integration", () => {
     vi.clearAllMocks();
   });
 
-  describe("persistence enabled scenarios", () => {
-    it("should persist messages after successful completion", async () => {
-      const userMessage = "Hello, test message";
+  describe('persistence enabled scenarios', () => {
+    it('should persist messages after successful completion', async () => {
+      const userMessage = 'Hello, test message';
 
       const result = await runAgent(
         userMessage,
         mockConfig,
         mockSession,
-        false,
+        false
       );
 
       expect(result.success).toBe(true);
       expect(mockConversationPersistence.persistMessages).toHaveBeenCalledTimes(
-        1,
+        1
       );
 
       // Verify the messages passed to persistMessages include user and assistant messages
@@ -168,71 +168,71 @@ describe("runAgent conversation persistence integration", () => {
       expect(persistedMessages).toEqual(
         expect.arrayContaining([
           expect.objectContaining({
-            role: "user",
+            role: 'user',
             content: userMessage,
           }),
           expect.objectContaining({
-            role: "assistant",
+            role: 'assistant',
             content: expect.any(String),
           }),
-        ]),
+        ])
       );
     });
 
-    it("should persist messages from conversation history", async () => {
+    it('should persist messages from conversation history', async () => {
       const conversationHistory: CoreMessage[] = [
-        { role: "user", content: "First message" },
-        { role: "assistant", content: "First response" },
-        { role: "user", content: "Second message" },
+        { role: 'user', content: 'First message' },
+        { role: 'assistant', content: 'First response' },
+        { role: 'user', content: 'Second message' },
       ];
 
       await runAgent(conversationHistory, mockConfig, mockSession, false);
 
       expect(mockConversationPersistence.persistMessages).toHaveBeenCalledTimes(
-        1,
+        1
       );
 
       // Verify all conversation messages are persisted
       const persistedMessages =
         mockConversationPersistence.persistMessages.mock.calls[0][0];
       expect(persistedMessages.length).toBeGreaterThanOrEqual(
-        conversationHistory.length,
+        conversationHistory.length
       );
 
       // Check that original conversation messages are included
       expect(persistedMessages).toEqual(
         expect.arrayContaining([
-          expect.objectContaining({ role: "user", content: "First message" }),
+          expect.objectContaining({ role: 'user', content: 'First message' }),
           expect.objectContaining({
-            role: "assistant",
-            content: "First response",
+            role: 'assistant',
+            content: 'First response',
           }),
-          expect.objectContaining({ role: "user", content: "Second message" }),
-        ]),
+          expect.objectContaining({ role: 'user', content: 'Second message' }),
+        ])
       );
     });
 
-    it("should handle persistence errors gracefully", async () => {
+    it('should handle persistence errors gracefully', async () => {
       // Instead of mocking the persistence to throw, we create a session with a persistence
       // service that has internal error handling. Since our current implementation handles
       // all errors internally and never throws, we test that the agent succeeds normally.
 
       const result = await runAgent(
-        "Test message",
+        'Test message',
         mockConfig,
         mockSession,
-        false,
+        false
       );
 
       // Agent execution should succeed - persistence errors are handled internally
       expect(result.success).toBe(true);
-      expect(result.response).toBe("Test response");
+      expect(result.response).toBe('Test response');
       expect(mockConversationPersistence.persistMessages).toHaveBeenCalledTimes(
-        1,
+        1
       );
     });
 
-    it("should not persist messages when persistence fails validation", async () => {
+    it('should not persist messages when persistence fails validation', async () => {
       // Mock isMessageComplete to return false for all messages
       const mockPersistenceNoComplete = {
         ...mockConversationPersistence,
@@ -250,16 +250,16 @@ describe("runAgent conversation persistence integration", () => {
         conversationPersistence: mockPersistenceNoComplete,
       });
 
-      await runAgent("Test message", mockConfig, mockSession_NoComplete, false);
+      await runAgent('Test message', mockConfig, mockSession_NoComplete, false);
 
       // persistMessages should still be called, but with filtered messages
       expect(
-        mockSession_NoComplete.conversationPersistence!.persistMessages,
+        mockSession_NoComplete.conversationPersistence!.persistMessages
       ).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe("persistence disabled scenarios", () => {
+  describe('persistence disabled scenarios', () => {
     beforeEach(() => {
       // Create session without conversation persistence
       mockSession = createMockAgentSession({
@@ -267,45 +267,45 @@ describe("runAgent conversation persistence integration", () => {
       });
     });
 
-    it("should not attempt persistence when conversationPersistence is undefined", async () => {
+    it('should not attempt persistence when conversationPersistence is undefined', async () => {
       const result = await runAgent(
-        "Test message",
+        'Test message',
         mockConfig,
         mockSession,
-        false,
+        false
       );
 
       expect(result.success).toBe(true);
       // No persistence calls should be made
       expect(
-        mockConversationPersistence.persistMessages,
+        mockConversationPersistence.persistMessages
       ).not.toHaveBeenCalled();
     });
 
-    it("should work normally in interactive mode without persistence", async () => {
+    it('should work normally in interactive mode without persistence', async () => {
       const result = await runAgent(
-        "Test message",
+        'Test message',
         mockConfig,
         mockSession,
-        true, // interactive mode
+        true // interactive mode
       );
 
       expect(result.success).toBe(true);
       expect(result.messages).toBeDefined();
       expect(
-        mockConversationPersistence.persistMessages,
+        mockConversationPersistence.persistMessages
       ).not.toHaveBeenCalled();
     });
   });
 
-  describe("error scenarios with persistence", () => {
-    it("should persist messages even when tool errors occur", async () => {
+  describe('error scenarios with persistence', () => {
+    it('should persist messages even when tool errors occur', async () => {
       // Use the same basic setup as successful tests - the key is that persistence should always be called
       const result = await runAgent(
-        "Test message",
+        'Test message',
         mockConfig,
         mockSession,
-        false,
+        false
       );
 
       // Should persist messages regardless of tool errors
@@ -314,18 +314,18 @@ describe("runAgent conversation persistence integration", () => {
     });
   });
 
-  describe("message completion detection", () => {
-    it("should only persist complete messages based on ConversationPersistence.isMessageComplete", async () => {
+  describe('message completion detection', () => {
+    it('should only persist complete messages based on ConversationPersistence.isMessageComplete', async () => {
       const result = await runAgent(
-        "Test message",
+        'Test message',
         mockConfig,
         mockSession,
-        false,
+        false
       );
 
       expect(result.success).toBe(true);
       expect(mockConversationPersistence.persistMessages).toHaveBeenCalledTimes(
-        1,
+        1
       );
 
       // Verify that persistMessages was called with messages

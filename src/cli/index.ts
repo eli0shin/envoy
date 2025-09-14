@@ -11,12 +11,12 @@ import { main } from './handlers/executionFlow.js';
 /**
  * Handle uncaught exceptions and unhandled rejections
  */
-process.on('uncaughtException', async error => {
+process.on('uncaughtException', async (error) => {
   process.stderr.write(`Uncaught exception: ${error.message}\n`);
   process.exit(1);
 });
 
-process.on('unhandledRejection', async reason => {
+process.on('unhandledRejection', async (reason) => {
   process.stderr.write(`Unhandled rejection: ${reason}\n`);
   process.exit(1);
 });

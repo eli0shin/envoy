@@ -3,26 +3,26 @@
  * Handles session listing, prompt/resource commands, and main execution orchestration
  */
 
-import fs from "fs";
-import { parseArguments } from "../config/argumentParser.js";
-import { readStdin } from "../io/inputHandler.js";
+import fs from 'fs';
+import { parseArguments } from '../config/argumentParser.js';
+import { readStdin } from '../io/inputHandler.js';
 
 import {
   createRuntimeConfiguration,
   getMCPServersFromConfig,
-} from "../../config/index.js";
+} from '../../config/index.js';
 import {
   initializeAgent,
   runAgent,
   formatExecutionSummary,
-} from "../../agent/index.js";
+} from '../../agent/index.js';
 import {
   initializeAgentSession,
   cleanupAgentSession,
-} from "../../agentSession.js";
-import { launchTUI } from "../../tui/index.js";
+} from '../../agentSession.js';
+import { launchTUI } from '../../tui/index.js';
 
-import { createMCPClientWrapper } from "../../mcp/loader.js";
+import { createMCPClientWrapper } from '../../mcp/loader.js';
 import {
   handleListPrompts,
   handleListResources,
@@ -30,24 +30,24 @@ import {
   handleInteractivePrompt,
   handleResourceInclusion,
   handleAutoResourceDiscovery,
-} from "../handlers/mcpCommands.js";
+} from '../handlers/mcpCommands.js';
 import {
   logger,
   setLogLevel,
   setLogProgress,
   getProjectConversationDirectory,
   getProjectConversationFile,
-} from "../../logger.js";
-import { ConversationPersistence } from "../../persistence/ConversationPersistence.js";
-import { ProcessManager } from "../../mcp/processManager.js";
-import type { CLIOptions, MCPClientWrapper } from "../../types/index.js";
-import type { Configuration } from "../../config/types.js";
+} from '../../logger.js';
+import { ConversationPersistence } from '../../persistence/ConversationPersistence.js';
+import { ProcessManager } from '../../mcp/processManager.js';
+import type { CLIOptions, MCPClientWrapper } from '../../types/index.js';
+import type { Configuration } from '../../config/types.js';
 
 /**
  * Handles session listing command
  */
 export async function handleSessionListing(
-  options: CLIOptions,
+  options: CLIOptions
 ): Promise<{ handled: boolean; success: boolean }> {
   if (!options.listSessions) {
     return { handled: false, success: true };
@@ -56,7 +56,7 @@ export async function handleSessionListing(
   try {
     // Get project identifier and conversation directory
     const projectIdentifier = ConversationPersistence.getProjectIdentifier(
-      process.cwd(),
+      process.cwd()
     );
     const projectDir = getProjectConversationDirectory(projectIdentifier);
 
@@ -69,19 +69,21 @@ export async function handleSessionListing(
 
       // Filter to only JSONL files and extract session information
       const sessions = files
-        .filter((file) => file.endsWith(".jsonl"))
+        .filter((file) => file.endsWith('.jsonl'))
         .map((file) => {
-          const sessionId = file.replace(".jsonl", "");
+          const sessionId = file.replace('.jsonl', '');
           const filePath = getProjectConversationFile(
             projectIdentifier,
-            sessionId,
+            sessionId
           );
           return { sessionId, filePath };
         })
         .sort((a, b) => b.sessionId.localeCompare(a.sessionId)); // Latest first (UUID v7 sorts by time)
 
       if (sessions.length === 0) {
-        process.stdout.write("No conversation sessions found for this project.\n");
+        process.stdout.write(
+          'No conversation sessions found for this project.\n'
+        );
         return { handled: true, success: true };
       }
 
@@ -92,11 +94,11 @@ export async function handleSessionListing(
           const stats = await fs.promises.stat(session.filePath);
           const fileContent = await fs.promises.readFile(
             session.filePath,
-            "utf8",
+            'utf8'
           );
           const lines = fileContent
             .trim()
-            .split("\n")
+            .split('\n')
             .filter((line) => line.trim());
 
           // Parse first line to get session start time
@@ -106,18 +108,24 @@ export async function handleSessionListing(
           process.stdout.write(`  ${session.sessionId}\n`);
           process.stdout.write(`    Started: ${startTime}\n`);
           process.stdout.write(`    Messages: ${lines.length}\n`);
-          process.stdout.write(`    Size: ${(stats.size / 1024).toFixed(1)} KB\n\n`);
+          process.stdout.write(
+            `    Size: ${(stats.size / 1024).toFixed(1)} KB\n\n`
+          );
         } catch {
           process.stdout.write(`  ${session.sessionId} (corrupted)\n\n`);
         }
       }
 
       process.stdout.write(`Total: ${sessions.length} conversation(s)\n`);
-      process.stdout.write(`\nTo resume a conversation: --resume <session-id>\n`);
+      process.stdout.write(
+        `\nTo resume a conversation: --resume <session-id>\n`
+      );
       process.stdout.write(`To resume latest: --resume\n`);
     } catch (error) {
-      if ((error as NodeJS.ErrnoException).code === "ENOENT") {
-        process.stdout.write("No conversation sessions found for this project.\n");
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        process.stdout.write(
+          'No conversation sessions found for this project.\n'
+        );
       } else {
         throw error;
       }
@@ -137,7 +145,7 @@ export async function handleSessionListing(
  */
 export async function handlePromptResourceCommands(
   options: CLIOptions,
-  config: Configuration,
+  config: Configuration
 ): Promise<{ handled: boolean; success: boolean }> {
   // Check if any prompt/resource commands were specified
   const hasPromptResourceCommands =
@@ -162,7 +170,7 @@ export async function handlePromptResourceCommands(
         clientWrappers.push(wrapper);
       } catch (error) {
         logger.warn(
-          `Failed to connect to MCP server ${serverConfig.name}: ${error}`,
+          `Failed to connect to MCP server ${serverConfig.name}: ${error}`
         );
         if (!options.json) {
           process.stderr.write(
@@ -174,10 +182,12 @@ export async function handlePromptResourceCommands(
 
     if (clientWrappers.length === 0) {
       const message =
-        "No MCP servers available for prompts and resources operations";
+        'No MCP servers available for prompts and resources operations';
       logger.error(message);
       if (options.json) {
-        process.stdout.write(JSON.stringify({ error: message }, null, 2) + '\n');
+        process.stdout.write(
+          JSON.stringify({ error: message }, null, 2) + '\n'
+        );
       } else {
         process.stderr.write(message + '\n');
       }
@@ -202,7 +212,7 @@ export async function handlePromptResourceCommands(
         clientWrappers,
         options.prompt,
         options.promptArgs,
-        options.json || false,
+        options.json || false
       );
       return { handled: true, success };
     }
@@ -211,7 +221,7 @@ export async function handlePromptResourceCommands(
     if (options.interactivePrompt) {
       const success = await handleInteractivePrompt(
         clientWrappers,
-        options.json || false,
+        options.json || false
       );
       return { handled: true, success };
     }
@@ -231,44 +241,51 @@ export async function handlePromptResourceCommands(
 
 /**
  * Initializes process cleanup handlers for MCP server child processes
+ * @returns Function to remove SIGINT handler (for TUI mode)
  */
-function initializeProcessCleanup(): void {
+function initializeProcessCleanup(): () => void {
   const processManager = ProcessManager.getInstance();
 
   // Handle normal exit
-  process.on("exit", () => {
+  process.on('exit', () => {
     processManager.cleanupAll();
   });
 
   // Handle Ctrl+C
-  process.on("SIGINT", () => {
-    logger.info("Received SIGINT, cleaning up...");
+  const sigintHandler = () => {
+    logger.info('Received SIGINT, cleaning up...');
     processManager.cleanupAll();
     process.exit(0);
-  });
+  };
+  process.on('SIGINT', sigintHandler);
 
   // Handle termination signal
-  process.on("SIGTERM", () => {
-    logger.info("Received SIGTERM, cleaning up...");
+  process.on('SIGTERM', () => {
+    logger.info('Received SIGTERM, cleaning up...');
     processManager.cleanupAll();
     process.exit(0);
   });
 
   // Handle uncaught exceptions (override existing handler)
-  process.removeAllListeners("uncaughtException");
-  process.on("uncaughtException", (error) => {
+  process.removeAllListeners('uncaughtException');
+  process.on('uncaughtException', (error) => {
     process.stderr.write(`Uncaught exception: ${error.message}\n`);
     processManager.cleanupAll();
     process.exit(1);
   });
 
   // Handle unhandled promise rejections (override existing handler)
-  process.removeAllListeners("unhandledRejection");
-  process.on("unhandledRejection", (reason, _promise) => {
+  process.removeAllListeners('unhandledRejection');
+  process.on('unhandledRejection', (reason, _promise) => {
     process.stderr.write(`Unhandled rejection: ${String(reason)}\n`);
     processManager.cleanupAll();
     process.exit(1);
   });
+
+  // Return function to remove SIGINT handler
+  return () => {
+    process.removeListener('SIGINT', sigintHandler);
+  };
 }
 
 /**
@@ -276,7 +293,7 @@ function initializeProcessCleanup(): void {
  */
 export async function main(): Promise<void> {
   // Initialize process cleanup handlers early
-  initializeProcessCleanup();
+  const removeSigintHandler = initializeProcessCleanup();
   try {
     // Parse command line arguments
     const { options, message } = await parseArguments();
@@ -289,8 +306,8 @@ export async function main(): Promise<void> {
       try {
         userMessage = await readStdin();
       } catch {
-        logger.error("No input provided via stdin");
-        process.stderr.write("Message cannot be empty\n");
+        logger.error('No input provided via stdin');
+        process.stderr.write('Message cannot be empty\n');
         process.exit(1);
       }
     } else if (message) {
@@ -308,10 +325,10 @@ export async function main(): Promise<void> {
       if (!hasPromptResourceCommands) {
         // No message provided and no prompt/resource commands
         // This might be interactive mode, so set a placeholder for now
-        userMessage = "";
+        userMessage = '';
       } else {
         // We have prompt/resource commands, set a placeholder message
-        userMessage = "";
+        userMessage = '';
       }
     }
 
@@ -334,10 +351,10 @@ export async function main(): Promise<void> {
     if (
       !hasPromptResourceCommands &&
       !wouldActivateInteractiveMode &&
-      (!userMessage || userMessage.trim() === "")
+      (!userMessage || userMessage.trim() === '')
     ) {
-      logger.error("Message is empty after validation");
-      process.stderr.write("Message cannot be empty\n");
+      logger.error('Message is empty after validation');
+      process.stderr.write('Message cannot be empty\n');
       process.exit(1);
     }
 
@@ -363,10 +380,10 @@ export async function main(): Promise<void> {
     if (shouldLaunchTUI) {
       // Update logger settings first
       setLogLevel(
-        configResult.config.agent.logLevel || options.logLevel || "SILENT",
+        configResult.config.agent.logLevel || options.logLevel || 'SILENT'
       );
       setLogProgress(
-        configResult.config.agent.logProgress || options.logProgress || "none",
+        configResult.config.agent.logProgress || options.logProgress || 'none'
       );
 
       // Initialize agent (environment validation)
@@ -377,6 +394,9 @@ export async function main(): Promise<void> {
 
       // Initialize agent session first
       const agentSession = await initializeAgentSession(configResult.config);
+
+      // Remove SIGINT handler to allow TUI to handle C-c properly
+      removeSigintHandler();
 
       // Launch TUI interface
       launchTUI(configResult.config, agentSession);
@@ -389,20 +409,20 @@ export async function main(): Promise<void> {
 
     // Update logger with final settings (prioritizing config file over CLI)
     setLogLevel(
-      configResult.config.agent.logLevel || options.logLevel || "SILENT",
+      configResult.config.agent.logLevel || options.logLevel || 'SILENT'
     );
     setLogProgress(
-      configResult.config.agent.logProgress || options.logProgress || "none",
+      configResult.config.agent.logProgress || options.logProgress || 'none'
     );
 
     // Log configuration loading
     if (configResult.errors?.length) {
-      logger.warn("Configuration warnings detected", {
+      logger.warn('Configuration warnings detected', {
         errors: configResult.errors || [],
         hasErrors: (configResult.errors?.length || 0) > 0,
       });
     }
-    logger.info("Configuration loaded", {
+    logger.info('Configuration loaded', {
       sources: configResult.loadedFrom || [],
       hasSource: (configResult.loadedFrom?.length || 0) > 0,
     });
@@ -418,7 +438,7 @@ export async function main(): Promise<void> {
     try {
       agentSession = await initializeAgentSession(configResult.config);
     } catch (error) {
-      logger.error("Agent session initialization failed");
+      logger.error('Agent session initialization failed');
       process.stderr.write(
         `Initialization error: ${error instanceof Error ? error.message : String(error)}\n`
       );
@@ -435,7 +455,7 @@ export async function main(): Promise<void> {
     // Handle MCP prompts and resources CLI operations
     const promptResourceResult = await handlePromptResourceCommands(
       options,
-      configResult.config,
+      configResult.config
     );
     if (promptResourceResult.handled) {
       // Command was handled, exit with result status
@@ -457,21 +477,21 @@ export async function main(): Promise<void> {
             clientWrappers.push(wrapper);
           } catch (error) {
             logger.warn(
-              `Failed to connect to MCP server ${serverConfig.name} for resource operations: ${error}`,
+              `Failed to connect to MCP server ${serverConfig.name} for resource operations: ${error}`
             );
           }
         }
 
         if (clientWrappers.length === 0) {
-          logger.warn("No MCP servers available for resource operations");
+          logger.warn('No MCP servers available for resource operations');
         } else {
-          let resourceContext = "";
+          let resourceContext = '';
 
           // Handle specific resource inclusion
           if (options.resources) {
             resourceContext += await handleResourceInclusion(
               options.resources,
-              clientWrappers,
+              clientWrappers
             );
           }
 
@@ -479,13 +499,13 @@ export async function main(): Promise<void> {
           if (options.autoResources) {
             resourceContext += await handleAutoResourceDiscovery(
               enhancedMessage,
-              clientWrappers,
+              clientWrappers
             );
           }
 
           if (resourceContext) {
             enhancedMessage += resourceContext;
-            logger.info("Enhanced message with resource context", {
+            logger.info('Enhanced message with resource context', {
               originalLength: userMessage.trim().length,
               enhancedLength: enhancedMessage.length,
             });
@@ -498,21 +518,21 @@ export async function main(): Promise<void> {
             // Process cleanup handled globally by ProcessManager
           } catch (error) {
             logger.warn(
-              `Failed to disconnect from ${wrapper.serverName}: ${error}`,
+              `Failed to disconnect from ${wrapper.serverName}: ${error}`
             );
           }
         }
       } catch (error) {
         logger.warn(
-          `Error during resource processing: ${error instanceof Error ? error.message : String(error)}`,
+          `Error during resource processing: ${error instanceof Error ? error.message : String(error)}`
         );
       }
     }
 
-    logger.info("Starting agent execution", {
+    logger.info('Starting agent execution', {
       message:
         enhancedMessage.substring(0, 100) +
-        (enhancedMessage.length > 100 ? "..." : ""),
+        (enhancedMessage.length > 100 ? '...' : ''),
     });
 
     // Run the agent with enhanced message using initialized session
@@ -522,17 +542,17 @@ export async function main(): Promise<void> {
         enhancedMessage,
         configResult.config,
         agentSession,
-        false,
+        false
       );
 
-      logger.info("Agent execution completed", {
+      logger.info('Agent execution completed', {
         success: result.success,
         toolCallsCount: result.toolCallsCount,
         executionTime: result.executionTime,
       });
 
       // Log execution summary
-      logger.info("Execution summary", {
+      logger.info('Execution summary', {
         success: result.success,
         toolCallsCount: result.toolCallsCount,
         executionTime: result.executionTime,
@@ -540,7 +560,7 @@ export async function main(): Promise<void> {
 
       if (
         !configResult.config.json &&
-        configResult.config.agent.logProgress !== "none"
+        configResult.config.agent.logProgress !== 'none'
       ) {
         process.stderr.write(formatExecutionSummary(result) + '\n');
       }
@@ -553,9 +573,9 @@ export async function main(): Promise<void> {
     process.exit(result.success ? 0 : 1);
   } catch (error) {
     const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
+      error instanceof Error ? error.message : 'Unknown error occurred';
 
-    logger.error("Fatal CLI error", { error: errorMessage });
+    logger.error('Fatal CLI error', { error: errorMessage });
 
     process.stderr.write(`Fatal error: ${errorMessage}\n`);
     process.exit(1);

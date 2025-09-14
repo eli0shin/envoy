@@ -53,7 +53,7 @@ describe('todoServer', () => {
     it('should add a new todo item', async () => {
       // Find the todo_add tool registration
       const todoAddCall = mockServer.tool.mock.calls.find(
-        call => call[0] === 'todo_add'
+        (call) => call[0] === 'todo_add'
       );
       expect(todoAddCall).toBeDefined();
 
@@ -70,7 +70,7 @@ describe('todoServer', () => {
 
     it('should reject empty todo content', async () => {
       const todoAddCall = mockServer.tool.mock.calls.find(
-        call => call[0] === 'todo_add'
+        (call) => call[0] === 'todo_add'
       );
       const toolHandler = todoAddCall?.[2];
       expect(toolHandler).toBeDefined();
@@ -87,7 +87,7 @@ describe('todoServer', () => {
   describe('todo_list', () => {
     it('should return empty list initially', async () => {
       const todoListCall = mockServer.tool.mock.calls.find(
-        call => call[0] === 'todo_list'
+        (call) => call[0] === 'todo_list'
       );
       expect(todoListCall).toBeDefined();
 
@@ -103,10 +103,10 @@ describe('todoServer', () => {
 
     it('should return todos after adding them', async () => {
       const todoAddCall = mockServer.tool.mock.calls.find(
-        call => call[0] === 'todo_add'
+        (call) => call[0] === 'todo_add'
       );
       const todoListCall = mockServer.tool.mock.calls.find(
-        call => call[0] === 'todo_list'
+        (call) => call[0] === 'todo_list'
       );
 
       // Add a todo first
@@ -127,7 +127,7 @@ describe('todoServer', () => {
   describe('todo_update', () => {
     it('should return error for non-existent todo', async () => {
       const todoUpdateCall = mockServer.tool.mock.calls.find(
-        call => call[0] === 'todo_update'
+        (call) => call[0] === 'todo_update'
       );
       const toolHandler = todoUpdateCall?.[2];
       expect(toolHandler).toBeDefined();
@@ -145,7 +145,7 @@ describe('todoServer', () => {
 
     it('should reject invalid status values', async () => {
       const todoUpdateCall = mockServer.tool.mock.calls.find(
-        call => call[0] === 'todo_update'
+        (call) => call[0] === 'todo_update'
       );
       const toolHandler = todoUpdateCall?.[2];
       expect(toolHandler).toBeDefined();
@@ -165,7 +165,7 @@ describe('todoServer', () => {
   describe('todo_remove', () => {
     it('should return error for non-existent todo', async () => {
       const todoRemoveCall = mockServer.tool.mock.calls.find(
-        call => call[0] === 'todo_remove'
+        (call) => call[0] === 'todo_remove'
       );
       const toolHandler = todoRemoveCall?.[2];
       expect(toolHandler).toBeDefined();
@@ -182,7 +182,7 @@ describe('todoServer', () => {
   describe('todo_clear', () => {
     it('should clear all todos', async () => {
       const todoClearCall = mockServer.tool.mock.calls.find(
-        call => call[0] === 'todo_clear'
+        (call) => call[0] === 'todo_clear'
       );
       const toolHandler = todoClearCall?.[2];
       expect(toolHandler).toBeDefined();
@@ -197,7 +197,7 @@ describe('todoServer', () => {
   describe('todo_reorder', () => {
     it('should return error for non-existent todo', async () => {
       const todoReorderCall = mockServer.tool.mock.calls.find(
-        call => call[0] === 'todo_reorder'
+        (call) => call[0] === 'todo_reorder'
       );
       const toolHandler = todoReorderCall?.[2];
       expect(toolHandler).toBeDefined();
@@ -215,10 +215,10 @@ describe('todoServer', () => {
 
     it('should reorder todos correctly', async () => {
       const todoAddCall = mockServer.tool.mock.calls.find(
-        call => call[0] === 'todo_add'
+        (call) => call[0] === 'todo_add'
       );
       const todoReorderCall = mockServer.tool.mock.calls.find(
-        call => call[0] === 'todo_reorder'
+        (call) => call[0] === 'todo_reorder'
       );
 
       // Add multiple todos first
@@ -247,7 +247,7 @@ describe('todoServer', () => {
     it('should register all expected tools', () => {
       expect(mockServer.tool).toHaveBeenCalledTimes(6); // add, list, update, remove, clear, reorder
 
-      const toolNames = mockServer.tool.mock.calls.map(call => call[0]);
+      const toolNames = mockServer.tool.mock.calls.map((call) => call[0]);
       expect(toolNames).toContain('todo_add');
       expect(toolNames).toContain('todo_list');
       expect(toolNames).toContain('todo_update');
@@ -258,7 +258,7 @@ describe('todoServer', () => {
 
     it('should have proper schema for todo_add', () => {
       const todoAddCall = mockServer.tool.mock.calls.find(
-        call => call[0] === 'todo_add'
+        (call) => call[0] === 'todo_add'
       );
       const schema = todoAddCall?.[1];
       expect(schema).toBeDefined();
@@ -269,7 +269,7 @@ describe('todoServer', () => {
 
     it('should have proper schema for todo_update', () => {
       const todoUpdateCall = mockServer.tool.mock.calls.find(
-        call => call[0] === 'todo_update'
+        (call) => call[0] === 'todo_update'
       );
       const schema = todoUpdateCall?.[1];
       expect(schema).toBeDefined();

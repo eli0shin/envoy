@@ -87,7 +87,7 @@ function isToolDisabled(
 
   // Check global disabled tools
   const globalDisabledTools = runtimeConfig.tools?.disabledInternalTools || [];
-  return globalDisabledTools.some(pattern => {
+  return globalDisabledTools.some((pattern) => {
     // Exact match: "filesystem_write_file"
     if (toolKey === pattern) return true;
 
@@ -381,7 +381,7 @@ function isToolDisabled(
 
   // Check global disabled tools (FR2)
   const globalDisabledTools = runtimeConfig.tools?.disabledInternalTools || [];
-  const isGloballyDisabled = globalDisabledTools.some(pattern => {
+  const isGloballyDisabled = globalDisabledTools.some((pattern) => {
     // Exact match: "filesystem_write_file"
     if (toolKey === pattern) return true;
 
@@ -508,9 +508,9 @@ function validateDisabledTools(
   const availableToolNames = Array.from(availableTools.keys());
 
   const invalidTools = globalDisabledTools.filter(
-    tool =>
+    (tool) =>
       !availableToolNames.some(
-        name =>
+        (name) =>
           name === tool ||
           name.endsWith(`_${tool}`) ||
           availableTools.get(name)?.toolName === tool
@@ -590,9 +590,9 @@ function validateToolDisableConfiguration(
   const globalDisabledTools = runtimeConfig.tools?.disabledInternalTools || [];
   const allToolNames = Array.from(mcpResult.tools.keys());
 
-  const unmatchedGlobalTools = globalDisabledTools.filter(pattern => {
+  const unmatchedGlobalTools = globalDisabledTools.filter((pattern) => {
     return !allToolNames.some(
-      toolName =>
+      (toolName) =>
         toolName === pattern ||
         toolName.endsWith(`_${pattern}`) ||
         mcpResult.tools.get(toolName)?.toolName === pattern

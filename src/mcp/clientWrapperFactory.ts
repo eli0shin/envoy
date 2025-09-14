@@ -3,12 +3,12 @@
  * Creates MCPClientWrapper instances from pre-loaded data with process management
  */
 
-import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
+import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type {
   GetPromptResult,
   ReadResourceResult,
-} from "@modelcontextprotocol/sdk/types.js";
-import type { ChildProcess } from "child_process";
+} from '@modelcontextprotocol/sdk/types.js';
+import type { ChildProcess } from 'child_process';
 import type {
   MCPClientWrapper,
   MCPServerConfig,
@@ -16,9 +16,9 @@ import type {
   WrappedTool,
   MCPPrompt,
   MCPResource,
-} from "../types/index.js";
-import { createPromptTools, createResourceTools } from "./capabilityTools.js";
-import { ProcessManager } from "./processManager.js";
+} from '../types/index.js';
+import { createPromptTools, createResourceTools } from './capabilityTools.js';
+import { ProcessManager } from './processManager.js';
 
 /**
  * Creates an MCPClientWrapper from pre-loaded data with optional child process tracking
@@ -30,7 +30,7 @@ export function createMCPClientWrapperFromData(
   tools: WrappedTool[],
   prompts: MCPPrompt[],
   resources: MCPResource[],
-  childProcess?: ChildProcess,
+  childProcess?: ChildProcess
 ): MCPClientWrapper {
   const toolsMap = new Map<string, WrappedTool>();
   const promptsMap = new Map<string, MCPPrompt>();
@@ -89,7 +89,7 @@ export function createMCPClientWrapperFromData(
     },
 
     async getPrompt(name: string, args?: Record<string, unknown>) {
-      if (!this.isConnected) throw new Error("Client not connected");
+      if (!this.isConnected) throw new Error('Client not connected');
       const result: GetPromptResult = await client.getPrompt({
         name,
         arguments: args as { [key: string]: string } | undefined,
@@ -106,7 +106,7 @@ export function createMCPClientWrapperFromData(
     },
 
     async readResource(uri: string) {
-      if (!this.isConnected) throw new Error("Client not connected");
+      if (!this.isConnected) throw new Error('Client not connected');
       const result: ReadResourceResult = await client.readResource({ uri });
 
       return {

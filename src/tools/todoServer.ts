@@ -85,11 +85,9 @@ function formatTodosAsMarkdown(todos: TodoItem[]): string {
 
   todos.forEach((todo, index) => {
     const statusIcon =
-      todo.status === 'completed'
-        ? '[✓]'
-        : todo.status === 'in_progress'
-          ? '[▶]'
-          : '[ ]';
+      todo.status === 'completed' ? '[✓]'
+      : todo.status === 'in_progress' ? '[▶]'
+      : '[ ]';
 
     lines.push(`${index + 1}. ${statusIcon} ${todo.content} (ID: ${todo.id})`);
   });
@@ -223,7 +221,7 @@ function createTodoServer(): McpServer {
       const sessionId = getSessionId();
       const todoList = getTodoList(sessionId);
 
-      const todo = todoList.items.find(item => item.id === id);
+      const todo = todoList.items.find((item) => item.id === id);
       if (!todo) {
         return {
           content: [
@@ -269,7 +267,7 @@ function createTodoServer(): McpServer {
       const sessionId = getSessionId();
       const todoList = getTodoList(sessionId);
 
-      const todoIndex = todoList.items.findIndex(item => item.id === id);
+      const todoIndex = todoList.items.findIndex((item) => item.id === id);
       if (todoIndex === -1) {
         return {
           content: [
@@ -343,7 +341,7 @@ function createTodoServer(): McpServer {
       const sessionId = getSessionId();
       const todoList = getTodoList(sessionId);
 
-      const todoIndex = todoList.items.findIndex(item => item.id === id);
+      const todoIndex = todoList.items.findIndex((item) => item.id === id);
       if (todoIndex === -1) {
         return {
           content: [
@@ -414,7 +412,11 @@ if (process.argv[1] && process.argv[1].endsWith('todoServer.ts')) {
     process.exit(0);
   });
 
-  server.connect(transport).catch(error => process.stderr.write(`Todo server connection error: ${error}\\n`));
+  server
+    .connect(transport)
+    .catch((error) =>
+      process.stderr.write(`Todo server connection error: ${error}\\n`)
+    );
 }
 
 export { createTodoServer };

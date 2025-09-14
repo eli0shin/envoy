@@ -212,8 +212,8 @@ describe('mcpServers', () => {
       const result = convertToLegacyMCPServers(servers);
       expect(result).toHaveLength(2);
 
-      const stdioServer = result.find(s => s.name === 'stdio_server');
-      const sseServer = result.find(s => s.name === 'sse_server');
+      const stdioServer = result.find((s) => s.name === 'stdio_server');
+      const sseServer = result.find((s) => s.name === 'sse_server');
 
       expect(stdioServer?.type).toBe('stdio');
       if (stdioServer?.type === 'stdio') {

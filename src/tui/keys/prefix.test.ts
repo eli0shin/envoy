@@ -2,7 +2,15 @@ import { describe, it, expect, beforeEach } from 'vitest';
 import { parseKeyDescriptor } from './parser.js';
 import { setActivePrefix, clearPrefix } from './prefixContext.js';
 
-const ev = (name: string, mods: Partial<{ ctrl: boolean; shift: boolean; alt: boolean; meta: boolean }> = {}) => ({
+const ev = (
+  name: string,
+  mods: Partial<{
+    ctrl: boolean;
+    shift: boolean;
+    alt: boolean;
+    meta: boolean;
+  }> = {}
+) => ({
   name,
   ctrl: !!mods.ctrl,
   shift: !!mods.shift,
@@ -31,4 +39,3 @@ describe('prefixed descriptor matching', () => {
     expect(matcher(ev('?'))).toBe(true);
   });
 });
-

@@ -50,7 +50,7 @@ describe('Interactive Tool Call Test', () => {
         try {
           await process.waitForText('🤖', 60000); // 60 second timeout for second response
           // Wait for the response to complete
-          await new Promise(resolve => setTimeout(resolve, 10000));
+          await new Promise((resolve) => setTimeout(resolve, 10000));
         } catch (_error) {
           void _error;
           console.log(
@@ -59,7 +59,7 @@ describe('Interactive Tool Call Test', () => {
         }
 
         // Add extra wait to ensure we capture the full conversation
-        await new Promise(resolve => setTimeout(resolve, 5000));
+        await new Promise((resolve) => setTimeout(resolve, 5000));
 
         const finalOutput = process.getCleanOutput();
 

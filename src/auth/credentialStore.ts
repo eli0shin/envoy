@@ -63,7 +63,9 @@ async function loadCredentials(): Promise<Record<string, AuthInfo>> {
     try {
       result[provider] = AuthInfo.parse(credentials);
     } catch {
-      process.stderr.write(`Invalid credentials for provider ${provider}, skipping\\n`);
+      process.stderr.write(
+        `Invalid credentials for provider ${provider}, skipping\\n`
+      );
     }
   }
 
@@ -144,8 +146,8 @@ export async function clear(): Promise<void> {
  */
 export function getAuthFilePath(): string {
   const homeDir = os.homedir();
-  return AUTH_FILE.startsWith(homeDir)
-    ? AUTH_FILE.replace(homeDir, '~')
+  return AUTH_FILE.startsWith(homeDir) ?
+      AUTH_FILE.replace(homeDir, '~')
     : AUTH_FILE;
 }
 

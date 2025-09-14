@@ -104,7 +104,7 @@ Render TUI and handle user interactions
 
 Update the existing `tsconfig.json` to support OpenTUI React JSX:
 
-```json
+````json
 {
   "compilerOptions": {
     "jsx": "react-jsx",
@@ -135,7 +135,7 @@ export async function launchTUI(
     />
   );
 }
-```
+````
 
 #### 2.2 Main App Component (`src/tui/components/TUIApp.tsx`)
 
@@ -244,7 +244,7 @@ export function MessageList({ messages, height }: MessageListProps) {
         // ResponseMessage has id for assistant/tool messages
         // User messages might not have id, use fallback
         const messageId = (message as any).id || `${message.role}-${messages.indexOf(message)}`;
-        
+
         // Handle content based on type - can be string or array of parts
         if (typeof message.content === 'string') {
           return (
@@ -254,13 +254,13 @@ export function MessageList({ messages, height }: MessageListProps) {
             />
           );
         }
-        
+
         // Content is an array of parts - render each part separately
         return message.content.map((part, partIndex) => {
           // Extract displayable content from different part types
           let displayContent = '';
           let contentType = 'normal';
-          
+
           if (part.type === 'text') {
             displayContent = part.text;
           } else if (part.type === 'reasoning') {
@@ -276,9 +276,9 @@ export function MessageList({ messages, height }: MessageListProps) {
             displayContent = `✅ ${part.toolName} result`;
             contentType = 'tool';
           }
-          
+
           if (!displayContent) return null;
-          
+
           return (
             <Message
               key={`${messageId}-${partIndex}`}
@@ -345,7 +345,7 @@ export function InputArea({ onSubmit }: InputAreaProps) {
 #### 3.1 Modify executionFlow.ts
 
 ```typescript
-import { launchTUI } from "../tui/index.js";
+import { launchTUI } from '../tui/index.js';
 
 export async function main(): Promise<void> {
   // ... existing code ...
@@ -362,7 +362,7 @@ export async function main(): Promise<void> {
     // Initialize agent session first
     const agentSession = await initializeAgentSession(
       configResult.config,
-      false,
+      false
     );
 
     // Launch TUI interface
@@ -391,7 +391,7 @@ type MessageProps = {
 
 export function Message({ message, contentType = 'normal' }: MessageProps) {
   const isUser = message.role === 'user';
-  
+
   // Style based on content type
   const getContentColor = () => {
     if (isUser) return 'cyan';
@@ -399,7 +399,7 @@ export function Message({ message, contentType = 'normal' }: MessageProps) {
     if (contentType === 'tool') return 'magenta';
     return 'green';
   };
-  
+
   const getPrefix = () => {
     if (isUser) return 'You';
     if (contentType === 'reasoning') return 'Assistant (thinking)';
@@ -440,7 +440,6 @@ export function ToolCallDisplay({ toolCall }: { toolCall: ToolCall }) {
   );
 }
 ```
-
 
 ## Testing Strategy
 
@@ -522,4 +521,3 @@ $ language-learner "What is the weather?"
 # With stdin (unchanged)
 $ echo "Hello" | language-learner --stdin
 ```
-

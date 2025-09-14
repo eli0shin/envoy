@@ -1,6 +1,6 @@
-import { keybindingsRegistry } from "./registry.js";
-import { getKeySettings } from "./settings.js";
-import type { KeyAction, KeyScope } from "./types.js";
+import { keybindingsRegistry } from './registry.js';
+import { getKeySettings } from './settings.js';
+import type { KeyAction, KeyScope } from './types.js';
 
 type KeyShortcut = {
   keys: string;
@@ -12,48 +12,48 @@ type KeyShortcut = {
 // Human-readable descriptions for key actions
 const ACTION_DESCRIPTIONS: Record<string, string> = {
   // Global actions
-  "help.toggle": "Toggle this help",
-  "app.exit": "Exit application",
-  "global.cancel": "Cancel operation",
+  'help.toggle': 'Toggle this help',
+  'app.exit': 'Exit application',
+  'global.cancel': 'Cancel operation',
 
   // Input actions
-  "input.submit": "Submit input",
-  "input.newline": "New line",
-  "input.cancel": "Cancel input",
-  "input.clear": "Clear input",
-  "input.historyUp": "Previous in history",
-  "input.historyDown": "Next in history",
-  "input.cursorLeft": "Move cursor left",
-  "input.cursorRight": "Move cursor right",
-  "input.cursorUp": "Move cursor up",
-  "input.cursorDown": "Move cursor down",
-  "input.cursorHome": "Move to start",
-  "input.cursorEnd": "Move to end",
-  "input.deleteLeft": "Delete character left",
-  "input.deleteRight": "Delete character right",
-  "input.deleteWord": "Delete word",
-  "input.deleteLine": "Delete line",
+  'input.submit': 'Submit input',
+  'input.newline': 'New line',
+  'input.cancel': 'Cancel input',
+  'input.clear': 'Clear input',
+  'input.historyUp': 'Previous in history',
+  'input.historyDown': 'Next in history',
+  'input.cursorLeft': 'Move cursor left',
+  'input.cursorRight': 'Move cursor right',
+  'input.cursorUp': 'Move cursor up',
+  'input.cursorDown': 'Move cursor down',
+  'input.cursorHome': 'Move to start',
+  'input.cursorEnd': 'Move to end',
+  'input.deleteLeft': 'Delete character left',
+  'input.deleteRight': 'Delete character right',
+  'input.deleteWord': 'Delete word',
+  'input.deleteLine': 'Delete line',
 
   // Messages actions
-  "messages.scrollUp": "Scroll up",
-  "messages.scrollDown": "Scroll down",
-  "messages.scrollPageUp": "Scroll page up",
-  "messages.scrollPageDown": "Scroll page down",
-  "messages.scrollTop": "Scroll to top",
-  "messages.scrollBottom": "Scroll to bottom",
+  'messages.scrollUp': 'Scroll up',
+  'messages.scrollDown': 'Scroll down',
+  'messages.scrollPageUp': 'Scroll page up',
+  'messages.scrollPageDown': 'Scroll page down',
+  'messages.scrollTop': 'Scroll to top',
+  'messages.scrollBottom': 'Scroll to bottom',
 
   // Modal actions
-  "modal.close": "Close modal",
+  'modal.close': 'Close modal',
 
   // Autocomplete actions
-  "autocomplete.up": "Move up in list",
-  "autocomplete.down": "Move down in list",
-  "autocomplete.accept": "Accept selection",
-  "autocomplete.cancel": "Cancel autocomplete",
-  "command.accept": "Accept command",
-  "command.prev": "Previous command",
-  "command.next": "Next command",
-  "command.close": "Close command list",
+  'autocomplete.up': 'Move up in list',
+  'autocomplete.down': 'Move down in list',
+  'autocomplete.accept': 'Accept selection',
+  'autocomplete.cancel': 'Cancel autocomplete',
+  'command.accept': 'Accept command',
+  'command.prev': 'Previous command',
+  'command.next': 'Next command',
+  'command.close': 'Close command list',
 };
 
 /**
@@ -85,33 +85,33 @@ export function formatKeyForDisplay(descriptor: string): string {
  */
 function formatKeyDescriptor(descriptor: string): string {
   // Handle modifier combinations
-  const parts = descriptor.split("-");
+  const parts = descriptor.split('-');
   if (parts.length > 1) {
     const modifiers = parts.slice(0, -1);
     const key = parts[parts.length - 1];
 
-    const formattedModifiers = modifiers.map(mod => {
+    const formattedModifiers = modifiers.map((mod) => {
       switch (mod.toLowerCase()) {
-        case "c":
-        case "ctrl":
-        case "control":
-          return "Ctrl";
-        case "s":
-        case "shift":
-          return "Shift";
-        case "m":
-        case "alt":
-        case "meta":
-          return "Alt";
-        case "cmd":
-        case "command":
-          return "Cmd";
+        case 'c':
+        case 'ctrl':
+        case 'control':
+          return 'Ctrl';
+        case 's':
+        case 'shift':
+          return 'Shift';
+        case 'm':
+        case 'alt':
+        case 'meta':
+          return 'Alt';
+        case 'cmd':
+        case 'command':
+          return 'Cmd';
         default:
           return mod;
       }
     });
 
-    return `${formattedModifiers.join("+")}+${capitalizeKey(key)}`;
+    return `${formattedModifiers.join('+')}+${capitalizeKey(key)}`;
   }
 
   return capitalizeKey(descriptor);
@@ -123,26 +123,26 @@ function formatKeyDescriptor(descriptor: string): string {
 function capitalizeKey(key: string): string {
   // Special cases
   const specialKeys: Record<string, string> = {
-    enter: "Enter",
-    return: "Enter",
-    tab: "Tab",
-    escape: "Escape",
-    esc: "Escape",
-    space: "Space",
-    backspace: "Backspace",
-    delete: "Delete",
-    home: "Home",
-    end: "End",
-    pageup: "Page Up",
-    pagedown: "Page Down",
-    arrowup: "↑",
-    arrowdown: "↓",
-    arrowleft: "←",
-    arrowright: "→",
-    up: "↑",
-    down: "↓",
-    left: "←",
-    right: "→",
+    enter: 'Enter',
+    return: 'Enter',
+    tab: 'Tab',
+    escape: 'Escape',
+    esc: 'Escape',
+    space: 'Space',
+    backspace: 'Backspace',
+    delete: 'Delete',
+    home: 'Home',
+    end: 'End',
+    pageup: 'Page Up',
+    pagedown: 'Page Down',
+    arrowup: '↑',
+    arrowdown: '↓',
+    arrowleft: '←',
+    arrowright: '→',
+    up: '↑',
+    down: '↓',
+    left: '←',
+    right: '→',
   };
 
   return specialKeys[key.toLowerCase()] || key.toUpperCase();
@@ -156,7 +156,13 @@ export function getKeyboardShortcuts(): KeyShortcut[] {
   const bindings = keybindingsRegistry.getAllBindings();
 
   // Priority order for scopes to show most important first
-  const scopeOrder: KeyScope[] = ["global", "input", "messages", "modal", "autocomplete"];
+  const scopeOrder: KeyScope[] = [
+    'global',
+    'input',
+    'messages',
+    'modal',
+    'autocomplete',
+  ];
 
   for (const scope of scopeOrder) {
     const scopeBindings = bindings[scope];
@@ -167,7 +173,8 @@ export function getKeyboardShortcuts(): KeyShortcut[] {
       if (!description) continue; // Skip actions without descriptions
 
       // Handle both single descriptors and arrays
-      const descriptorArray = Array.isArray(descriptors) ? descriptors : [descriptors];
+      const descriptorArray =
+        Array.isArray(descriptors) ? descriptors : [descriptors];
 
       // Use the first descriptor for display (primary binding)
       const primaryDescriptor = descriptorArray[0];

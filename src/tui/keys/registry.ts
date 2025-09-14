@@ -1,11 +1,11 @@
-import { parseKeyDescriptor } from "./parser.js";
+import { parseKeyDescriptor } from './parser.js';
 import type {
   KeybindingsConfig,
   KeyScope,
   KeyAction,
   KeyDescriptor,
   TUIKeyEvent,
-} from "./types.js";
+} from './types.js';
 
 export class KeybindingsRegistry {
   private bindings: KeybindingsConfig = {};

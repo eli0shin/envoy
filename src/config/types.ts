@@ -103,7 +103,10 @@ export type ToolsConfig = {
  */
 export type TUIKeybindingActionMap = Record<string, string | string[]>;
 export type TUIKeybindings = Partial<
-  Record<'global' | 'modal' | 'autocomplete' | 'input' | 'messages', TUIKeybindingActionMap>
+  Record<
+    'global' | 'modal' | 'autocomplete' | 'input' | 'messages',
+    TUIKeybindingActionMap
+  >
 > & {
   prefixes?: Record<string, string | string[]>;
   prefixCancel?: string | string[];

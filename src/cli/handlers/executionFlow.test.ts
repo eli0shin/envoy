@@ -3,29 +3,29 @@
  * Tests main CLI execution orchestration functionality
  */
 
-import { describe, it, expect, vi, beforeEach } from "vitest";
-import fs from "fs";
-import { parseArguments } from "../config/argumentParser.js";
-import { readStdin } from "../io/inputHandler.js";
-import { shouldActivateInteractiveMode } from "../handlers/interactiveMode.js";
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import fs from 'fs';
+import { parseArguments } from '../config/argumentParser.js';
+import { readStdin } from '../io/inputHandler.js';
+import { shouldActivateInteractiveMode } from '../handlers/interactiveMode.js';
 import {
   createRuntimeConfiguration,
   getMCPServersFromConfig,
-} from "../../config/index.js";
-import { createMCPClientWrapper } from "../../mcp/loader.js";
+} from '../../config/index.js';
+import { createMCPClientWrapper } from '../../mcp/loader.js';
 import {
   createMockMCPClientWrapper,
   createMockAgentSession,
-} from "../../test/helpers/createMocks.js";
+} from '../../test/helpers/createMocks.js';
 import {
   initializeAgent,
   runAgent,
   formatExecutionSummary,
-} from "../../agent/index.js";
+} from '../../agent/index.js';
 import {
   initializeAgentSession,
   cleanupAgentSession,
-} from "../../agentSession.js";
+} from '../../agentSession.js';
 
 import {
   handleListPrompts,
@@ -34,23 +34,23 @@ import {
   handleInteractivePrompt,
   handleResourceInclusion,
   handleAutoResourceDiscovery,
-} from "../handlers/mcpCommands.js";
+} from '../handlers/mcpCommands.js';
 import {
   handleSessionListing,
   handlePromptResourceCommands,
   main,
-} from "./executionFlow.js";
-import type { CLIOptions } from "../../types/index.js";
-import type { Configuration } from "../../config/types.js";
+} from './executionFlow.js';
+import type { CLIOptions } from '../../types/index.js';
+import type { Configuration } from '../../config/types.js';
 
 // Pre-configured mock that avoids redundant assignment patterns
-vi.mock("../../mcp/loader.js", () => ({
+vi.mock('../../mcp/loader.js', () => ({
   createMCPClientWrapper: vi.fn().mockResolvedValue({
-    serverName: "test-server",
+    serverName: 'test-server',
     serverConfig: {
-      type: "stdio",
-      name: "test-server",
-      command: "test-command",
+      type: 'stdio',
+      name: 'test-server',
+      command: 'test-command',
       args: [],
     },
     tools: new Map(),
@@ -64,46 +64,46 @@ vi.mock("../../mcp/loader.js", () => ({
   }),
 }));
 
-vi.mock("../../persistence/ConversationPersistence.js", () => ({
+vi.mock('../../persistence/ConversationPersistence.js', () => ({
   ConversationPersistence: {
-    getProjectIdentifier: vi.fn().mockReturnValue("mock-project-id"),
+    getProjectIdentifier: vi.fn().mockReturnValue('mock-project-id'),
     isValidSessionId: vi.fn().mockReturnValue(true),
   },
 }));
 
-vi.mock("../../config/index.js", () => ({
+vi.mock('../../config/index.js', () => ({
   createRuntimeConfiguration: vi.fn(),
   getMCPServersFromConfig: vi.fn().mockReturnValue([]),
 }));
 
-vi.mock("../../agent/index.js", () => ({
+vi.mock('../../agent/index.js', () => ({
   runAgent: vi.fn(),
-  formatExecutionSummary: vi.fn().mockReturnValue("Mock execution summary"),
+  formatExecutionSummary: vi.fn().mockReturnValue('Mock execution summary'),
   initializeAgent: vi.fn().mockResolvedValue(true),
 }));
 
-vi.mock("../../agentSession.js", () => ({
+vi.mock('../../agentSession.js', () => ({
   initializeAgentSession: vi.fn(),
   cleanupAgentSession: vi.fn(),
 }));
 
-vi.mock("../../ui/inkInteractiveMode.js", () => ({
+vi.mock('../../ui/inkInteractiveMode.js', () => ({
   runInkInteractiveMode: vi.fn(),
 }));
 
-vi.mock("../config/argumentParser.js", () => ({
+vi.mock('../config/argumentParser.js', () => ({
   parseArguments: vi.fn(),
 }));
 
-vi.mock("../io/inputHandler.js", () => ({
+vi.mock('../io/inputHandler.js', () => ({
   readStdin: vi.fn(),
 }));
 
-vi.mock("../handlers/interactiveMode.js", () => ({
+vi.mock('../handlers/interactiveMode.js', () => ({
   shouldActivateInteractiveMode: vi.fn(),
 }));
 
-vi.mock("../handlers/mcpCommands.js", () => ({
+vi.mock('../handlers/mcpCommands.js', () => ({
   handleListPrompts: vi.fn(),
   handleListResources: vi.fn(),
   handleExecutePrompt: vi.fn(),
@@ -118,19 +118,19 @@ const mockConsole = {
   error: vi.fn(),
 };
 
-Object.defineProperty(global, "console", {
+Object.defineProperty(global, 'console', {
   value: mockConsole,
   writable: true,
 });
 
 // Mock process.exit
 const mockExit = vi.fn();
-Object.defineProperty(process, "exit", {
+Object.defineProperty(process, 'exit', {
   value: mockExit,
   writable: true,
 });
 
-describe("executionFlow", () => {
+describe('executionFlow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockConsole.log.mockClear();
@@ -138,15 +138,15 @@ describe("executionFlow", () => {
     mockExit.mockClear();
   });
 
-  describe("handleSessionListing", () => {
-    it("should return not handled when listSessions is false", async () => {
+  describe('handleSessionListing', () => {
+    it('should return not handled when listSessions is false', async () => {
       const options: CLIOptions = {
-        logLevel: "SILENT",
-        logProgress: "none",
+        logLevel: 'SILENT',
+        logProgress: 'none',
         json: false,
         stdin: false,
         maxSteps: 100,
-        systemPromptMode: "append",
+        systemPromptMode: 'append',
         listSessions: false,
       };
 
@@ -155,29 +155,29 @@ describe("executionFlow", () => {
       expect(result).toEqual({ handled: false, success: true });
     });
 
-    it("should handle session listing when listSessions is true", async () => {
+    it('should handle session listing when listSessions is true', async () => {
       vi.mocked(fs.promises.access).mockResolvedValue(undefined);
       vi.mocked(fs.promises.readdir).mockResolvedValue([
-        "session1.jsonl",
-        "session2.jsonl",
-        "other.txt",
+        'session1.jsonl',
+        'session2.jsonl',
+        'other.txt',
       ] as never);
 
       const mockStats = { size: 1024 };
       vi.mocked(fs.promises.stat).mockResolvedValue(mockStats as fs.Stats);
 
       const mockFileContent = JSON.stringify({
-        timestamp: "2023-01-01T00:00:00Z",
+        timestamp: '2023-01-01T00:00:00Z',
       });
       vi.mocked(fs.promises.readFile).mockResolvedValue(mockFileContent);
 
       const options: CLIOptions = {
-        logLevel: "SILENT",
-        logProgress: "none",
+        logLevel: 'SILENT',
+        logProgress: 'none',
         json: false,
         stdin: false,
         maxSteps: 100,
-        systemPromptMode: "append",
+        systemPromptMode: 'append',
         listSessions: true,
       };
 
@@ -185,21 +185,21 @@ describe("executionFlow", () => {
 
       expect(result).toEqual({ handled: true, success: true });
       expect(mockConsole.log).toHaveBeenCalledWith(
-        expect.stringContaining("Conversation Sessions"),
+        expect.stringContaining('Conversation Sessions')
       );
     });
 
-    it("should handle empty session directory", async () => {
+    it('should handle empty session directory', async () => {
       vi.mocked(fs.promises.access).mockResolvedValue(undefined);
       vi.mocked(fs.promises.readdir).mockResolvedValue([]);
 
       const options: CLIOptions = {
-        logLevel: "SILENT",
-        logProgress: "none",
+        logLevel: 'SILENT',
+        logProgress: 'none',
         json: false,
         stdin: false,
         maxSteps: 100,
-        systemPromptMode: "append",
+        systemPromptMode: 'append',
         listSessions: true,
       };
 
@@ -207,22 +207,22 @@ describe("executionFlow", () => {
 
       expect(result).toEqual({ handled: true, success: true });
       expect(mockConsole.log).toHaveBeenCalledWith(
-        "No conversation sessions found for this project.",
+        'No conversation sessions found for this project.'
       );
     });
 
-    it("should handle directory not found error", async () => {
-      const error = new Error("Directory not found") as NodeJS.ErrnoException;
-      error.code = "ENOENT";
+    it('should handle directory not found error', async () => {
+      const error = new Error('Directory not found') as NodeJS.ErrnoException;
+      error.code = 'ENOENT';
       vi.mocked(fs.promises.access).mockRejectedValue(error);
 
       const options: CLIOptions = {
-        logLevel: "SILENT",
-        logProgress: "none",
+        logLevel: 'SILENT',
+        logProgress: 'none',
         json: false,
         stdin: false,
         maxSteps: 100,
-        systemPromptMode: "append",
+        systemPromptMode: 'append',
         listSessions: true,
       };
 
@@ -230,22 +230,22 @@ describe("executionFlow", () => {
 
       expect(result).toEqual({ handled: true, success: true });
       expect(mockConsole.log).toHaveBeenCalledWith(
-        "No conversation sessions found for this project.",
+        'No conversation sessions found for this project.'
       );
     });
 
-    it("should handle other errors", async () => {
+    it('should handle other errors', async () => {
       vi.mocked(fs.promises.access).mockRejectedValue(
-        new Error("Permission denied"),
+        new Error('Permission denied')
       );
 
       const options: CLIOptions = {
-        logLevel: "SILENT",
-        logProgress: "none",
+        logLevel: 'SILENT',
+        logProgress: 'none',
         json: false,
         stdin: false,
         maxSteps: 100,
-        systemPromptMode: "append",
+        systemPromptMode: 'append',
         listSessions: true,
       };
 
@@ -253,19 +253,19 @@ describe("executionFlow", () => {
 
       expect(result).toEqual({ handled: true, success: false });
       expect(mockConsole.error).toHaveBeenCalledWith(
-        expect.stringContaining("Error listing sessions"),
+        expect.stringContaining('Error listing sessions')
       );
     });
   });
 
-  describe("handlePromptResourceCommands", () => {
+  describe('handlePromptResourceCommands', () => {
     const mockConfig: Configuration = {
-      providers: { default: "anthropic" },
+      providers: { default: 'anthropic' },
       agent: {
         maxSteps: 100,
         timeout: 30000,
-        logLevel: "INFO",
-        logProgress: "none",
+        logLevel: 'INFO',
+        logProgress: 'none',
         streaming: true,
       },
       tools: {
@@ -274,14 +274,14 @@ describe("executionFlow", () => {
       },
     };
 
-    it("should return not handled when no prompt/resource commands", async () => {
+    it('should return not handled when no prompt/resource commands', async () => {
       const options: CLIOptions = {
-        logLevel: "SILENT",
-        logProgress: "none",
+        logLevel: 'SILENT',
+        logProgress: 'none',
         json: false,
         stdin: false,
         maxSteps: 100,
-        systemPromptMode: "append",
+        systemPromptMode: 'append',
         listPrompts: false,
         listResources: false,
 
@@ -293,9 +293,9 @@ describe("executionFlow", () => {
       expect(result).toEqual({ handled: false, success: true });
     });
 
-    it("should handle listPrompts command", async () => {
+    it('should handle listPrompts command', async () => {
       vi.mocked(getMCPServersFromConfig).mockReturnValue([
-        { name: "test-server", command: "test-command", type: "stdio" },
+        { name: 'test-server', command: 'test-command', type: 'stdio' },
       ]);
 
       // Override createMCPClientWrapper to ensure it returns a working mock
@@ -304,12 +304,12 @@ describe("executionFlow", () => {
       vi.mocked(createMCPClientWrapper).mockResolvedValueOnce(mockWrapper);
 
       const options: CLIOptions = {
-        logLevel: "SILENT",
-        logProgress: "none",
+        logLevel: 'SILENT',
+        logProgress: 'none',
         json: false,
         stdin: false,
         maxSteps: 100,
-        systemPromptMode: "append",
+        systemPromptMode: 'append',
         listPrompts: true,
       };
 
@@ -319,9 +319,9 @@ describe("executionFlow", () => {
       expect(handleListPrompts).toHaveBeenCalled();
     });
 
-    it("should handle listResources command", async () => {
+    it('should handle listResources command', async () => {
       vi.mocked(getMCPServersFromConfig).mockReturnValue([
-        { name: "test-server", command: "test-command", type: "stdio" },
+        { name: 'test-server', command: 'test-command', type: 'stdio' },
       ]);
 
       // Override createMCPClientWrapper to ensure it returns a working mock
@@ -330,12 +330,12 @@ describe("executionFlow", () => {
       vi.mocked(createMCPClientWrapper).mockResolvedValueOnce(mockWrapper);
 
       const options: CLIOptions = {
-        logLevel: "SILENT",
-        logProgress: "none",
+        logLevel: 'SILENT',
+        logProgress: 'none',
         json: false,
         stdin: false,
         maxSteps: 100,
-        systemPromptMode: "append",
+        systemPromptMode: 'append',
         listResources: true,
       };
 
@@ -345,9 +345,9 @@ describe("executionFlow", () => {
       expect(handleListResources).toHaveBeenCalled();
     });
 
-    it("should handle execute prompt command", async () => {
+    it('should handle execute prompt command', async () => {
       vi.mocked(getMCPServersFromConfig).mockReturnValue([
-        { name: "test-server", command: "test-command", type: "stdio" },
+        { name: 'test-server', command: 'test-command', type: 'stdio' },
       ]);
       vi.mocked(handleExecutePrompt).mockResolvedValue(true);
 
@@ -357,13 +357,13 @@ describe("executionFlow", () => {
       vi.mocked(createMCPClientWrapper).mockResolvedValueOnce(mockWrapper);
 
       const options: CLIOptions = {
-        logLevel: "SILENT",
-        logProgress: "none",
+        logLevel: 'SILENT',
+        logProgress: 'none',
         json: false,
         stdin: false,
         maxSteps: 100,
-        systemPromptMode: "append",
-        prompt: "test-prompt",
+        systemPromptMode: 'append',
+        prompt: 'test-prompt',
       };
 
       const result = await handlePromptResourceCommands(options, mockConfig);
@@ -372,9 +372,9 @@ describe("executionFlow", () => {
       expect(handleExecutePrompt).toHaveBeenCalled();
     });
 
-    it("should handle interactive prompt command", async () => {
+    it('should handle interactive prompt command', async () => {
       vi.mocked(getMCPServersFromConfig).mockReturnValue([
-        { name: "test-server", command: "test-command", type: "stdio" },
+        { name: 'test-server', command: 'test-command', type: 'stdio' },
       ]);
       vi.mocked(handleInteractivePrompt).mockResolvedValue(true);
 
@@ -384,12 +384,12 @@ describe("executionFlow", () => {
       vi.mocked(createMCPClientWrapper).mockResolvedValueOnce(mockWrapper);
 
       const options: CLIOptions = {
-        logLevel: "SILENT",
-        logProgress: "none",
+        logLevel: 'SILENT',
+        logProgress: 'none',
         json: false,
         stdin: false,
         maxSteps: 100,
-        systemPromptMode: "append",
+        systemPromptMode: 'append',
         interactivePrompt: true,
       };
 
@@ -399,16 +399,16 @@ describe("executionFlow", () => {
       expect(handleInteractivePrompt).toHaveBeenCalled();
     });
 
-    it("should handle no MCP servers available", async () => {
+    it('should handle no MCP servers available', async () => {
       vi.mocked(getMCPServersFromConfig).mockReturnValue([]);
 
       const options: CLIOptions = {
-        logLevel: "SILENT",
-        logProgress: "none",
+        logLevel: 'SILENT',
+        logProgress: 'none',
         json: false,
         stdin: false,
         maxSteps: 100,
-        systemPromptMode: "append",
+        systemPromptMode: 'append',
         listPrompts: true,
       };
 
@@ -416,32 +416,32 @@ describe("executionFlow", () => {
 
       expect(result).toEqual({ handled: true, success: false });
       expect(mockConsole.error).toHaveBeenCalledWith(
-        expect.stringContaining("No MCP servers available"),
+        expect.stringContaining('No MCP servers available')
       );
     });
   });
 
-  describe("main", () => {
-    it("should handle basic execution flow", async () => {
+  describe('main', () => {
+    it('should handle basic execution flow', async () => {
       vi.mocked(parseArguments).mockResolvedValue({
         options: {
-          logLevel: "SILENT",
-          logProgress: "none",
+          logLevel: 'SILENT',
+          logProgress: 'none',
           json: false,
           stdin: false,
           maxSteps: 100,
-          systemPromptMode: "append",
+          systemPromptMode: 'append',
         },
-        message: "test message",
+        message: 'test message',
       });
 
       vi.mocked(createRuntimeConfiguration).mockResolvedValue({
         config: {
-          message: "test message",
+          message: 'test message',
           stdin: false,
           json: false,
           providers: {
-            default: "anthropic",
+            default: 'anthropic',
             openai: {},
             openrouter: {},
             anthropic: {},
@@ -450,8 +450,8 @@ describe("executionFlow", () => {
           agent: {
             maxSteps: 100,
             timeout: 30000,
-            logLevel: "INFO",
-            logProgress: "none",
+            logLevel: 'INFO',
+            logProgress: 'none',
             streaming: true,
           },
           tools: {
@@ -466,7 +466,7 @@ describe("executionFlow", () => {
       vi.mocked(shouldActivateInteractiveMode).mockReturnValue(false);
       vi.mocked(initializeAgent).mockResolvedValue(true);
       const mockAgentSession = createMockAgentSession({
-        systemPrompt: "test prompt",
+        systemPrompt: 'test prompt',
       });
       vi.mocked(initializeAgentSession).mockResolvedValue(mockAgentSession);
       vi.mocked(runAgent).mockResolvedValue({
@@ -485,20 +485,20 @@ describe("executionFlow", () => {
       expect(cleanupAgentSession).toHaveBeenCalled();
     });
 
-    it("should handle stdin input", async () => {
+    it('should handle stdin input', async () => {
       vi.mocked(parseArguments).mockResolvedValue({
         options: {
-          logLevel: "SILENT",
-          logProgress: "none",
+          logLevel: 'SILENT',
+          logProgress: 'none',
           json: false,
           stdin: true,
           maxSteps: 100,
-          systemPromptMode: "append",
+          systemPromptMode: 'append',
         },
         message: undefined,
       });
 
-      vi.mocked(readStdin).mockResolvedValue("stdin message");
+      vi.mocked(readStdin).mockResolvedValue('stdin message');
 
       vi.mocked(createRuntimeConfiguration).mockResolvedValue({
         config: {
@@ -506,7 +506,7 @@ describe("executionFlow", () => {
           stdin: true,
           json: false,
           providers: {
-            default: "anthropic",
+            default: 'anthropic',
             openai: {},
             openrouter: {},
             anthropic: {},
@@ -515,8 +515,8 @@ describe("executionFlow", () => {
           agent: {
             maxSteps: 100,
             timeout: 30000,
-            logLevel: "INFO",
-            logProgress: "none",
+            logLevel: 'INFO',
+            logProgress: 'none',
             streaming: true,
           },
           tools: {
@@ -531,7 +531,7 @@ describe("executionFlow", () => {
       vi.mocked(shouldActivateInteractiveMode).mockReturnValue(false);
       vi.mocked(initializeAgent).mockResolvedValue(true);
       const mockAgentSession = createMockAgentSession({
-        systemPrompt: "test prompt",
+        systemPrompt: 'test prompt',
       });
       vi.mocked(initializeAgentSession).mockResolvedValue(mockAgentSession);
       vi.mocked(runAgent).mockResolvedValue({
@@ -546,27 +546,27 @@ describe("executionFlow", () => {
       expect(mockExit).toHaveBeenCalledWith(0);
     });
 
-    it("should handle resource inclusion", async () => {
+    it('should handle resource inclusion', async () => {
       vi.mocked(parseArguments).mockResolvedValue({
         options: {
-          logLevel: "SILENT",
-          logProgress: "none",
+          logLevel: 'SILENT',
+          logProgress: 'none',
           json: false,
           stdin: false,
           maxSteps: 100,
-          systemPromptMode: "append",
-          resources: "file:///test.txt",
+          systemPromptMode: 'append',
+          resources: 'file:///test.txt',
         },
-        message: "test message",
+        message: 'test message',
       });
 
       vi.mocked(createRuntimeConfiguration).mockResolvedValue({
         config: {
-          message: "test message",
+          message: 'test message',
           stdin: false,
           json: false,
           providers: {
-            default: "anthropic",
+            default: 'anthropic',
             openai: {},
             openrouter: {},
             anthropic: {},
@@ -575,8 +575,8 @@ describe("executionFlow", () => {
           agent: {
             maxSteps: 100,
             timeout: 30000,
-            logLevel: "INFO",
-            logProgress: "none",
+            logLevel: 'INFO',
+            logProgress: 'none',
             streaming: true,
           },
           tools: {
@@ -591,11 +591,11 @@ describe("executionFlow", () => {
       vi.mocked(shouldActivateInteractiveMode).mockReturnValue(false);
       vi.mocked(initializeAgent).mockResolvedValue(true);
       const mockAgentSession = createMockAgentSession({
-        systemPrompt: "test prompt",
+        systemPrompt: 'test prompt',
       });
       vi.mocked(initializeAgentSession).mockResolvedValue(mockAgentSession);
       vi.mocked(getMCPServersFromConfig).mockReturnValue([
-        { name: "test-server", command: "test-command", type: "stdio" },
+        { name: 'test-server', command: 'test-command', type: 'stdio' },
       ]);
 
       // Override createMCPClientWrapper to ensure it returns a working mock
@@ -604,7 +604,7 @@ describe("executionFlow", () => {
       vi.mocked(createMCPClientWrapper).mockResolvedValue(mockWrapper);
 
       vi.mocked(handleResourceInclusion).mockResolvedValue(
-        "\n\n## Resources:\nTest content",
+        '\n\n## Resources:\nTest content'
       );
       vi.mocked(runAgent).mockResolvedValue({
         success: true,
@@ -618,27 +618,27 @@ describe("executionFlow", () => {
       expect(mockExit).toHaveBeenCalledWith(0);
     });
 
-    it("should handle auto resource discovery", async () => {
+    it('should handle auto resource discovery', async () => {
       vi.mocked(parseArguments).mockResolvedValue({
         options: {
-          logLevel: "SILENT",
-          logProgress: "none",
+          logLevel: 'SILENT',
+          logProgress: 'none',
           json: false,
           stdin: false,
           maxSteps: 100,
-          systemPromptMode: "append",
+          systemPromptMode: 'append',
           autoResources: true,
         },
-        message: "test message",
+        message: 'test message',
       });
 
       vi.mocked(createRuntimeConfiguration).mockResolvedValue({
         config: {
-          message: "test message",
+          message: 'test message',
           stdin: false,
           json: false,
           providers: {
-            default: "anthropic",
+            default: 'anthropic',
             openai: {},
             openrouter: {},
             anthropic: {},
@@ -647,8 +647,8 @@ describe("executionFlow", () => {
           agent: {
             maxSteps: 100,
             timeout: 30000,
-            logLevel: "INFO",
-            logProgress: "none",
+            logLevel: 'INFO',
+            logProgress: 'none',
             streaming: true,
           },
           tools: {
@@ -663,11 +663,11 @@ describe("executionFlow", () => {
       vi.mocked(shouldActivateInteractiveMode).mockReturnValue(false);
       vi.mocked(initializeAgent).mockResolvedValue(true);
       const mockAgentSession = createMockAgentSession({
-        systemPrompt: "test prompt",
+        systemPrompt: 'test prompt',
       });
       vi.mocked(initializeAgentSession).mockResolvedValue(mockAgentSession);
       vi.mocked(getMCPServersFromConfig).mockReturnValue([
-        { name: "test-server", command: "test-command", type: "stdio" },
+        { name: 'test-server', command: 'test-command', type: 'stdio' },
       ]);
 
       // Override createMCPClientWrapper to ensure it returns a working mock
@@ -676,7 +676,7 @@ describe("executionFlow", () => {
       vi.mocked(createMCPClientWrapper).mockResolvedValue(mockWrapper);
 
       vi.mocked(handleAutoResourceDiscovery).mockResolvedValue(
-        "\n\n## Auto Resources:\nAuto content",
+        '\n\n## Auto Resources:\nAuto content'
       );
       vi.mocked(runAgent).mockResolvedValue({
         success: true,
@@ -690,37 +690,37 @@ describe("executionFlow", () => {
       expect(mockExit).toHaveBeenCalledWith(0);
     });
 
-    it("should handle fatal errors", async () => {
-      vi.mocked(parseArguments).mockRejectedValue(new Error("Fatal error"));
+    it('should handle fatal errors', async () => {
+      vi.mocked(parseArguments).mockRejectedValue(new Error('Fatal error'));
 
       await main();
 
       expect(mockConsole.error).toHaveBeenCalledWith(
-        expect.stringContaining("Fatal error"),
+        expect.stringContaining('Fatal error')
       );
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 
-    it("should handle agent initialization failure", async () => {
+    it('should handle agent initialization failure', async () => {
       vi.mocked(parseArguments).mockResolvedValue({
         options: {
-          logLevel: "SILENT",
-          logProgress: "none",
+          logLevel: 'SILENT',
+          logProgress: 'none',
           json: false,
           stdin: false,
           maxSteps: 100,
-          systemPromptMode: "append",
+          systemPromptMode: 'append',
         },
-        message: "test message",
+        message: 'test message',
       });
 
       vi.mocked(createRuntimeConfiguration).mockResolvedValue({
         config: {
-          message: "test message",
+          message: 'test message',
           stdin: false,
           json: false,
           providers: {
-            default: "anthropic",
+            default: 'anthropic',
             openai: {},
             openrouter: {},
             anthropic: {},
@@ -729,8 +729,8 @@ describe("executionFlow", () => {
           agent: {
             maxSteps: 100,
             timeout: 30000,
-            logLevel: "INFO",
-            logProgress: "none",
+            logLevel: 'INFO',
+            logProgress: 'none',
             streaming: true,
           },
           tools: {
@@ -750,26 +750,26 @@ describe("executionFlow", () => {
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 
-    it("should handle agent execution failure", async () => {
+    it('should handle agent execution failure', async () => {
       vi.mocked(parseArguments).mockResolvedValue({
         options: {
-          logLevel: "SILENT",
-          logProgress: "none",
+          logLevel: 'SILENT',
+          logProgress: 'none',
           json: false,
           stdin: false,
           maxSteps: 100,
-          systemPromptMode: "append",
+          systemPromptMode: 'append',
         },
-        message: "test message",
+        message: 'test message',
       });
 
       vi.mocked(createRuntimeConfiguration).mockResolvedValue({
         config: {
-          message: "test message",
+          message: 'test message',
           stdin: false,
           json: false,
           providers: {
-            default: "anthropic",
+            default: 'anthropic',
             openai: {},
             openrouter: {},
             anthropic: {},
@@ -778,8 +778,8 @@ describe("executionFlow", () => {
           agent: {
             maxSteps: 100,
             timeout: 30000,
-            logLevel: "INFO",
-            logProgress: "none",
+            logLevel: 'INFO',
+            logProgress: 'none',
             streaming: true,
           },
           tools: {
@@ -794,7 +794,7 @@ describe("executionFlow", () => {
       vi.mocked(shouldActivateInteractiveMode).mockReturnValue(false);
       vi.mocked(initializeAgent).mockResolvedValue(true);
       const mockAgentSession = createMockAgentSession({
-        systemPrompt: "test prompt",
+        systemPrompt: 'test prompt',
       });
       vi.mocked(initializeAgentSession).mockResolvedValue(mockAgentSession);
       vi.mocked(runAgent).mockResolvedValue({
@@ -808,26 +808,26 @@ describe("executionFlow", () => {
       expect(mockExit).toHaveBeenCalledWith(1);
     });
 
-    it("should display execution summary when not in JSON mode", async () => {
+    it('should display execution summary when not in JSON mode', async () => {
       vi.mocked(parseArguments).mockResolvedValue({
         options: {
-          logLevel: "SILENT",
-          logProgress: "tool",
+          logLevel: 'SILENT',
+          logProgress: 'tool',
           json: false,
           stdin: false,
           maxSteps: 100,
-          systemPromptMode: "append",
+          systemPromptMode: 'append',
         },
-        message: "test message",
+        message: 'test message',
       });
 
       vi.mocked(createRuntimeConfiguration).mockResolvedValue({
         config: {
-          message: "test message",
+          message: 'test message',
           stdin: false,
           json: false,
           providers: {
-            default: "anthropic",
+            default: 'anthropic',
             openai: {},
             openrouter: {},
             anthropic: {},
@@ -836,8 +836,8 @@ describe("executionFlow", () => {
           agent: {
             maxSteps: 100,
             timeout: 30000,
-            logLevel: "INFO",
-            logProgress: "tool",
+            logLevel: 'INFO',
+            logProgress: 'tool',
             streaming: true,
           },
           tools: {
@@ -852,7 +852,7 @@ describe("executionFlow", () => {
       vi.mocked(shouldActivateInteractiveMode).mockReturnValue(false);
       vi.mocked(initializeAgent).mockResolvedValue(true);
       const mockAgentSession = createMockAgentSession({
-        systemPrompt: "test prompt",
+        systemPrompt: 'test prompt',
       });
       vi.mocked(initializeAgentSession).mockResolvedValue(mockAgentSession);
       vi.mocked(runAgent).mockResolvedValue({

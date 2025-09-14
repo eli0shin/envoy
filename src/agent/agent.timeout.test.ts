@@ -11,19 +11,19 @@ import {
   afterEach,
   vi,
   type MockedFunction,
-} from "vitest";
-import { runAgent } from "./index.js";
-import { AgentSession } from "../agentSession.js";
-import { RuntimeConfiguration } from "../config/types.js";
-import { logger } from "../logger.js";
+} from 'vitest';
+import { runAgent } from './index.js';
+import { AgentSession } from '../agentSession.js';
+import { RuntimeConfiguration } from '../config/types.js';
+import { logger } from '../logger.js';
 import {
   createMockAgentSession,
   createMockRuntimeConfiguration,
   createMockResponse,
-} from "../test/helpers/createMocks.js";
+} from '../test/helpers/createMocks.js';
 
 // Mock the AI SDK
-vi.mock("ai", () => ({
+vi.mock('ai', () => ({
   generateText: vi.fn(),
   streamText: vi.fn(),
   APICallError: {
@@ -47,10 +47,10 @@ vi.mock("ai", () => ({
 }));
 
 // Mock constants
-vi.mock("./constants.js", () => ({
-  SYSTEM_PROMPT: "Test system prompt",
-  DEFAULT_SYSTEM_PROMPT: "Test default system prompt",
-  buildSystemPrompt: vi.fn(() => "Test system prompt"),
+vi.mock('./constants.js', () => ({
+  SYSTEM_PROMPT: 'Test system prompt',
+  DEFAULT_SYSTEM_PROMPT: 'Test default system prompt',
+  buildSystemPrompt: vi.fn(() => 'Test system prompt'),
   MCP_SERVERS: [],
   MAX_STEPS: 10,
   GENERATION_TIMEOUT_MS: 1200000, // 20 minutes - updated timeout
@@ -63,8 +63,8 @@ vi.mock("./constants.js", () => ({
       costMultiplier: 1.0,
     },
     openai: {
-      defaultEffort: "medium",
-      efforts: ["low", "medium", "high"],
+      defaultEffort: 'medium',
+      efforts: ['low', 'medium', 'high'],
     },
     google: {
       defaultBudget: 8192,
@@ -75,19 +75,19 @@ vi.mock("./constants.js", () => ({
 }));
 
 // Mock agent session
-vi.mock("../agentSession.js", () => ({
+vi.mock('../agentSession.js', () => ({
   initializeAgentSession: vi.fn(),
   cleanupAgentSession: vi.fn(),
 }));
 
 // Import mocked modules
-import { streamText } from "ai";
+import { streamText } from 'ai';
 
 const mockStreamText = streamText as MockedFunction<typeof streamText>;
 
 // Helper function to create proper StreamTextResult mock
 function createMockStreamTextResult(
-  fullStreamGenerator: () => AsyncGenerator<unknown, void, unknown>,
+  fullStreamGenerator: () => AsyncGenerator<unknown, void, unknown>
 ) {
   // Create proper AsyncIterableStream objects
   const textStream = Object.assign(
@@ -97,7 +97,7 @@ function createMockStreamTextResult(
       return;
       yield; // Unreachable but satisfies linter
     })(),
-    new ReadableStream(),
+    new ReadableStream()
   );
 
   const fullStream = Object.assign(fullStreamGenerator(), new ReadableStream());
@@ -109,7 +109,7 @@ function createMockStreamTextResult(
       return;
       yield; // Unreachable but satisfies linter
     })(),
-    new ReadableStream(),
+    new ReadableStream()
   );
 
   return {
@@ -121,25 +121,25 @@ function createMockStreamTextResult(
     }),
     sources: Promise.resolve([]),
     files: Promise.resolve([]),
-    finishReason: Promise.resolve("error" as const),
+    finishReason: Promise.resolve('error' as const),
     providerMetadata: Promise.resolve(undefined),
     experimental_providerMetadata: Promise.resolve(undefined),
-    text: Promise.resolve(""),
+    text: Promise.resolve(''),
     reasoning: Promise.resolve(undefined),
     reasoningDetails: Promise.resolve([]),
     toolCalls: Promise.resolve([]),
     toolResults: Promise.resolve([]),
     steps: Promise.resolve([]),
     request: Promise.resolve({
-      id: "test-request",
-      url: "https://api.test.com/v1/chat",
+      id: 'test-request',
+      url: 'https://api.test.com/v1/chat',
       headers: {},
-      body: "{}",
+      body: '{}',
     }),
     response: Promise.resolve({
-      id: "test-response",
+      id: 'test-response',
       timestamp: new Date(),
-      modelId: "test-model",
+      modelId: 'test-model',
       messages: [],
     }),
     textStream: textStream,
@@ -156,7 +156,7 @@ function createMockStreamTextResult(
   };
 }
 
-describe("Agent Timeout Error Handling", () => {
+describe('Agent Timeout Error Handling', () => {
   let mockSession: AgentSession;
   let mockConfig: RuntimeConfiguration;
 
@@ -172,88 +172,88 @@ describe("Agent Timeout Error Handling", () => {
     vi.useRealTimers();
   });
 
-  describe("AI SDK Generation Timeout", () => {
+  describe('AI SDK Generation Timeout', () => {
     it('should handle "The operation was aborted due to timeout" error correctly', async () => {
       // Mock the exact timeout error structure from the session logs
       const timeoutError = new Error(
-        "The operation was aborted due to timeout",
+        'The operation was aborted due to timeout'
       );
-      timeoutError.name = "DOMException";
+      timeoutError.name = 'DOMException';
 
       // In simplified agent, timeouts would cause streamText itself to throw
       mockStreamText.mockImplementation(() => {
         throw timeoutError;
       });
 
-      const result = await runAgent("test message", mockConfig, mockSession);
+      const result = await runAgent('test message', mockConfig, mockSession);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("The operation was aborted due to timeout");
+      expect(result.error).toBe('The operation was aborted due to timeout');
       // Use >= 0 to handle timing precision issues while still verifying
       // that executionTime is being set (not undefined/null)
       expect(result.executionTime).toBeGreaterThanOrEqual(0);
-      expect(typeof result.executionTime).toBe("number");
+      expect(typeof result.executionTime).toBe('number');
     });
 
-    it("should handle timeout with proper error metadata", async () => {
+    it('should handle timeout with proper error metadata', async () => {
       const timeoutError = new Error(
-        "The operation was aborted due to timeout",
+        'The operation was aborted due to timeout'
       );
-      timeoutError.name = "DOMException";
+      timeoutError.name = 'DOMException';
 
       // In simplified agent, timeouts would cause streamText itself to throw
       mockStreamText.mockImplementation(() => {
         throw timeoutError;
       });
 
-      await runAgent("test message", mockConfig, mockSession);
+      await runAgent('test message', mockConfig, mockSession);
 
       // Verify error logging matches simplified agent format
       expect(logger.error).toHaveBeenCalledWith(
-        "Fatal agent error",
+        'Fatal agent error',
         expect.objectContaining({
-          errorMessage: "The operation was aborted due to timeout",
-          errorType: "Error", // The error type is actually Error, not DOMException in tests
+          errorMessage: 'The operation was aborted due to timeout',
+          errorType: 'Error', // The error type is actually Error, not DOMException in tests
           executionTime: expect.any(Number),
-        }),
+        })
       );
     });
 
-    it("should handle timeout during streaming chunk processing", async () => {
+    it('should handle timeout during streaming chunk processing', async () => {
       const timeoutError = new Error(
-        "The operation was aborted due to timeout",
+        'The operation was aborted due to timeout'
       );
-      timeoutError.name = "DOMException";
+      timeoutError.name = 'DOMException';
 
       // In simplified agent, timeouts would cause streamText itself to throw
       mockStreamText.mockImplementation(() => {
         throw timeoutError;
       });
 
-      const result = await runAgent("test message", mockConfig, mockSession);
+      const result = await runAgent('test message', mockConfig, mockSession);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("The operation was aborted due to timeout");
+      expect(result.error).toBe('The operation was aborted due to timeout');
     });
   });
 
-  describe("Message Validation After Timeout", () => {
-    it("should handle message validation errors after timeout", async () => {
+  describe('Message Validation After Timeout', () => {
+    it('should handle message validation errors after timeout', async () => {
       // First simulate a timeout
       const timeoutError = new Error(
-        "The operation was aborted due to timeout",
+        'The operation was aborted due to timeout'
       );
-      timeoutError.name = "DOMException";
+      timeoutError.name = 'DOMException';
 
       // In simplified agent, timeouts would cause streamText itself to throw
       mockStreamText.mockImplementation(() => {
         throw timeoutError;
       });
 
-      const result = await runAgent("test message", mockConfig, mockSession);
+      const result = await runAgent('test message', mockConfig, mockSession);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("The operation was aborted due to timeout");
+      expect(result.error).toBe('The operation was aborted due to timeout');
 
       // Verify that the conversation state is properly handled
       // The session logs show "Invalid prompt: message must be a CoreMessage or a UI message"
@@ -262,11 +262,11 @@ describe("Agent Timeout Error Handling", () => {
       expect(result.messages).toBeUndefined();
     });
 
-    it("should validate message format consistency after timeout recovery", async () => {
+    it('should validate message format consistency after timeout recovery', async () => {
       const timeoutError = new Error(
-        "The operation was aborted due to timeout",
+        'The operation was aborted due to timeout'
       );
-      timeoutError.name = "DOMException";
+      timeoutError.name = 'DOMException';
 
       // In simplified agent, timeouts would cause streamText itself to throw
       mockStreamText.mockImplementation(() => {
@@ -275,15 +275,15 @@ describe("Agent Timeout Error Handling", () => {
 
       const result = await runAgent(
         [
-          { role: "user", content: "test message" },
-          { role: "assistant", content: "partial response..." },
+          { role: 'user', content: 'test message' },
+          { role: 'assistant', content: 'partial response...' },
         ],
         mockConfig,
-        mockSession,
+        mockSession
       );
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("The operation was aborted due to timeout");
+      expect(result.error).toBe('The operation was aborted due to timeout');
 
       // Verify that all messages maintain proper CoreMessage format
       // Note: In error cases, the agent doesn't return messages property
@@ -291,23 +291,23 @@ describe("Agent Timeout Error Handling", () => {
     });
   });
 
-  describe("Tool Call Timeout Handling", () => {
-    it("should handle tool result timeout errors", async () => {
+  describe('Tool Call Timeout Handling', () => {
+    it('should handle tool result timeout errors', async () => {
       const mockStream = createMockStreamTextResult(async function* () {
-        yield { type: "step-start" };
+        yield { type: 'step-start' };
         yield {
-          type: "tool-call",
-          toolName: "agent-spawner_spawn_agent",
-          toolCallId: "test-tool-call-id",
-          args: { message: "test message" },
+          type: 'tool-call',
+          toolName: 'agent-spawner_spawn_agent',
+          toolCallId: 'test-tool-call-id',
+          args: { message: 'test message' },
         };
 
         // Simulate tool result timeout
         yield {
-          type: "tool-result",
-          toolCallId: "test-tool-call-id",
-          toolName: "agent-spawner_spawn_agent",
-          result: { error: "timeout" },
+          type: 'tool-result',
+          toolCallId: 'test-tool-call-id',
+          toolName: 'agent-spawner_spawn_agent',
+          result: { error: 'timeout' },
         };
       });
 
@@ -315,11 +315,11 @@ describe("Agent Timeout Error Handling", () => {
 
       const messageCallback = vi.fn();
       const result = await runAgent(
-        "test message",
+        'test message',
         mockConfig,
         mockSession,
         false,
-        messageCallback,
+        messageCallback
       );
 
       expect(result.success).toBe(true);
@@ -329,23 +329,23 @@ describe("Agent Timeout Error Handling", () => {
       expect(result.success).toBe(true);
     });
 
-    it("should handle MCP server timeout (60 second hardcoded timeout)", async () => {
+    it('should handle MCP server timeout (60 second hardcoded timeout)', async () => {
       const mockStream = createMockStreamTextResult(async function* () {
-        yield { type: "step-start" };
+        yield { type: 'step-start' };
         yield {
-          type: "tool-call",
-          toolName: "agent-spawner_spawn_agent",
-          toolCallId: "test-tool-call-id",
-          args: { message: "complex task requiring thinking" },
+          type: 'tool-call',
+          toolName: 'agent-spawner_spawn_agent',
+          toolCallId: 'test-tool-call-id',
+          args: { message: 'complex task requiring thinking' },
         };
 
         // Simulate MCP server timeout (60 seconds)
         yield {
-          type: "tool-result",
-          toolCallId: "test-tool-call-id",
-          toolName: "agent-spawner_spawn_agent",
+          type: 'tool-result',
+          toolCallId: 'test-tool-call-id',
+          toolName: 'agent-spawner_spawn_agent',
           result: {
-            error: "MCP error -32001: Request timed out",
+            error: 'MCP error -32001: Request timed out',
             data: { timeout: 60000 },
           },
         };
@@ -355,11 +355,11 @@ describe("Agent Timeout Error Handling", () => {
 
       const messageCallback = vi.fn();
       const result = await runAgent(
-        "complex task",
+        'complex task',
         mockConfig,
         mockSession,
         false,
-        messageCallback,
+        messageCallback
       );
 
       expect(result.success).toBe(true);
@@ -370,36 +370,36 @@ describe("Agent Timeout Error Handling", () => {
     });
   });
 
-  describe("Error Chunk Handling", () => {
-    it("should handle error chunks from streamText", async () => {
+  describe('Error Chunk Handling', () => {
+    it('should handle error chunks from streamText', async () => {
       // In simplified agent, error chunks would cause streamText to throw
-      const apiError = new Error("API error: API timeout error");
+      const apiError = new Error('API error: API timeout error');
       mockStreamText.mockImplementation(() => {
         throw apiError;
       });
 
-      const result = await runAgent("test message", mockConfig, mockSession);
+      const result = await runAgent('test message', mockConfig, mockSession);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("API error: API timeout error");
+      expect(result.error).toBe('API error: API timeout error');
     });
 
-    it("should handle error chunks with no error message", async () => {
+    it('should handle error chunks with no error message', async () => {
       // In simplified agent, error chunks would cause streamText to throw
-      const unknownError = new Error("API error: Unknown error");
+      const unknownError = new Error('API error: Unknown error');
       mockStreamText.mockImplementation(() => {
         throw unknownError;
       });
 
-      const result = await runAgent("test message", mockConfig, mockSession);
+      const result = await runAgent('test message', mockConfig, mockSession);
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("API error: Unknown error");
+      expect(result.error).toBe('API error: Unknown error');
     });
   });
 
-  describe("Timeout Configuration Issues", () => {
-    it("should expose the timeout configuration fix", () => {
+  describe('Timeout Configuration Issues', () => {
+    it('should expose the timeout configuration fix', () => {
       // This test documents the FIXED timeout configuration:
       // GENERATION_TIMEOUT_MS (20 minutes) < TOOL_TIMEOUT_MS (30 minutes)
       // The AI SDK now has adequate time before MCP tools timeout
@@ -412,7 +412,7 @@ describe("Agent Timeout Error Handling", () => {
       expect(1200000).toBeLessThan(1800000);
     });
 
-    it("should handle AbortSignal timeout properly", async () => {
+    it('should handle AbortSignal timeout properly', async () => {
       // Test that AbortSignal.timeout(GENERATION_TIMEOUT_MS) works as expected
       vi.useFakeTimers();
 
@@ -420,7 +420,7 @@ describe("Agent Timeout Error Handling", () => {
         const abortController = new AbortController();
         const timeoutId = setTimeout(() => {
           abortController.abort();
-          reject(new Error("The operation was aborted due to timeout"));
+          reject(new Error('The operation was aborted due to timeout'));
         }, 1200000); // GENERATION_TIMEOUT_MS
 
         // Simulate a long-running operation
@@ -433,7 +433,7 @@ describe("Agent Timeout Error Handling", () => {
       vi.advanceTimersByTime(1200000);
 
       await expect(timeoutPromise).rejects.toThrow(
-        "The operation was aborted due to timeout",
+        'The operation was aborted due to timeout'
       );
 
       vi.useRealTimers();

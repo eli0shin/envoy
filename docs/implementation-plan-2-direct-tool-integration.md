@@ -292,7 +292,7 @@ export class AgentInstanceManager {
 
   static getActiveInstances(): AgentInstance[] {
     return Array.from(this.instances.values()).filter(
-      instance => instance.status === 'running'
+      (instance) => instance.status === 'running'
     );
   }
 

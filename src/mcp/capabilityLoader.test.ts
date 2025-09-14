@@ -429,21 +429,21 @@ describe('Capability Loader Module', () => {
 
       mockLoadToolsFromServer.mockImplementation(async () => {
         callOrder.push('tools-start');
-        await new Promise(resolve => setTimeout(resolve, 10));
+        await new Promise((resolve) => setTimeout(resolve, 10));
         callOrder.push('tools-end');
         return { tools: mockTools };
       });
 
       mockLoadPromptsFromServer.mockImplementation(async () => {
         callOrder.push('prompts-start');
-        await new Promise(resolve => setTimeout(resolve, 5));
+        await new Promise((resolve) => setTimeout(resolve, 5));
         callOrder.push('prompts-end');
         return { prompts: mockPrompts };
       });
 
       mockLoadResourcesFromServer.mockImplementation(async () => {
         callOrder.push('resources-start');
-        await new Promise(resolve => setTimeout(resolve, 15));
+        await new Promise((resolve) => setTimeout(resolve, 15));
         callOrder.push('resources-end');
         return { resources: mockResources };
       });

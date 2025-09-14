@@ -29,7 +29,6 @@ globalThis.console = {
 // Tests that need to assert on logger calls should use manual mocking
 vi.mock('./src/logger.js', () => createMockLogger());
 
-
 // Global file system mocks for all tests
 vi.mock('fs/promises', () => createFsPromisesMock());
 vi.mock('fs', () => createFsMock());
@@ -39,11 +38,11 @@ vi.mock('fs', () => createFsMock());
 // Global test utilities
 globalThis.testUtils = {
   // Helper to wait for a specified amount of time
-  delay: (ms: number) => new Promise(resolve => setTimeout(resolve, ms)),
+  delay: (ms: number) => new Promise((resolve) => setTimeout(resolve, ms)),
 
   // Helper to create a promise that resolves after a delay
   delayedResolve: <T>(value: T, ms = 100) =>
-    new Promise<T>(resolve => setTimeout(() => resolve(value), ms)),
+    new Promise<T>((resolve) => setTimeout(() => resolve(value), ms)),
 
   // Helper to create a promise that rejects after a delay
   delayedReject: (error: unknown, ms = 100) =>
@@ -72,7 +71,9 @@ afterEach(() => {
 
 // Handle unhandled promise rejections in tests
 process.on('unhandledRejection', (reason, promise) => {
-  process.stderr.write(`Unhandled Rejection at: ${promise}, reason: ${reason}\\n`);
+  process.stderr.write(
+    `Unhandled Rejection at: ${promise}, reason: ${reason}\\n`
+  );
   // Don't exit in tests, but log the error
 });
 

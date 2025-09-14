@@ -19,7 +19,7 @@ export async function readStdin(): Promise<string> {
       }
     }, 1000);
 
-    process.stdin.on('data', chunk => {
+    process.stdin.on('data', (chunk) => {
       input += chunk;
       clearTimeout(timeout);
     });
@@ -28,7 +28,7 @@ export async function readStdin(): Promise<string> {
       resolve(input.trim());
     });
 
-    process.stdin.on('error', error => {
+    process.stdin.on('error', (error) => {
       reject(error);
     });
   });

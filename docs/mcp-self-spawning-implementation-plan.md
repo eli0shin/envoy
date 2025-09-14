@@ -351,13 +351,11 @@ export interface RuntimeConfiguration extends Configuration {
 ### Phase 1: Core Infrastructure (Week 1-2)
 
 1. **Create Agent Spawner Server** (`src/agentSpawnerServer.ts`)
-
    - Implement basic MCP server structure
    - Add direct function call execution
    - Implement basic tool handlers
 
 2. **Direct Function Integration**
-
    - Import and use runAgent function directly
    - Configuration setup and initialization
    - Timeout and error handling
@@ -370,13 +368,11 @@ export interface RuntimeConfiguration extends Configuration {
 ### Phase 2: Tool Implementation (Week 2-3)
 
 1. **Implement spawn_agent tool**
-
    - Direct function execution with proper configuration
    - Configuration inheritance and overrides
    - Error handling and validation
 
 2. **Implement monitoring tools** (Simplified)
-
    - Direct execution results instead of process monitoring
    - Synchronous execution with timeout handling
    - Error propagation and reporting
@@ -388,13 +384,11 @@ export interface RuntimeConfiguration extends Configuration {
 ### Phase 3: Advanced Features (Week 3-4)
 
 1. **Enhanced Configuration**
-
    - Advanced configuration options
    - Better error reporting and logging
    - Result formatting and serialization
 
 2. **Performance Optimization**
-
    - Shared configuration caching
    - Optimized initialization
    - Memory usage optimization
@@ -407,13 +401,11 @@ export interface RuntimeConfiguration extends Configuration {
 ### Phase 4: Testing and Optimization (Week 4-5)
 
 1. **Unit Tests**
-
    - Agent spawner server tests
    - Direct execution function tests
    - Tool functionality tests
 
 2. **Integration Tests**
-
    - End-to-end agent execution
    - Configuration inheritance testing
    - Error recovery testing
@@ -495,19 +487,16 @@ export interface RuntimeConfiguration extends Configuration {
 ### Benefits
 
 1. **Efficient Execution**
-
    - Direct function calls eliminate process overhead
    - Faster execution with shared memory context
    - Reduced startup latency
 
 2. **Error Isolation**
-
    - Try-catch blocks isolate execution failures
    - Parent agent remains stable during child failures
    - Better error reporting and debugging
 
 3. **Specialized Agent Configurations**
-
    - Different models/providers for different task types
    - Customized system prompts per use case
    - Inherited configuration with selective overrides
@@ -609,25 +598,21 @@ export interface RuntimeConfiguration extends Configuration {
 ### Pros
 
 1. **Natural MCP Integration**
-
    - Leverages existing infrastructure seamlessly
    - Tools are discoverable and usable like any other MCP tool
    - Consistent interface and error handling
 
 2. **Efficient Execution**
-
    - No process spawning overhead
    - Shared memory space reduces resource usage
    - Faster execution with direct function calls
 
 3. **Flexible Configuration**
-
    - Each agent execution can have different configurations
    - Dynamic model selection based on task requirements
    - Inherited or overridden settings per execution
 
 4. **Simplified Architecture**
-
    - No complex process management required
    - Easier to debug and maintain
    - Better performance characteristics
@@ -640,25 +625,21 @@ export interface RuntimeConfiguration extends Configuration {
 ### Cons
 
 1. **Shared Memory Space**
-
    - All executions share the same memory space
    - Potential for memory leaks to affect parent
    - Harder to enforce resource limits per execution
 
 2. **Less Isolation**
-
    - Errors in one execution could potentially affect others
    - Shared global state between executions
    - Memory management complexity
 
 3. **Synchronous Execution**
-
    - Currently implemented as synchronous execution
    - Less parallelism compared to true process spawning
    - Blocking behavior for long-running tasks
 
 4. **Limited Scalability**
-
    - All executions run in single process
    - Cannot distribute across multiple CPU cores effectively
    - Memory usage grows with concurrent executions
@@ -671,13 +652,11 @@ export interface RuntimeConfiguration extends Configuration {
 ## Security Considerations
 
 1. **Shared Process Context**
-
    - All executions run with same privileges as parent
    - No additional privilege isolation
    - Shared memory space security implications
 
 2. **Resource Management**
-
    - Timeout-based execution limits
    - Memory usage monitoring (shared context)
    - Error isolation through try-catch blocks

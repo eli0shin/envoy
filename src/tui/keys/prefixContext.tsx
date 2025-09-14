@@ -51,4 +51,3 @@ export function usePrefixState(): PrefixContextValue {
   if (!ctx) throw new Error('usePrefixState must be used within KeysProvider');
   return ctx;
 }
-

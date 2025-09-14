@@ -33,7 +33,7 @@ describe('constants', () => {
     });
 
     it('should contain valid server configurations', () => {
-      MCP_SERVERS.forEach(server => {
+      MCP_SERVERS.forEach((server) => {
         expect(server).toHaveProperty('name');
         expect(server).toHaveProperty('type');
         expect(typeof server.name).toBe('string');
@@ -42,16 +42,16 @@ describe('constants', () => {
     });
 
     it('should have unique server names', () => {
-      const names = MCP_SERVERS.map(server => server.name);
+      const names = MCP_SERVERS.map((server) => server.name);
       const uniqueNames = new Set(names);
       expect(uniqueNames.size).toBe(names.length);
     });
 
     it('should validate stdio server configurations', () => {
       const stdioServers = MCP_SERVERS.filter(
-        server => server.type === 'stdio'
+        (server) => server.type === 'stdio'
       );
-      stdioServers.forEach(server => {
+      stdioServers.forEach((server) => {
         expect(server).toHaveProperty('command');
         expect(typeof server.command).toBe('string');
         expect(server.command.length).toBeGreaterThan(0);
@@ -59,8 +59,8 @@ describe('constants', () => {
     });
 
     it('should validate sse server configurations', () => {
-      const sseServers = MCP_SERVERS.filter(server => server.type === 'sse');
-      sseServers.forEach(server => {
+      const sseServers = MCP_SERVERS.filter((server) => server.type === 'sse');
+      sseServers.forEach((server) => {
         expect(server).toHaveProperty('url');
         expect(typeof server.url).toBe('string');
         expect(() => new URL(server.url)).not.toThrow();

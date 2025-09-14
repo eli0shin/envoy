@@ -100,7 +100,9 @@ export async function handleListResources(
     if (allResources.length === 0) {
       process.stdout.write('No resources available from any MCP server.\n');
     } else {
-      process.stdout.write(`\nAvailable Resources (${allResources.length}):\n\n`);
+      process.stdout.write(
+        `\nAvailable Resources (${allResources.length}):\n\n`
+      );
       for (const resource of allResources) {
         process.stdout.write(`${resource.server}: ${resource.uri}\n`);
         if (resource.name) {
@@ -135,7 +137,9 @@ export async function handleExecutePrompt(
     } catch (error) {
       const message = `Invalid JSON in --prompt-args: ${error instanceof Error ? error.message : String(error)}`;
       if (jsonMode) {
-        process.stdout.write(JSON.stringify({ error: message }, null, 2) + '\n');
+        process.stdout.write(
+          JSON.stringify({ error: message }, null, 2) + '\n'
+        );
       } else {
         process.stderr.write(message + '\n');
       }
@@ -147,7 +151,7 @@ export async function handleExecutePrompt(
   for (const wrapper of clientWrappers) {
     try {
       const prompts = await wrapper.listPrompts();
-      const prompt = prompts.find(p => p.name === promptName);
+      const prompt = prompts.find((p) => p.name === promptName);
 
       if (prompt) {
         try {
@@ -166,7 +170,9 @@ export async function handleExecutePrompt(
               ) + '\n'
             );
           } else {
-            process.stdout.write(`\nPrompt: ${wrapper.serverName}:${promptName}\n`);
+            process.stdout.write(
+              `\nPrompt: ${wrapper.serverName}:${promptName}\n`
+            );
             if (result.description) {
               process.stdout.write(`Description: ${result.description}\n\n`);
             }
@@ -181,7 +187,9 @@ export async function handleExecutePrompt(
         } catch (error) {
           const message = `Failed to execute prompt '${promptName}': ${error instanceof Error ? error.message : String(error)}`;
           if (jsonMode) {
-            process.stdout.write(JSON.stringify({ error: message }, null, 2) + '\n');
+            process.stdout.write(
+              JSON.stringify({ error: message }, null, 2) + '\n'
+            );
           } else {
             process.stderr.write(message + '\n');
           }
@@ -256,7 +264,7 @@ export async function handleInteractivePrompt(
         {
           message:
             'Interactive mode not available in JSON output. Available prompts:',
-          prompts: allPrompts.map(p => ({
+          prompts: allPrompts.map((p) => ({
             server: p.serverName,
             name: p.name,
             description: p.description,
@@ -277,7 +285,7 @@ export async function handleInteractivePrompt(
         type: 'list',
         name: 'selectedPrompt',
         message: 'Select a prompt to execute:',
-        choices: allPrompts.map(p => ({
+        choices: allPrompts.map((p) => ({
           name: `${p.displayName} - ${p.description}`,
           value: p,
         })),
@@ -337,15 +345,19 @@ export async function handleInteractivePrompt(
 
     // Find the wrapper and execute the prompt
     const wrapper = clientWrappers.find(
-      w => w.serverName === selectedPrompt.serverName
+      (w) => w.serverName === selectedPrompt.serverName
     );
     if (!wrapper) {
-      process.stderr.write(`Error: Server ${selectedPrompt.serverName} not found\n`);
+      process.stderr.write(
+        `Error: Server ${selectedPrompt.serverName} not found\n`
+      );
       return false;
     }
 
     try {
-      process.stdout.write(`\nExecuting prompt: ${selectedPrompt.displayName}\n\n`);
+      process.stdout.write(
+        `\nExecuting prompt: ${selectedPrompt.displayName}\n\n`
+      );
 
       const result = await wrapper.getPrompt(selectedPrompt.name, args);
 
@@ -388,7 +400,7 @@ export async function handleResourceInclusion(
   resourceUris: string,
   clientWrappers: MCPClientWrapper[]
 ): Promise<string> {
-  const uris = resourceUris.split(',').map(uri => uri.trim());
+  const uris = resourceUris.split(',').map((uri) => uri.trim());
   const resourceContents: string[] = [];
 
   for (const uri of uris) {
@@ -397,7 +409,7 @@ export async function handleResourceInclusion(
     for (const wrapper of clientWrappers) {
       try {
         const resources = await wrapper.listResources();
-        const resource = resources.find(r => r.uri === uri);
+        const resource = resources.find((r) => r.uri === uri);
 
         if (resource) {
           const content = await wrapper.readResource(uri);
@@ -501,7 +513,7 @@ export async function handleAutoResourceDiscovery(
   }
 
   logger.info(
-    `Auto-discovered ${topResources.length} relevant resources: ${topResources.map(r => r.uri).join(', ')}`
+    `Auto-discovered ${topResources.length} relevant resources: ${topResources.map((r) => r.uri).join(', ')}`
   );
 
   return `\n\n## Auto-Discovered Resources:\n\n${resourceContents.join('\n\n')}`;

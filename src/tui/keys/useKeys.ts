@@ -14,8 +14,11 @@ export function useKeys(handler: KeyHandler, opts: UseKeysOptions) {
   const priority = opts.priority ?? defaultPriorityForScope(opts.scope);
 
   useEffect(() => {
-    const enabled = typeof opts.enabled === 'function' ? opts.enabled : () => (opts.enabled ?? true) as boolean;
-    
+    const enabled =
+      typeof opts.enabled === 'function' ?
+        opts.enabled
+      : () => (opts.enabled ?? true) as boolean;
+
     idRef.current = keyEventBus.register({
       scope: opts.scope,
       enabled,

@@ -22,7 +22,6 @@ describe('PTY Input/Output Test', () => {
 
         await process.waitForText('>', TEST_TIMEOUTS.startup);
 
-
         await process.typeText('what is 2+2?');
         process.sendEnter();
 

@@ -49,7 +49,7 @@ export async function createPTYTestEnvironment(): Promise<PTYTestEnvironment> {
       let output = '';
       let cleanOutput = '';
 
-      ptyProcess.onData(data => {
+      ptyProcess.onData((data) => {
         output += data;
         cleanOutput = stripAnsi(output);
       });
@@ -62,10 +62,10 @@ export async function createPTYTestEnvironment(): Promise<PTYTestEnvironment> {
         typeText: async (text: string, charDelay = 10, terminalDelay = 100) => {
           for (const char of text) {
             ptyProcess.write(char);
-            await new Promise(resolve => setTimeout(resolve, charDelay));
+            await new Promise((resolve) => setTimeout(resolve, charDelay));
           }
 
-          await new Promise(resolve => setTimeout(resolve, terminalDelay));
+          await new Promise((resolve) => setTimeout(resolve, terminalDelay));
         },
 
         sendEnter: () => {
@@ -74,7 +74,7 @@ export async function createPTYTestEnvironment(): Promise<PTYTestEnvironment> {
 
         sendAltEnter: async () => {
           ptyProcess.write('\u000d'); // Ctrl+M (Ctrl+Return)
-          await new Promise(resolve => setTimeout(resolve, 100));
+          await new Promise((resolve) => setTimeout(resolve, 100));
         },
 
         sendArrowUp: () => {
@@ -123,7 +123,7 @@ export async function createPTYTestEnvironment(): Promise<PTYTestEnvironment> {
         },
 
         onExit: () => {
-          return new Promise(resolve => {
+          return new Promise((resolve) => {
             ptyProcess.onExit(({ exitCode }) => {
               resolve(exitCode);
             });
@@ -135,7 +135,7 @@ export async function createPTYTestEnvironment(): Promise<PTYTestEnvironment> {
     },
 
     cleanup: async () => {
-      processes.forEach(proc => {
+      processes.forEach((proc) => {
         try {
           proc.kill();
         } catch (_e) {

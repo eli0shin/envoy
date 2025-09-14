@@ -110,7 +110,6 @@ vi.mock('child_process', () => {
         spawnfile: args[0],
       };
 
-
       return mockProcess;
     }),
   };
@@ -142,7 +141,6 @@ function createMockMcpClient(
     shouldFailConnection = false,
     customCallToolResponse,
   } = options;
-
 
   const mockClient = {
     // Connection management
@@ -194,7 +192,7 @@ function createMockMcpClient(
 }
 
 vi.mock('@modelcontextprotocol/sdk/client/stdio.js', () => ({
-  StdioClientTransport: vi.fn().mockImplementation(_options => {
+  StdioClientTransport: vi.fn().mockImplementation((_options) => {
     return {
       // Mock transport that behaves like a real transport but doesn't create processes
       start: vi.fn().mockResolvedValue(undefined),
@@ -273,7 +271,6 @@ describe('mcpLoader', () => {
 
   describe('loadMCPTools', () => {
     it('should verify mock setup is working', async () => {
-
       // Check if the Client mock is working at all
       expect(typeof clientSpy).toBe('function');
       expect(clientSpy).toHaveBeenCalledTimes(0); // Should be 0 at start
@@ -283,8 +280,6 @@ describe('mcpLoader', () => {
         { name: 'test-client', version: '1.0.0' },
         { capabilities: {} }
       );
-
-
 
       expect(testClient).toBeDefined();
       expect(clientSpy).toHaveBeenCalledTimes(1);
@@ -298,7 +293,6 @@ describe('mcpLoader', () => {
     });
 
     it('should load tools from stdio servers successfully', async () => {
-
       const mockTools = [
         {
           name: 'test-tool',
@@ -328,9 +322,7 @@ describe('mcpLoader', () => {
       // Use absolute path to bypass resolveCommand function
       serverConfigs[0].command = '/usr/bin/node';
 
-
       const result = await loadMCPTools(serverConfigs);
-
 
       // Debug: Check if spawn was called (should happen in resolveCommand)
 
@@ -339,7 +331,7 @@ describe('mcpLoader', () => {
       if (result.errors.length > 0) {
         // Force the test to fail with error details instead of proceeding
         throw new Error(
-          `Server initialization failed: ${result.errors.map(e => `${e.serverName}: ${e.error}`).join('; ')}`
+          `Server initialization failed: ${result.errors.map((e) => `${e.serverName}: ${e.error}`).join('; ')}`
         );
       }
 
@@ -466,7 +458,7 @@ describe('mcpLoader', () => {
       ];
 
       // Verify server names are unique
-      const serverNames = serverConfigs.map(config => config.name);
+      const serverNames = serverConfigs.map((config) => config.name);
       const uniqueNames = new Set(serverNames);
       expect(uniqueNames.size).toBe(serverNames.length);
 

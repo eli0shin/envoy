@@ -292,7 +292,7 @@ describe('Thinking Types', () => {
         part: ThinkingStreamPart
       ) => Promise<ThinkingMetadata>;
 
-      const processor: StreamProcessor = async part => {
+      const processor: StreamProcessor = async (part) => {
         switch (part.type) {
           case 'reasoning':
             return { thinking: true, isThinkingComplete: false };
@@ -318,7 +318,7 @@ describe('Thinking Types', () => {
         textDelta: 'Processing...',
       };
 
-      processor(reasoningPart).then(result => {
+      processor(reasoningPart).then((result) => {
         expect(result.thinking).toBe(true);
         expect(result.isThinkingComplete).toBe(false);
       });
@@ -329,7 +329,7 @@ describe('Thinking Types', () => {
         signature: 'final-signature',
       };
 
-      processor(signaturePart).then(result => {
+      processor(signaturePart).then((result) => {
         expect(result.thinking).toBe(true);
         expect(result.isThinkingComplete).toBe(true);
         expect(result.thinkingSignature).toBe('final-signature');
@@ -341,7 +341,7 @@ describe('Thinking Types', () => {
         data: '[Thinking redacted]',
       };
 
-      processor(redactedPart).then(result => {
+      processor(redactedPart).then((result) => {
         expect(result.thinking).toBe(true);
         expect(result.thinkingContent).toBe('[Thinking redacted]');
       });

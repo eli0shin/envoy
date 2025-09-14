@@ -1,19 +1,19 @@
-import envPaths from "env-paths";
-import { v7 as uuidv7 } from "uuid";
-import { promises as fs } from "fs";
-import { join } from "path";
-import { marked } from "marked";
-import TerminalRenderer from "marked-terminal";
+import envPaths from 'env-paths';
+import { v7 as uuidv7 } from 'uuid';
+import { promises as fs } from 'fs';
+import { join } from 'path';
+import { marked } from 'marked';
+import TerminalRenderer from 'marked-terminal';
 
 // Configure marked with terminal renderer using the types I just wrote
 marked.setOptions({
   renderer: new TerminalRenderer(),
 });
 
-export type LogLevel = "DEBUG" | "INFO" | "WARN" | "ERROR";
-export type LoggerLevel = "DEBUG" | "INFO" | "WARN" | "ERROR" | "SILENT";
-export type LogProgress = "none" | "assistant" | "tool" | "all";
-export type LogType = "agent" | "tool-call" | "mcp-tool";
+export type LogLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR';
+export type LoggerLevel = 'DEBUG' | 'INFO' | 'WARN' | 'ERROR' | 'SILENT';
+export type LogProgress = 'none' | 'assistant' | 'tool' | 'all';
+export type LogType = 'agent' | 'tool-call' | 'mcp-tool';
 
 export type LogEntry = {
   timestamp: string;
@@ -37,9 +37,9 @@ class Logger {
 
   constructor() {
     this.sessionId = uuidv7();
-    this.logLevel = "SILENT";
-    this.logProgress = "none";
-    this.paths = envPaths("envoy", { suffix: "" });
+    this.logLevel = 'SILENT';
+    this.logProgress = 'none';
+    this.paths = envPaths('envoy', { suffix: '' });
   }
 
   setLogLevel(level: LoggerLevel): void {
@@ -57,7 +57,7 @@ class Logger {
   private renderMarkdown(content: string): string {
     try {
       const rendered = marked.parse(content, { async: false }) as string;
-      return rendered.replace(/\n+$/, "");
+      return rendered.replace(/\n+$/, '');
     } catch {
       // Fallback to original content if markdown rendering fails
       return content;
@@ -65,9 +65,9 @@ class Logger {
   }
 
   private shouldLog(level: LogLevel): boolean {
-    if (this.logLevel === "SILENT") return false;
+    if (this.logLevel === 'SILENT') return false;
 
-    const levels: LogLevel[] = ["DEBUG", "INFO", "WARN", "ERROR"];
+    const levels: LogLevel[] = ['DEBUG', 'INFO', 'WARN', 'ERROR'];
     const currentLevelIndex = levels.indexOf(this.logLevel as LogLevel);
     const messageLevelIndex = levels.indexOf(level);
 
@@ -78,8 +78,8 @@ class Logger {
     if (this.initialized) return;
 
     try {
-      await fs.mkdir(join(this.paths.data, "sessions"), { recursive: true });
-      await fs.mkdir(join(this.paths.data, "mcp-tools"), { recursive: true });
+      await fs.mkdir(join(this.paths.data, 'sessions'), { recursive: true });
+      await fs.mkdir(join(this.paths.data, 'mcp-tools'), { recursive: true });
       this.initialized = true;
     } catch {
       // Silently fail if directories cannot be created
@@ -98,10 +98,10 @@ class Logger {
         }
       }
 
-      const logLine = JSON.stringify(entry) + "\n";
+      const logLine = JSON.stringify(entry) + '\n';
 
       try {
-        await fs.appendFile(filePath, logLine, "utf8");
+        await fs.appendFile(filePath, logLine, 'utf8');
       } catch {
         // Silently fail if file cannot be written
       }
@@ -114,7 +114,7 @@ class Logger {
     message: string,
     metadata?: Record<string, unknown>,
     serverName?: string,
-    toolName?: string,
+    toolName?: string
   ): LogEntry {
     return {
       timestamp: new Date().toISOString(),
@@ -129,20 +129,20 @@ class Logger {
   }
 
   private getSessionLogPath(): string {
-    return join(this.paths.data, "sessions", `${this.sessionId}.jsonl`);
+    return join(this.paths.data, 'sessions', `${this.sessionId}.jsonl`);
   }
 
   private getMcpToolLogPath(serverName: string, toolName: string): string {
     const filename = `${serverName}_${toolName}.jsonl`;
-    return join(this.paths.data, "mcp-tools", filename);
+    return join(this.paths.data, 'mcp-tools', filename);
   }
 
   logAgent(
     level: LogLevel,
     message: string,
-    metadata?: Record<string, unknown>,
+    metadata?: Record<string, unknown>
   ): void {
-    const entry = this.createLogEntry(level, "agent", message, metadata);
+    const entry = this.createLogEntry(level, 'agent', message, metadata);
     this.queueLogEntry(entry, this.getSessionLogPath());
 
     if (this.shouldLog(level)) {
@@ -154,15 +154,15 @@ class Logger {
     toolName: string,
     level: LogLevel,
     message: string,
-    metadata?: Record<string, unknown>,
+    metadata?: Record<string, unknown>
   ): void {
     const entry = this.createLogEntry(
       level,
-      "tool-call",
+      'tool-call',
       message,
       metadata,
       undefined,
-      toolName,
+      toolName
     );
     this.queueLogEntry(entry, this.getSessionLogPath());
 
@@ -176,15 +176,15 @@ class Logger {
     toolName: string,
     level: LogLevel,
     message: string,
-    metadata?: Record<string, unknown>,
+    metadata?: Record<string, unknown>
   ): void {
     const entry = this.createLogEntry(
       level,
-      "mcp-tool",
+      'mcp-tool',
       message,
       metadata,
       serverName,
-      toolName,
+      toolName
     );
 
     this.queueLogEntry(entry, this.getMcpToolLogPath(serverName, toolName));
@@ -193,7 +193,7 @@ class Logger {
       this.logConsole(
         level,
         `[mcp:${serverName}:${toolName}] ${message}`,
-        metadata,
+        metadata
       );
     }
   }
@@ -201,7 +201,7 @@ class Logger {
   logConsole(
     level: LogLevel,
     message: string,
-    metadata?: Record<string, unknown>,
+    metadata?: Record<string, unknown>
   ): void {
     if (!this.shouldLog(level)) return;
 
@@ -209,7 +209,7 @@ class Logger {
     let logMessage = `[${timestamp}] ${level}: ${message}`;
 
     // Include metadata in console output for DEBUG level to show actual values
-    if (level === "DEBUG" && metadata && Object.keys(metadata).length > 0) {
+    if (level === 'DEBUG' && metadata && Object.keys(metadata).length > 0) {
       const metadataStr = JSON.stringify(metadata, null, 2);
       logMessage += `\n${metadataStr}`;
     }
@@ -219,23 +219,23 @@ class Logger {
   }
 
   error(message: string, metadata?: Record<string, unknown>): void {
-    this.logAgent("ERROR", message, metadata);
+    this.logAgent('ERROR', message, metadata);
   }
 
   warn(message: string, metadata?: Record<string, unknown>): void {
-    this.logAgent("WARN", message, metadata);
+    this.logAgent('WARN', message, metadata);
   }
 
   info(message: string, metadata?: Record<string, unknown>): void {
-    this.logAgent("INFO", message, metadata);
+    this.logAgent('INFO', message, metadata);
   }
 
   debug(message: string, metadata?: Record<string, unknown>): void {
-    this.logAgent("DEBUG", message, metadata);
+    this.logAgent('DEBUG', message, metadata);
   }
 
-  private shouldLogProgress(type: "assistant" | "tool" | "user"): boolean {
-    return this.logProgress === "all" || this.logProgress === type;
+  private shouldLogProgress(type: 'assistant' | 'tool' | 'user'): boolean {
+    return this.logProgress === 'all' || this.logProgress === type;
   }
 
   getCurrentLogProgress(): LogProgress {
@@ -243,27 +243,29 @@ class Logger {
   }
 
   logUserStep(message: string): void {
-    if (this.shouldLogProgress("user") && !this.suppressConsoleOutput) {
+    if (this.shouldLogProgress('user') && !this.suppressConsoleOutput) {
       const renderedMessage = this.renderMarkdown(message);
       process.stdout.write(`[user]\n${renderedMessage}\n\n`);
     }
   }
 
   logAssistantStep(message: string): void {
-    if (this.shouldLogProgress("assistant") && !this.suppressConsoleOutput) {
+    if (this.shouldLogProgress('assistant') && !this.suppressConsoleOutput) {
       const renderedMessage = this.renderMarkdown(message);
       process.stdout.write(`[assistant]\n${renderedMessage}\n\n`);
     }
   }
 
   logToolCallProgress(toolName: string, args: unknown): void {
-    if (this.shouldLogProgress("tool") && !this.suppressConsoleOutput) {
-      process.stdout.write(`[tool-call]\n${toolName} ${JSON.stringify(args)}\n\n`);
+    if (this.shouldLogProgress('tool') && !this.suppressConsoleOutput) {
+      process.stdout.write(
+        `[tool-call]\n${toolName} ${JSON.stringify(args)}\n\n`
+      );
     }
   }
 
   logThinking(message: string): void {
-    if (this.shouldLogProgress("assistant") && !this.suppressConsoleOutput) {
+    if (this.shouldLogProgress('assistant') && !this.suppressConsoleOutput) {
       const renderedMessage = this.renderMarkdown(message);
       process.stdout.write(`[thinking...]\n${renderedMessage}\n\n`);
     }
@@ -274,22 +276,22 @@ class Logger {
   }
 
   getConversationDirectory(): string {
-    return join(this.paths.data, "conversations");
+    return join(this.paths.data, 'conversations');
   }
 
   getProjectConversationDirectory(projectIdentifier: string): string {
-    return join(this.paths.data, "conversations", projectIdentifier);
+    return join(this.paths.data, 'conversations', projectIdentifier);
   }
 
   getProjectConversationFile(
     projectIdentifier: string,
-    sessionId: string,
+    sessionId: string
   ): string {
     return join(
       this.paths.data,
-      "conversations",
+      'conversations',
       projectIdentifier,
-      `${sessionId}.jsonl`,
+      `${sessionId}.jsonl`
     );
   }
 
@@ -317,7 +319,7 @@ export function logMcpTool(
   toolName: string,
   level: LogLevel,
   message: string,
-  metadata?: Record<string, unknown>,
+  metadata?: Record<string, unknown>
 ): void {
   logger.logMcpTool(serverName, toolName, level, message, metadata);
 }
@@ -335,14 +337,14 @@ export function getConversationDirectory(): string {
 }
 
 export function getProjectConversationDirectory(
-  projectIdentifier: string,
+  projectIdentifier: string
 ): string {
   return logger.getProjectConversationDirectory(projectIdentifier);
 }
 
 export function getProjectConversationFile(
   projectIdentifier: string,
-  sessionId: string,
+  sessionId: string
 ): string {
   return logger.getProjectConversationFile(projectIdentifier, sessionId);
 }

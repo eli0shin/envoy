@@ -27,11 +27,14 @@ declare module 'marked-terminal' {
   };
 
   export default class TerminalRenderer extends Renderer {
-    constructor(options?: TerminalRendererOptions, highlightOptions?: HighlightOptions);
+    constructor(
+      options?: TerminalRendererOptions,
+      highlightOptions?: HighlightOptions
+    );
   }
-  
+
   export function markedTerminal(
-    options?: TerminalRendererOptions, 
+    options?: TerminalRendererOptions,
     highlightOptions?: HighlightOptions
   ): {
     renderer: Record<string, unknown>;

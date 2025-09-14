@@ -217,8 +217,10 @@ async function main() {
 
 // Run if this file is executed directly
 if (import.meta.url === `file://${process.argv[1]}`) {
-  main().catch(error => {
-    process.stderr.write(`Failed to start Agent Spawner MCP Server: ${error}\n`);
+  main().catch((error) => {
+    process.stderr.write(
+      `Failed to start Agent Spawner MCP Server: ${error}\n`
+    );
     process.exit(1);
   });
 }

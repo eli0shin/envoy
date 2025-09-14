@@ -19,7 +19,9 @@ vi.mock('../shared/fileOperations.js', () => ({
     (error, operation, path) =>
       new Error(`${operation} failed for ${path}: ${error.message}`)
   ),
-  getUserConfigPath: vi.fn(filename => `/mock/home/.config/envoy/${filename}`),
+  getUserConfigPath: vi.fn(
+    (filename) => `/mock/home/.config/envoy/${filename}`
+  ),
 }));
 
 vi.mock('os', () => ({

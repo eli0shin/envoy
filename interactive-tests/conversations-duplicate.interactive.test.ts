@@ -27,7 +27,7 @@ describe('Conversations Command Duplicate Messages', () => {
         process.sendEnter();
 
         // Wait for response to appear
-        await new Promise(resolve => setTimeout(resolve, 8000));
+        await new Promise((resolve) => setTimeout(resolve, 8000));
 
         // Get final output and analyze
         const finalOutput = process.getCleanOutput();

@@ -300,8 +300,9 @@ class AgentSpawnerServer {
       this.resourcePool,
       {
         agent: {
-          systemPrompt: params.systemPrompt
-            ? {
+          systemPrompt:
+            params.systemPrompt ?
+              {
                 mode: 'append',
                 value: params.systemPrompt,
               }

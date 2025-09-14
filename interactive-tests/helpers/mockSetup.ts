@@ -73,7 +73,7 @@ export function setupMockEnvironment(config: MockConfig) {
 
   return () => {
     // Restore original environment
-    Object.keys(process.env).forEach(key => {
+    Object.keys(process.env).forEach((key) => {
       if (originalEnv[key] === undefined) {
         delete process.env[key];
       } else {

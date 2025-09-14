@@ -1,10 +1,10 @@
-import { HelpModal } from "./HelpModal.js";
-import { useModalState } from "./ModalProvider.js";
+import { HelpModal } from './HelpModal.js';
+import { useModalState } from './ModalProvider.js';
 
 export function ModalDisplay() {
   const { currentModal } = useModalState();
 
-  if (currentModal === "help") {
+  if (currentModal === 'help') {
     return <HelpModal />;
   }
 

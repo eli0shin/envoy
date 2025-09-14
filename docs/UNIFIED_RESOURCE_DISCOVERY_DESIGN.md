@@ -273,7 +273,7 @@ export class UnifiedResourceManager {
   private readonly CACHE_TTL = 300000; // 5 minutes
 
   constructor(clientWrappers: MCPClientWrapper[]) {
-    this.clientWrappers = new Map(clientWrappers.map(w => [w.serverName, w]));
+    this.clientWrappers = new Map(clientWrappers.map((w) => [w.serverName, w]));
     this.resourceCache = new Map();
   }
 
@@ -325,7 +325,7 @@ function createUnifiedResourceTools(
       includeContent: z.boolean().default(false).optional(),
       relevanceThreshold: z.number().min(0).max(1).default(0.3).optional(),
     }),
-    execute: async args => {
+    execute: async (args) => {
       const result = await resourceManager.discoverResources(args);
       return JSON.stringify(result, null, 2);
     },

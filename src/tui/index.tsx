@@ -8,10 +8,8 @@ export async function launchTUI(
   agentSession: AgentSession
 ): Promise<void> {
   // Initialize TUI with existing session
-  render(
-    <TUIApp
-      config={config}
-      session={agentSession}
-    />
-  );
+  // Disable OpenTUI's built-in Ctrl+C handling to allow our double-press logic
+  render(<TUIApp config={config} session={agentSession} />, {
+    exitOnCtrlC: false,
+  });
 }

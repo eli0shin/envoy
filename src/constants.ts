@@ -69,8 +69,9 @@ Current working directory: ${process.cwd()}
   let prompt: string;
 
   // Build the base prompt with conditional non-interactive line
-  const basePrompt = isInteractive
-    ? DEFAULT_SYSTEM_PROMPT.replace(
+  const basePrompt =
+    isInteractive ?
+      DEFAULT_SYSTEM_PROMPT.replace(
         'You are in a non-interactive environment meaning that the user cannot respond to you after they send the initial message.\nIf you are unsure and have a question think about 3 possible answers and proceed with the most likely one.\nDo not stop until the task is complete and all outputs are delivered.',
         ''
       ).trim()

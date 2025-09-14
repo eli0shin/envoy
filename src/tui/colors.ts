@@ -5,20 +5,21 @@
 
 export const colors = {
   // Text colors
-  primary: "#4fc1ff", // Header title, user messages
-  processing: "#DCDCAA", // Processing status, reasoning content
-  success: "#89d185", // Ready status, assistant messages
-  muted: "#858585", // Session info display
-  lightGray: "#DCDCDC", // Slightly muted content text
-  accent: "#C586C0", // Tool-related content
-  text: "#D4D4D4", // Input text color
+  primary: '#4fc1ff', // Header title, user messages
+  processing: '#DCDCAA', // Processing status, reasoning content
+  success: '#89d185', // Ready status, assistant messages
+  warning: '#FFD700', // Warning messages, exit confirmation
+  muted: '#858585', // Session info display
+  lightGray: '#DCDCDC', // Slightly muted content text
+  accent: '#C586C0', // Tool-related content
+  text: '#D4D4D4', // Input text color
 
   // Background colors
   backgrounds: {
-    main: "#1E1E1E", // Main UI background
-    userMessage: "#2a2d2e", // User message background
-    assistantMessage: "#1E1E1E", // Assistant message background
-    input: "#252526", // Input area background
+    main: '#1E1E1E', // Main UI background
+    userMessage: '#2a2d2e', // User message background
+    assistantMessage: '#1E1E1E', // Assistant message background
+    input: '#252526', // Input area background
   },
 } as const;
 
@@ -46,6 +47,7 @@ export const {
   primary,
   processing,
   success,
+  warning,
   muted,
   lightGray,
   accent,

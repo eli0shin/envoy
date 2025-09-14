@@ -4,22 +4,22 @@
  * Based on actual @modelcontextprotocol/sdk interfaces
  */
 
-import { vi } from "vitest";
-import type { ChildProcess } from "child_process";
-import type { LanguageModel } from "ai";
-import type { Client } from "@modelcontextprotocol/sdk/client/index.js";
-import type { StdioClientTransport } from "@modelcontextprotocol/sdk/client/stdio.js";
-import type { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
-import type { AgentSession } from "../../agentSession.js";
+import { vi } from 'vitest';
+import type { ChildProcess } from 'child_process';
+import type { LanguageModel } from 'ai';
+import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
+import type { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import type { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
+import type { AgentSession } from '../../agentSession.js';
 
-import type { RuntimeConfiguration } from "../../config/types.js";
+import type { RuntimeConfiguration } from '../../config/types.js';
 import type {
   MCPClientWrapper,
   MCPServerConfig,
   WrappedTool,
   MCPPrompt,
   MCPResource,
-} from "../../types/index.js";
+} from '../../types/index.js';
 // UI bridge types removed with UI deletion
 
 /**
@@ -48,26 +48,26 @@ export function createMockLogger() {
       setSuppressConsoleOutput: vi.fn(),
 
       // Utility methods
-      getSessionId: vi.fn(() => "test-session-id"),
-      getLogDirectory: vi.fn(() => "/test/logs"),
-      getCurrentLogProgress: vi.fn(() => "none"),
+      getSessionId: vi.fn(() => 'test-session-id'),
+      getLogDirectory: vi.fn(() => '/test/logs'),
+      getCurrentLogProgress: vi.fn(() => 'none'),
     },
 
     // Individual function exports
-    getSessionId: vi.fn(() => "test-session-id"),
-    getLogDirectory: vi.fn(() => "/test/logs"),
-    getConversationDirectory: vi.fn(() => "/test/conversations"),
+    getSessionId: vi.fn(() => 'test-session-id'),
+    getLogDirectory: vi.fn(() => '/test/logs'),
+    getConversationDirectory: vi.fn(() => '/test/conversations'),
     getProjectConversationDirectory: vi.fn(
-      (projectIdentifier: string) => `/test/conversations/${projectIdentifier}`,
+      (projectIdentifier: string) => `/test/conversations/${projectIdentifier}`
     ),
     getProjectConversationFile: vi.fn(
       (projectIdentifier: string, sessionId: string) =>
-        `/test/conversations/${projectIdentifier}/${sessionId}.jsonl`,
+        `/test/conversations/${projectIdentifier}/${sessionId}.jsonl`
     ),
     logMcpTool: vi.fn(),
     setLogLevel: vi.fn(),
     setLogProgress: vi.fn(),
-    createSessionId: vi.fn(() => "test-session-id"),
+    createSessionId: vi.fn(() => 'test-session-id'),
   };
 }
 
@@ -153,7 +153,7 @@ export function createMockClient(overrides: Partial<Client> = {}): Client {
  * details we don't need to mock for testing purposes.
  */
 export function createMockStdioTransport(
-  overrides: Partial<StdioClientTransport> = {},
+  overrides: Partial<StdioClientTransport> = {}
 ): StdioClientTransport {
   const mockTransport = {
     // Core transport methods (with correct signatures)
@@ -209,7 +209,7 @@ export function createMockStdioTransport(
  * details we don't need to mock for testing purposes.
  */
 export function createMockSSETransport(
-  overrides: Partial<SSEClientTransport> = {},
+  overrides: Partial<SSEClientTransport> = {}
 ): SSEClientTransport {
   const mockTransport = {
     // Core transport methods (with correct signatures)
@@ -240,31 +240,31 @@ export function createMockSSETransport(
  * Based on the actual RuntimeConfiguration type from configTypes.ts
  */
 export function createMockRuntimeConfiguration(
-  overrides: Partial<RuntimeConfiguration> = {},
+  overrides: Partial<RuntimeConfiguration> = {}
 ): RuntimeConfiguration {
   return {
     providers: {
-      default: "anthropic" as const,
+      default: 'anthropic' as const,
       anthropic: {
-        model: "claude-sonnet-4-20250514",
-        authType: "x-api-key" as const,
+        model: 'claude-sonnet-4-20250514',
+        authType: 'x-api-key' as const,
       },
-      openai: { model: "gpt-4.1" },
+      openai: { model: 'gpt-4.1' },
       google: {
-        model: "gemini-2.5-pro",
-        authType: "api-key" as const,
+        model: 'gemini-2.5-pro',
+        authType: 'api-key' as const,
       },
-      openrouter: { model: "google/gemini-2.5-flash-preview-05-20" },
+      openrouter: { model: 'google/gemini-2.5-flash-preview-05-20' },
     },
     agent: {
-      logProgress: "none" as const,
+      logProgress: 'none' as const,
       systemPrompt: {
-        mode: "replace" as const,
-        value: "Test system prompt",
+        mode: 'replace' as const,
+        value: 'Test system prompt',
       },
       maxSteps: 10,
       timeout: 300000,
-      logLevel: "SILENT" as const,
+      logLevel: 'SILENT' as const,
       streaming: true,
     },
     tools: {
@@ -283,24 +283,24 @@ export function createMockRuntimeConfiguration(
  * Based on the actual AgentSession type from agentSession.ts
  */
 export function createMockAgentSession(
-  overrides: Partial<AgentSession> = {},
+  overrides: Partial<AgentSession> = {}
 ): AgentSession {
   return {
     model: {
-      modelId: "claude-sonnet-4-20250514",
-      specificationVersion: "v1",
-      provider: "anthropic",
-      defaultObjectGenerationMode: "json",
+      modelId: 'claude-sonnet-4-20250514',
+      specificationVersion: 'v1',
+      provider: 'anthropic',
+      defaultObjectGenerationMode: 'json',
       doGenerate: vi.fn(),
       doStream: vi.fn(),
     } as LanguageModel,
     tools: {},
-    systemPrompt: "Test system prompt",
+    systemPrompt: 'Test system prompt',
     mcpClients: [],
     authInfo: {
-      method: "api-key" as const,
-      source: "environment" as const,
-      details: { envVarName: "ANTHROPIC_API_KEY" },
+      method: 'api-key' as const,
+      source: 'environment' as const,
+      details: { envVarName: 'ANTHROPIC_API_KEY' },
     },
     conversationPersistence: undefined,
     ...overrides,
@@ -361,14 +361,14 @@ export function createFsMock() {
  * For test-specific behavior, use vi.mocked() to override specific methods
  */
 export function createMockMCPClientWrapper(
-  overrides: Partial<MCPClientWrapper> = {},
+  overrides: Partial<MCPClientWrapper> = {}
 ): MCPClientWrapper {
   return {
-    serverName: "test-server",
+    serverName: 'test-server',
     serverConfig: {
-      type: "stdio",
-      name: "test-server",
-      command: "test-command",
+      type: 'stdio',
+      name: 'test-server',
+      command: 'test-command',
       args: [],
     } as MCPServerConfig,
     tools: new Map<string, WrappedTool>(),
@@ -405,7 +405,7 @@ export function createMockFetch(defaultResponse?: Response) {
   if (defaultResponse) {
     mockFetch.mockResolvedValue(defaultResponse);
   }
-  vi.stubGlobal("fetch", mockFetch);
+  vi.stubGlobal('fetch', mockFetch);
   return mockFetch;
 }
 
@@ -415,7 +415,7 @@ export function createMockFetch(defaultResponse?: Response) {
 export function createMockResponse(data: unknown, status = 200) {
   return new Response(JSON.stringify(data), {
     status,
-    headers: { "Content-Type": "application/json" },
+    headers: { 'Content-Type': 'application/json' },
   });
 }
 
@@ -424,7 +424,7 @@ export function createMockResponse(data: unknown, status = 200) {
  * Used for child process mock centralization
  */
 export function createMockChildProcess(
-  overrides: Record<string, unknown> = {},
+  overrides: Record<string, unknown> = {}
 ): Partial<ChildProcess> {
   return {
     stdout: null,
@@ -480,17 +480,17 @@ export function createMockStreamTextResult(
     usage?: { totalTokens: number };
     messages?: Array<{ role: string; content: string }>;
     toolResults?: Array<unknown>;
-  },
+  }
 ) {
   return {
     fullStream: generator,
     response: Promise.resolve({
       messages: overrides?.messages || [
-        { role: "assistant", content: overrides?.text || "Test response" },
+        { role: 'assistant', content: overrides?.text || 'Test response' },
       ],
     }),
-    text: Promise.resolve(overrides?.text || "Test response"),
-    finishReason: Promise.resolve(overrides?.finishReason || "stop"),
+    text: Promise.resolve(overrides?.text || 'Test response'),
+    finishReason: Promise.resolve(overrides?.finishReason || 'stop'),
     usage: Promise.resolve(overrides?.usage || { totalTokens: 100 }),
     toolResults: Promise.resolve(overrides?.toolResults || []),
   };

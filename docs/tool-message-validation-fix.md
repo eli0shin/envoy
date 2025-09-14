@@ -33,7 +33,6 @@ The error occurs during the following execution flow:
 2. **Message Storage**: `onMessageUpdate()` → `MessageUpdateHandler.handleMessageUpdate()` → `handleToolCallMessage()` → `session.messages.push(msgEnhanced)`
 
 3. **Multi-Step Continuation**: In the same agent execution, when continuing multi-step processing:
-
    - `AgentExecutionHandler.execute()` line 80: `runAgent(this.session.messages)`
    - `agent.ts` line 84-85: `messages` → `transformedMessages` (no filtering)
    - Line 101: `streamText({ messages: transformedMessages })`

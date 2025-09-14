@@ -22,8 +22,9 @@ function initializeMatchers() {
     const arr = Array.isArray(desc) ? desc : [desc];
     prefixMatchers[name] = arr.map((d) => parseKeyDescriptor(d));
   });
-  const cancels = Array.isArray(settings.prefixCancel)
-    ? settings.prefixCancel
+  const cancels =
+    Array.isArray(settings.prefixCancel) ?
+      settings.prefixCancel
     : [settings.prefixCancel];
   cancelMatchers = cancels.map((d) => parseKeyDescriptor(d));
 }

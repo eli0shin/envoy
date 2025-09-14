@@ -33,7 +33,7 @@ describe('MCP Prompt Autocomplete Interactive Test', () => {
         await process.typeText('/demo-server:sim');
 
         // Give it time to show autocomplete suggestions
-        await new Promise(resolve => setTimeout(resolve, 500));
+        await new Promise((resolve) => setTimeout(resolve, 500));
 
         let currentOutput = process.getCleanOutput();
         console.log(
@@ -47,12 +47,11 @@ describe('MCP Prompt Autocomplete Interactive Test', () => {
           currentOutput.includes('simple-prompt') ||
           currentOutput.includes('/demo-server:simple-prompt');
 
-
         // Test 2: Try completing the prompt name manually
         await process.typeText('ple-prompt');
 
         // Give it time to process
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise((resolve) => setTimeout(resolve, 200));
 
         currentOutput = process.getCleanOutput();
         console.log(
@@ -99,7 +98,7 @@ describe('MCP Prompt Autocomplete Interactive Test', () => {
         await process.typeText('/help');
         process.sendEnter();
 
-        await new Promise(resolve => setTimeout(resolve, 2000));
+        await new Promise((resolve) => setTimeout(resolve, 2000));
 
         const helpOutput = process.getCleanOutput();
 

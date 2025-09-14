@@ -3,7 +3,15 @@ import { keybindingsRegistry } from './registry.js';
 import { defaultKeybindings } from './defaults.js';
 import type { TUIKeyEvent } from './types.js';
 
-const ev = (name: string, mods: Partial<{ ctrl: boolean; shift: boolean; alt: boolean; meta: boolean }> = {}): TUIKeyEvent => ({
+const ev = (
+  name: string,
+  mods: Partial<{
+    ctrl: boolean;
+    shift: boolean;
+    alt: boolean;
+    meta: boolean;
+  }> = {}
+): TUIKeyEvent => ({
   name,
   ctrl: !!mods.ctrl,
   shift: !!mods.shift,
@@ -25,10 +33,29 @@ describe('keybindings registry', () => {
   });
 
   it('matches events against configured bindings', () => {
-    expect(keybindingsRegistry.matches('input', 'input.submit', ev('enter'))).toBe(true);
-    expect(keybindingsRegistry.matches('input', 'input.newline', ev('enter', { shift: true }))).toBe(true);
-    expect(keybindingsRegistry.matches('messages', 'messages.scrollPageUp', ev('pageup'))).toBe(true);
-    expect(keybindingsRegistry.matches('messages', 'messages.scrollPageUp', ev('u', { ctrl: true }))).toBe(true);
+    expect(
+      keybindingsRegistry.matches('input', 'input.submit', ev('enter'))
+    ).toBe(true);
+    expect(
+      keybindingsRegistry.matches(
+        'input',
+        'input.newline',
+        ev('enter', { shift: true })
+      )
+    ).toBe(true);
+    expect(
+      keybindingsRegistry.matches(
+        'messages',
+        'messages.scrollPageUp',
+        ev('pageup')
+      )
+    ).toBe(true);
+    expect(
+      keybindingsRegistry.matches(
+        'messages',
+        'messages.scrollPageUp',
+        ev('u', { ctrl: true })
+      )
+    ).toBe(true);
   });
 });
-

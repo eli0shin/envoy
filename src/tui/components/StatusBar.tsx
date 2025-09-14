@@ -7,16 +7,21 @@ type Status = 'READY' | 'PROCESSING';
 type StatusBarProps = {
   status: Status;
   session: AgentSession;
+  exitConfirmation?: boolean;
 };
 
-export function StatusBar({ status, session }: StatusBarProps) {
+export function StatusBar({
+  status,
+  session,
+  exitConfirmation,
+}: StatusBarProps) {
   const statusText = status === 'PROCESSING' ? 'Working...' : 'Ready';
   const statusColor = statusColors[status];
 
   // Extract provider, model, and auth info from session
   const modelId = session.model.modelId || 'unknown';
   const authMethod = session.authInfo.method;
-  
+
   // Determine provider from model ID or auth info
   let provider = 'unknown';
   if (modelId.includes('claude')) {
@@ -32,14 +37,20 @@ export function StatusBar({ status, session }: StatusBarProps) {
   const sessionInfo = `${provider} | ${authMethod} | ${modelId}`;
 
   return (
-    <box style={{ flexDirection: "column" }}>
-      <box style={{ height: 1, flexDirection: "row", justifyContent: "space-between" }}>
+    <box style={{ flexDirection: 'column' }}>
+      <box
+        style={{
+          height: 1,
+          flexDirection: 'row',
+          justifyContent: 'space-between',
+        }}
+      >
         <text>
-          {fg(statusColor)(` ${statusText}`)}
+          {exitConfirmation ?
+            fg(colors.warning)(` Press Ctrl+C again to exit`)
+          : fg(statusColor)(` ${statusText}`)}
         </text>
-        <text>
-          {fg(colors.muted)(`${sessionInfo} `)}
-        </text>
+        <text>{fg(colors.muted)(`${sessionInfo} `)}</text>
       </box>
       {/* Bottom padding line */}
       <box style={{ height: 1 }}>

@@ -525,14 +525,14 @@ describe('CLI Tests', () => {
     it('should have uncaught exception handler', () => {
       const handler = process
         .listeners('uncaughtException')
-        .find(listener => typeof listener === 'function');
+        .find((listener) => typeof listener === 'function');
       expect(handler).toBeDefined();
     });
 
     it('should have unhandled rejection handler', () => {
       const handler = process
         .listeners('unhandledRejection')
-        .find(listener => typeof listener === 'function');
+        .find((listener) => typeof listener === 'function');
       expect(handler).toBeDefined();
     });
 
@@ -699,7 +699,7 @@ describe('CLI Tests', () => {
 
         // Verify no argument section for prompt without arguments
         const consoleCalls = vi.mocked(console.log).mock.calls.flat();
-        const argumentSectionCount = consoleCalls.filter(call =>
+        const argumentSectionCount = consoleCalls.filter((call) =>
           call.includes('Arguments:')
         ).length;
         expect(argumentSectionCount).toBe(1); // Only first prompt should have arguments section
@@ -2145,9 +2145,9 @@ describe('CLI Tests', () => {
 
         // Count the number of resource sections (should be max 5)
         const messageText =
-          typeof enhancedMessage === 'string'
-            ? enhancedMessage
-            : JSON.stringify(enhancedMessage);
+          typeof enhancedMessage === 'string' ? enhancedMessage : (
+            JSON.stringify(enhancedMessage)
+          );
         const resourceSections = (
           messageText.match(/### Resource: file:\/\/\/app\/log\d+\.txt/g) || []
         ).length;

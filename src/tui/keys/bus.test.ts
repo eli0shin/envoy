@@ -5,7 +5,15 @@ import { keybindingsRegistry } from './registry.js';
 import { defaultKeybindings } from './defaults.js';
 import { parseKeys } from './useKeys.js';
 
-const ev = (name: string, mods: Partial<{ ctrl: boolean; shift: boolean; alt: boolean; meta: boolean }> = {}): TUIKeyEvent => ({
+const ev = (
+  name: string,
+  mods: Partial<{
+    ctrl: boolean;
+    shift: boolean;
+    alt: boolean;
+    meta: boolean;
+  }> = {}
+): TUIKeyEvent => ({
   name,
   ctrl: !!mods.ctrl,
   shift: !!mods.shift,
@@ -25,9 +33,33 @@ describe('key event bus', () => {
 
   it('dispatches to highest priority enabled handler first', () => {
     const calls: string[] = [];
-    keyEventBus.register({ scope: 'messages', priority: 40, enabled: () => true, handle: () => { calls.push('messages'); return false; } });
-    keyEventBus.register({ scope: 'global', priority: 20, enabled: () => true, handle: () => { calls.push('global'); return true; } });
-    keyEventBus.register({ scope: 'input', priority: 60, enabled: () => true, handle: () => { calls.push('input'); return true; } });
+    keyEventBus.register({
+      scope: 'messages',
+      priority: 40,
+      enabled: () => true,
+      handle: () => {
+        calls.push('messages');
+        return false;
+      },
+    });
+    keyEventBus.register({
+      scope: 'global',
+      priority: 20,
+      enabled: () => true,
+      handle: () => {
+        calls.push('global');
+        return true;
+      },
+    });
+    keyEventBus.register({
+      scope: 'input',
+      priority: 60,
+      enabled: () => true,
+      handle: () => {
+        calls.push('input');
+        return true;
+      },
+    });
 
     keyEventBus.dispatch(ev('x'));
 
@@ -44,4 +76,3 @@ describe('key event bus', () => {
     expect(spy).toHaveBeenCalled();
   });
 });
-

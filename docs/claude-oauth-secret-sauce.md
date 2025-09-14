@@ -220,7 +220,7 @@ export function transformMessagesForAnthropic(
 
   // Convert system prompts to system messages
   if (systemPrompts && systemPrompts.length > 0) {
-    const systemMessages: CoreMessage[] = systemPrompts.map(content => ({
+    const systemMessages: CoreMessage[] = systemPrompts.map((content) => ({
       role: 'system',
       content,
     }));
@@ -229,10 +229,10 @@ export function transformMessagesForAnthropic(
 
   // Apply cache control to strategic messages
   const systemMessages = transformed
-    .filter(msg => msg.role === 'system')
+    .filter((msg) => msg.role === 'system')
     .slice(0, 2);
   const finalMessages = transformed
-    .filter(msg => msg.role !== 'system')
+    .filter((msg) => msg.role !== 'system')
     .slice(-2);
 
   // Cache first 2 system + last 2 non-system messages
@@ -287,8 +287,9 @@ case 'anthropic':
 const result = await generateText({
   model,
   system: Array.isArray(systemPrompt) ? undefined : systemPrompt,
-  messages: Array.isArray(systemPrompt)
-    ? transformMessagesForAnthropic(messages, systemPrompt)
+  messages:
+    Array.isArray(systemPrompt) ?
+      transformMessagesForAnthropic(messages, systemPrompt)
     : messages,
   tools,
   // ... other options
@@ -402,23 +403,19 @@ npx . --provider anthropic "What tools do you have available?"
 ### For New Projects
 
 1. **Start with OAuth Configuration**
-
    - Use the exact endpoints and client ID from this guide
    - Implement PKCE flow with proper URL construction
 
 2. **Implement Header Preservation**
-
    - Never use `new Headers()` - always spread existing headers
    - Add OAuth headers without destroying AI SDK defaults
 
 3. **Build Multi-Part System Messages**
-
    - Support both string and array system prompts
    - Always include spoof message first for Anthropic
    - Add environment context with platform details
 
 4. **Add Strategic Caching**
-
    - Only during streaming operations
    - Cache first 2 system + last 2 non-system messages
    - Use ephemeral cache control

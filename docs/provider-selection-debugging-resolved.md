@@ -134,11 +134,11 @@ logger.debug('Provider configuration analysis', {
   configuredModel: providerConfig?.model || null,
   resolvedModel: model,
   configSources: configResult.loadedFrom || [],
-  source: cliOverrides.provider
-    ? 'CLI override'
-    : loadedFrom.length > 0
-      ? `config file (${loadedFrom[loadedFrom.length - 1]})`
-      : 'default',
+  source:
+    cliOverrides.provider ? 'CLI override'
+    : loadedFrom.length > 0 ?
+      `config file (${loadedFrom[loadedFrom.length - 1]})`
+    : 'default',
 });
 ```
 

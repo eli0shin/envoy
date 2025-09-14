@@ -37,7 +37,7 @@ server.registerResource(
     title: 'Simple',
     description: 'A simple resource',
   },
-  async uri => ({
+  async (uri) => ({
     contents: [
       {
         uri: uri.href,
@@ -113,9 +113,9 @@ server.registerPrompt(
     title: 'Team Greeting',
     description: 'Generate a greeting for team members',
     argsSchema: {
-      department: completable(z.string(), value => {
+      department: completable(z.string(), (value) => {
         // Department suggestions
-        return ['engineering', 'sales', 'marketing', 'support'].filter(d =>
+        return ['engineering', 'sales', 'marketing', 'support'].filter((d) =>
           d.startsWith(value)
         );
       }),
@@ -123,13 +123,13 @@ server.registerPrompt(
         // Name suggestions based on selected department
         const department = context?.arguments?.['department'];
         if (department === 'engineering') {
-          return ['Alice', 'Bob', 'Charlie'].filter(n => n.startsWith(value));
+          return ['Alice', 'Bob', 'Charlie'].filter((n) => n.startsWith(value));
         } else if (department === 'sales') {
-          return ['David', 'Eve', 'Frank'].filter(n => n.startsWith(value));
+          return ['David', 'Eve', 'Frank'].filter((n) => n.startsWith(value));
         } else if (department === 'marketing') {
-          return ['Grace', 'Henry', 'Iris'].filter(n => n.startsWith(value));
+          return ['Grace', 'Henry', 'Iris'].filter((n) => n.startsWith(value));
         }
-        return ['Guest'].filter(n => n.startsWith(value));
+        return ['Guest'].filter((n) => n.startsWith(value));
       }),
     },
   },

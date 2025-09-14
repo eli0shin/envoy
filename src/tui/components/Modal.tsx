@@ -1,6 +1,6 @@
-import { useKeyboard, useTerminalDimensions } from "@opentui/react";
-import { colors } from "../theme.js";
-import type { ReactNode } from "react";
+import { useKeyboard, useTerminalDimensions } from '@opentui/react';
+import { colors } from '../theme.js';
+import type { ReactNode } from 'react';
 
 type ModalProps = {
   width: number;
@@ -38,4 +38,3 @@ export function Modal({ width, height, children }: ModalProps) {
     </box>
   );
 }
-

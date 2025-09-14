@@ -103,7 +103,7 @@ describe('ProcessManager', () => {
       expect(processManager.getActiveProcessCount()).toBe(0);
 
       // Wait a bit for process to be terminated
-      await new Promise(resolve => setTimeout(resolve, 100));
+      await new Promise((resolve) => setTimeout(resolve, 100));
       expect(mockProcess.killed).toBe(true);
     });
 
@@ -130,7 +130,7 @@ describe('ProcessManager', () => {
       );
 
       // Wait for cleanup to complete
-      await new Promise(resolve => setTimeout(resolve, 200));
+      await new Promise((resolve) => setTimeout(resolve, 200));
     });
 
     test('should handle cleanup when no processes exist', () => {

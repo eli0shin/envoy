@@ -1,10 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
-import { fg } from "@opentui/core";
-import { useTerminalDimensions } from "@opentui/react";
-import { useKeys, parseKeys } from "../keys/index.js";
-import { colors } from "../theme.js";
-import { commandRegistry } from "../commands/registry.js";
-import type { Command } from "../commands/registry.js";
+import { useState, useEffect, useCallback } from 'react';
+import { fg } from '@opentui/core';
+import { useTerminalDimensions } from '@opentui/react';
+import { useKeys, parseKeys } from '../keys/index.js';
+import { colors } from '../theme.js';
+import { commandRegistry } from '../commands/registry.js';
+import type { Command } from '../commands/registry.js';
 
 type CommandAutocompleteProps = {
   inputValue: string;
@@ -24,7 +24,7 @@ export function CommandAutocomplete({
 
   // Update suggestions when input value changes
   useEffect(() => {
-    if (inputValue.startsWith("/")) {
+    if (inputValue.startsWith('/')) {
       const newSuggestions = commandRegistry.getSuggestions(inputValue);
       setSuggestions(newSuggestions);
       setSelectedIndex(0);
@@ -45,23 +45,23 @@ export function CommandAutocomplete({
 
   // Handle arrow key navigation
   const handleArrowKey = useCallback(
-    (direction: "up" | "down") => {
+    (direction: 'up' | 'down') => {
       if (!shouldShowAutocomplete || suggestions.length === 0) {
         return false;
       }
 
-      if (direction === "up") {
+      if (direction === 'up') {
         setSelectedIndex((prev) =>
-          prev > 0 ? prev - 1 : suggestions.length - 1,
+          prev > 0 ? prev - 1 : suggestions.length - 1
         );
       } else {
         setSelectedIndex((prev) =>
-          prev < suggestions.length - 1 ? prev + 1 : 0,
+          prev < suggestions.length - 1 ? prev + 1 : 0
         );
       }
       return true;
     },
-    [shouldShowAutocomplete, suggestions],
+    [shouldShowAutocomplete, suggestions]
   );
 
   // Keybindings for autocomplete
@@ -71,39 +71,39 @@ export function CommandAutocomplete({
       return (
         parseKeys(
           key,
-          "command.accept",
+          'command.accept',
           () => {
             handleTabComplete();
           },
-          "autocomplete",
+          'autocomplete'
         ) ||
         parseKeys(
           key,
-          "command.prev",
+          'command.prev',
           () => {
-            handleArrowKey("up");
+            handleArrowKey('up');
           },
-          "autocomplete",
+          'autocomplete'
         ) ||
         parseKeys(
           key,
-          "command.next",
+          'command.next',
           () => {
-            handleArrowKey("down");
+            handleArrowKey('down');
           },
-          "autocomplete",
+          'autocomplete'
         ) ||
         parseKeys(
           key,
-          "command.close",
+          'command.close',
           () => {
             setSuggestions([]);
           },
-          "autocomplete",
+          'autocomplete'
         )
       );
     },
-    { scope: "autocomplete", enabled: () => shouldShowAutocomplete },
+    { scope: 'autocomplete', enabled: () => shouldShowAutocomplete }
   );
 
   if (!shouldShowAutocomplete) {
@@ -144,19 +144,19 @@ export function CommandAutocomplete({
           paddingLeft={1}
           paddingRight={1}
           backgroundColor={
-            index === visibleSelectedIndex
-              ? colors.backgrounds.userMessage
-              : undefined
+            index === visibleSelectedIndex ?
+              colors.backgrounds.userMessage
+            : undefined
           }
         >
           <text>
-            {index === visibleSelectedIndex
-              ? fg(colors.text)(`/${cmd.name}`)
-              : fg(colors.primary)(`/${cmd.name}`)}
-            {fg(colors.muted)(" - ")}
-            {index === visibleSelectedIndex
-              ? fg(colors.lightGray)(cmd.description)
-              : fg(colors.muted)(cmd.description)}
+            {index === visibleSelectedIndex ?
+              fg(colors.text)(`/${cmd.name}`)
+            : fg(colors.primary)(`/${cmd.name}`)}
+            {fg(colors.muted)(' - ')}
+            {index === visibleSelectedIndex ?
+              fg(colors.lightGray)(cmd.description)
+            : fg(colors.muted)(cmd.description)}
           </text>
         </box>
       ))}

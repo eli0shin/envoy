@@ -29,7 +29,6 @@ The function will:
    to `stdout` the moment the model selects the tool.
 
 4. Invoke `generateText()` (Vercel AI SDK) with `maxSteps > 1`.
-
    - The SDK automatically:
      - Loops: assistant → tool‑call → assistant … until no further tool calls.
      - Validates tool arguments against JSON schemas.

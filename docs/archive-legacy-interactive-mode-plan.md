@@ -99,7 +99,7 @@ async function promptUser(): Promise<string> {
       type: 'input',
       name: 'message',
       message: '>',
-      validate: value => value.trim().length > 0 || 'Please enter a message',
+      validate: (value) => value.trim().length > 0 || 'Please enter a message',
     },
   ]);
   return message;

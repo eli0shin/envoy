@@ -138,8 +138,9 @@ function createThinkingProviderOptions(
   const providerType = getProviderType(model);
 
   // Analyze message for thinking requirements
-  const analysis = message
-    ? analyzeMessageForThinking(message)
+  const analysis =
+    message ?
+      analyzeMessageForThinking(message)
     : { level: 'none', budgetTokens: 0, enableInterleaved: false };
 
   // If no thinking requested, return minimal options
@@ -147,9 +148,9 @@ function createThinkingProviderOptions(
     return {
       providerOptions: {},
       headers:
-        analysis.enableInterleaved && providerType === 'anthropic'
-          ? { 'anthropic-beta': 'interleaved-thinking-2025-05-14' }
-          : {},
+        analysis.enableInterleaved && providerType === 'anthropic' ?
+          { 'anthropic-beta': 'interleaved-thinking-2025-05-14' }
+        : {},
     };
   }
 
@@ -167,8 +168,9 @@ function createThinkingProviderOptions(
             },
           },
         },
-        headers: analysis.enableInterleaved
-          ? { 'anthropic-beta': 'interleaved-thinking-2025-05-14' }
+        headers:
+          analysis.enableInterleaved ?
+            { 'anthropic-beta': 'interleaved-thinking-2025-05-14' }
           : {},
       };
 
@@ -182,8 +184,9 @@ function createThinkingProviderOptions(
       };
       const reasoningEffort = effortMap[analysis.level];
       return {
-        providerOptions: reasoningEffort
-          ? {
+        providerOptions:
+          reasoningEffort ?
+            {
               openai: { reasoningEffort },
             }
           : {},
@@ -201,11 +204,11 @@ function createThinkingProviderOptions(
       const thinkingBudget = googleBudgetMap[analysis.level];
       return {
         providerOptions:
-          thinkingBudget > 0
-            ? {
-                google: { thinkingBudget },
-              }
-            : {},
+          thinkingBudget > 0 ?
+            {
+              google: { thinkingBudget },
+            }
+          : {},
         headers: {}, // Google doesn't support interleaved thinking
       };
 
@@ -233,8 +236,9 @@ export async function runAgent(
   // ... existing setup ...
 
   // Extract user message for analysis
-  const userMessage = Array.isArray(messagesOrUserMessage)
-    ? messagesOrUserMessage.find(m => m.role === 'user')?.content || ''
+  const userMessage =
+    Array.isArray(messagesOrUserMessage) ?
+      messagesOrUserMessage.find((m) => m.role === 'user')?.content || ''
     : messagesOrUserMessage;
 
   // Get thinking options with message analysis
@@ -312,7 +316,6 @@ export async function runAgent(
    ```
 
 2. **Provider Options Tests** (update existing `agent.test.ts`):
-
    - Test each provider with different thinking levels
    - Verify no thinking options when level is 'none'
    - Test interleaved header independence
@@ -338,12 +341,10 @@ Create `e2e/dynamicThinking.test.ts`:
 Since this is a hard switch with no backward compatibility:
 
 1. **Default Behavior Change**:
-
    - OLD: Thinking always enabled with default budgets
    - NEW: No thinking unless explicitly requested
 
 2. **User Impact**:
-
    - Users must add thinking keywords to get reasoning behavior
    - Existing scripts/workflows will need updates
    - Performance improvement for non-thinking tasks

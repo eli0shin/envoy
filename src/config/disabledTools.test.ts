@@ -65,9 +65,9 @@ describe('DisabledTools Regression Tests', () => {
 
     // Find the servers
     const braveSearchServer = mcpServers.find(
-      server => server.name === 'brave-search'
+      (server) => server.name === 'brave-search'
     );
-    const fetchServer = mcpServers.find(server => server.name === 'fetch');
+    const fetchServer = mcpServers.find((server) => server.name === 'fetch');
 
     expect(braveSearchServer).toBeDefined();
     expect(fetchServer).toBeDefined();
@@ -93,7 +93,9 @@ describe('DisabledTools Regression Tests', () => {
     };
 
     const mcpServers = getMCPServersFromConfig(userConfig);
-    const testServer = mcpServers.find(server => server.name === 'test-server');
+    const testServer = mcpServers.find(
+      (server) => server.name === 'test-server'
+    );
 
     expect(testServer).toBeDefined();
 
@@ -119,7 +121,7 @@ describe('DisabledTools Regression Tests', () => {
     };
 
     const mcpServers = getMCPServersFromConfig(userConfig);
-    const sseServer = mcpServers.find(server => server.name === 'sse-server');
+    const sseServer = mcpServers.find((server) => server.name === 'sse-server');
 
     expect(sseServer).toBeDefined();
     expect(sseServer!.type).toBe('sse');
@@ -141,7 +143,7 @@ describe('DisabledTools Regression Tests', () => {
 
     const mcpServers = getMCPServersFromConfig(userConfig);
     const minimalServer = mcpServers.find(
-      server => server.name === 'minimal-server'
+      (server) => server.name === 'minimal-server'
     );
 
     expect(minimalServer).toBeDefined();
@@ -175,7 +177,7 @@ describe('DisabledTools Regression Tests', () => {
 
     const mcpServers = getMCPServersFromConfig(userConfig);
     const productionServer = mcpServers.find(
-      server => server.name === 'production-server'
+      (server) => server.name === 'production-server'
     );
 
     expect(productionServer).toBeDefined();

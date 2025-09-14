@@ -21,7 +21,7 @@ vi.mock('../shared/fileOperations.js', () => ({
 }));
 
 // Mock process.cwd and homedir for consistent testing
-vi.mock('os', async importOriginal => {
+vi.mock('os', async (importOriginal) => {
   const actual = await importOriginal<typeof import('os')>();
   return {
     ...actual,

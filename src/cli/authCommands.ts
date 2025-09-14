@@ -24,7 +24,7 @@ function promptUser(
   question: string,
   hidden: boolean = false
 ): Promise<string> {
-  return new Promise(resolve => {
+  return new Promise((resolve) => {
     const rl = createReadlineInterface();
 
     if (hidden) {
@@ -68,7 +68,7 @@ function promptUser(
       process.stdout.write(question);
       stdin.on('data', onData);
     } else {
-      rl.question(question, answer => {
+      rl.question(question, (answer) => {
         rl.close();
         resolve(answer.trim());
       });
@@ -190,7 +190,9 @@ async function handleOAuthLogin(): Promise<void> {
 async function handleApiKeyLogin(): Promise<void> {
   try {
     process.stdout.write('\n🔑 API Key Setup\n');
-    process.stdout.write('Get your API key from: https://console.anthropic.com/\n');
+    process.stdout.write(
+      'Get your API key from: https://console.anthropic.com/\n'
+    );
 
     const apiKey = await promptUser('Enter your Anthropic API key: ', true);
 
@@ -244,7 +246,9 @@ export async function logoutCommand(): Promise<void> {
       const provider = providers[0];
       const credential = credentials[provider];
 
-      process.stdout.write(`Removing ${provider} credentials (${credential.type})\n`);
+      process.stdout.write(
+        `Removing ${provider} credentials (${credential.type})\n`
+      );
       const confirm = await promptUser('Are you sure? (y/N): ');
 
       if (confirm.toLowerCase().startsWith('y')) {
@@ -255,7 +259,7 @@ export async function logoutCommand(): Promise<void> {
       }
     } else {
       // Multiple providers - let user choose
-      const options = providers.map(provider => ({
+      const options = providers.map((provider) => ({
         label: `${provider} (${credentials[provider].type})`,
         value: provider,
       }));
@@ -339,7 +343,9 @@ export async function statusCommand(): Promise<void> {
       if (anthropicCreds.type === 'oauth') {
         const isAuthenticated = await AnthropicOAuth.isAuthenticated();
         if (isAuthenticated) {
-          process.stdout.write('✅ Anthropic: OAuth authenticated (Claude Pro/Max)\n');
+          process.stdout.write(
+            '✅ Anthropic: OAuth authenticated (Claude Pro/Max)\n'
+          );
         } else {
           process.stdout.write('❌ Anthropic: OAuth token expired/invalid\n');
           process.stdout.write('   Run: npx . auth login\n');

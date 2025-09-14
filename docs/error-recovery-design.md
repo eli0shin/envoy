@@ -11,7 +11,7 @@ try {
   const result = await generateText({
     // ... configuration
     tools: aiSDKTools,
-    onStepFinish: step => {
+    onStepFinish: (step) => {
       // ... step handling
     },
   });
@@ -59,7 +59,7 @@ export async function runAgent(
         messages,
         tools: aiSDKTools,
         maxSteps: 1,
-        onStepFinish: step => {
+        onStepFinish: (step) => {
           if (step.text?.trim()) {
             console.log(`[assistant] ${step.text.trim()}`);
           }

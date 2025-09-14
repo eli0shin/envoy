@@ -28,7 +28,7 @@ export function isToolDisabled(
 
   // Check global disabled tools (FR2)
   const globalDisabledTools = runtimeConfig.tools?.disabledInternalTools || [];
-  const isGloballyDisabled = globalDisabledTools.some(pattern => {
+  const isGloballyDisabled = globalDisabledTools.some((pattern) => {
     // Exact match: "filesystem_write_file"
     if (toolKey === pattern) return true;
 

@@ -27,13 +27,13 @@ export async function resolveCommand(command: string): Promise<string> {
 
     let stdout = '';
 
-    child.stdout?.on('data', data => {
+    child.stdout?.on('data', (data) => {
       stdout += data.toString();
     });
 
-    child.stderr?.on('data', _data => {});
+    child.stderr?.on('data', (_data) => {});
 
-    child.on('close', code => {
+    child.on('close', (code) => {
       if (code === 0 && stdout.trim()) {
         resolve(stdout.trim());
       } else {
@@ -45,11 +45,11 @@ export async function resolveCommand(command: string): Promise<string> {
 
         let whichStdout = '';
 
-        whichChild.stdout?.on('data', data => {
+        whichChild.stdout?.on('data', (data) => {
           whichStdout += data.toString();
         });
 
-        whichChild.on('close', async whichCode => {
+        whichChild.on('close', async (whichCode) => {
           if (whichCode === 0 && whichStdout.trim()) {
             resolve(whichStdout.trim());
           } else {
@@ -66,7 +66,7 @@ export async function resolveCommand(command: string): Promise<string> {
       }
     });
 
-    child.on('error', async error => {
+    child.on('error', async (error) => {
       logger.warn(`Error resolving command '${command}': ${error.message}`);
       resolve(command);
     });

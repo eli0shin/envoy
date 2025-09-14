@@ -96,7 +96,7 @@ const MCPServerConfigSchema = z.any().superRefine((data, ctx) => {
 
     const result = stdioSchema.safeParse(config);
     if (!result.success) {
-      result.error.issues.forEach(issue => {
+      result.error.issues.forEach((issue) => {
         ctx.addIssue(issue);
       });
     }
@@ -117,7 +117,7 @@ const MCPServerConfigSchema = z.any().superRefine((data, ctx) => {
 
     const result = sseSchema.safeParse(config);
     if (!result.success) {
-      result.error.issues.forEach(issue => {
+      result.error.issues.forEach((issue) => {
         ctx.addIssue(issue);
       });
     }
@@ -185,7 +185,7 @@ export function validateConfig(config: unknown): {
     return { valid: true, errors: [] };
   } catch (error) {
     if (error instanceof z.ZodError) {
-      const errors = error.issues.map(issue => {
+      const errors = error.issues.map((issue) => {
         const path = issue.path.length > 0 ? issue.path.join('.') : 'root';
         return `${path}: ${issue.message}`;
       });

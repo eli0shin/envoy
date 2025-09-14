@@ -1,7 +1,7 @@
-import { createContext, useContext, type ReactNode } from "react";
-import { useKeys, parseKeys } from "../keys/index.js";
+import { createContext, useContext, type ReactNode } from 'react';
+import { useKeys, parseKeys } from '../keys/index.js';
 
-type ModalType = "help" | null;
+type ModalType = 'help' | null;
 
 type ModalContextType = {
   currentModal: ModalType;
@@ -23,10 +23,13 @@ export function ModalProvider({
   children,
 }: ModalProviderProps) {
   // Use keybindings to close modal (modal scope has higher priority)
-  useKeys((key) => {
-    if (modalState === null) return false;
-    return parseKeys(key, 'modal.close', () => setModalState(null), 'modal');
-  }, { scope: 'modal', enabled: () => modalState !== null });
+  useKeys(
+    (key) => {
+      if (modalState === null) return false;
+      return parseKeys(key, 'modal.close', () => setModalState(null), 'modal');
+    },
+    { scope: 'modal', enabled: () => modalState !== null }
+  );
 
   const showModal = (type: ModalType) => {
     setModalState(type);
@@ -52,7 +55,7 @@ export function ModalProvider({
 export function useModalState(): ModalContextType {
   const context = useContext(ModalContext);
   if (!context) {
-    throw new Error("useModalState must be used within a ModalProvider");
+    throw new Error('useModalState must be used within a ModalProvider');
   }
   return context;
 }

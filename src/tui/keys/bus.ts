@@ -45,4 +45,3 @@ export function defaultPriorityForScope(scope: KeyScope): number {
       return 20;
   }
 }
-

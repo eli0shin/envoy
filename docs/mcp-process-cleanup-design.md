@@ -367,7 +367,7 @@ function initializeProcessCleanup(): void {
   });
 
   // Handle uncaught exceptions
-  process.on('uncaughtException', error => {
+  process.on('uncaughtException', (error) => {
     logger.error('Uncaught exception:', error);
     processManager.cleanupAll();
     process.exit(1);
@@ -483,7 +483,7 @@ describe('ProcessManager', () => {
     processManager.registerProcess('test-server', mockProcess);
 
     // Wait for process to die naturally
-    await new Promise(resolve => setTimeout(resolve, 200));
+    await new Promise((resolve) => setTimeout(resolve, 200));
 
     // Should not throw
     expect(() => processManager.cleanupProcess('test-server')).not.toThrow();
@@ -537,7 +537,7 @@ describe('Process Cleanup Interactive Tests', () => {
     process.kill('SIGINT');
 
     // Wait for cleanup
-    await new Promise(resolve => setTimeout(resolve, 5000));
+    await new Promise((resolve) => setTimeout(resolve, 5000));
 
     // Check for ghost processes
     const ghostProcesses = await checkForGhostProcesses();

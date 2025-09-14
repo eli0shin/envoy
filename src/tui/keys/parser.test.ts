@@ -1,7 +1,20 @@
 import { describe, it, expect } from 'vitest';
-import { compileDescriptor, matchCompiled, normalizeKeyName, parseKeyDescriptor } from './parser.js';
+import {
+  compileDescriptor,
+  matchCompiled,
+  normalizeKeyName,
+  parseKeyDescriptor,
+} from './parser.js';
 
-const ev = (name: string, mods: Partial<{ ctrl: boolean; shift: boolean; alt: boolean; meta: boolean }> = {}) => ({
+const ev = (
+  name: string,
+  mods: Partial<{
+    ctrl: boolean;
+    shift: boolean;
+    alt: boolean;
+    meta: boolean;
+  }> = {}
+) => ({
   name,
   ctrl: !!mods.ctrl,
   shift: !!mods.shift,
@@ -45,4 +58,3 @@ describe('key descriptor parser', () => {
     expect(mCmd(ev('k', { meta: true }))).toBe(true);
   });
 });
-

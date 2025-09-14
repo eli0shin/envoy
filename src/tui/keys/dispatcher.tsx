@@ -1,24 +1,24 @@
-import { useKeyboard } from "@opentui/react";
-import { keyEventBus } from "./bus.js";
-import { matchesAnyPrefix, matchesCancel } from "./settings.js";
-import { getActivePrefix } from "./prefixContext.js";
-import { keybindingsRegistry } from "./registry.js";
-import { usePrefixState } from "./prefixContext.js";
-import { logger } from "../../logger.js";
+import { useKeyboard } from '@opentui/react';
+import { keyEventBus } from './bus.js';
+import { matchesAnyPrefix, matchesCancel } from './settings.js';
+import { getActivePrefix } from './prefixContext.js';
+import { keybindingsRegistry } from './registry.js';
+import { usePrefixState } from './prefixContext.js';
+import { logger } from '../../logger.js';
 
 export function KeyDispatcher() {
   const { setActivePrefixState } = usePrefixState();
   useKeyboard((key, ev?: Event) => {
     // Try to prevent library default handlers (e.g., Escape-to-exit)
     try {
-      if (ev && typeof ev.preventDefault === "function") ev.preventDefault();
-      if (ev && typeof ev.stopPropagation === "function") ev.stopPropagation();
+      if (ev && typeof ev.preventDefault === 'function') ev.preventDefault();
+      if (ev && typeof ev.stopPropagation === 'function') ev.stopPropagation();
       // eslint-disable-next-line no-empty
     } catch {}
     const active = getActivePrefix();
 
     // Guard against malformed/empty events
-    const hasName = key && typeof key.name === "string" && key.name;
+    const hasName = key && typeof key.name === 'string' && key.name;
     if (!hasName) {
       if (active) {
         setActivePrefixState(null);

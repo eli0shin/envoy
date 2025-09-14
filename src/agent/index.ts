@@ -13,23 +13,23 @@ import {
   NoSuchToolError,
   ToolExecutionError,
   LanguageModel,
-} from "ai";
-import { GENERATION_TIMEOUT_MS, MAX_GENERATION_RETRIES } from "../constants.js";
-import { AgentResult } from "../types/index.js";
+} from 'ai';
+import { GENERATION_TIMEOUT_MS, MAX_GENERATION_RETRIES } from '../constants.js';
+import { AgentResult } from '../types/index.js';
 
-import { RuntimeConfiguration } from "../config/types.js";
-import { logger } from "../logger.js";
-import { AgentSession } from "../agentSession.js";
-import { transformMessagesForAnthropic } from "./utils/messageTransform.js";
-import { ContentExtractor } from "./utils/ContentExtractor.js";
+import { RuntimeConfiguration } from '../config/types.js';
+import { logger } from '../logger.js';
+import { AgentSession } from '../agentSession.js';
+import { transformMessagesForAnthropic } from './utils/messageTransform.js';
+import { ContentExtractor } from './utils/ContentExtractor.js';
 import {
   ThinkingProcessor,
   type ThinkingProviderResult,
-} from "./thinking/ThinkingProcessor.js";
+} from './thinking/ThinkingProcessor.js';
 
 export function createThinkingProviderOptions(
   model: LanguageModel,
-  message?: string,
+  message?: string
 ): ThinkingProviderResult {
   return ThinkingProcessor.createThinkingProviderOptions(model, message);
 }
@@ -39,18 +39,18 @@ export function createThinkingProviderOptions(
  */
 function logResponseMessages(
   messages: CoreMessage[],
-  config: RuntimeConfiguration,
+  config: RuntimeConfiguration
 ): void {
   if (config.json) return;
 
   for (const message of messages) {
-    if (message.role === "assistant" && Array.isArray(message.content)) {
+    if (message.role === 'assistant' && Array.isArray(message.content)) {
       for (const contentItem of message.content) {
-        if (contentItem.type === "reasoning") {
+        if (contentItem.type === 'reasoning') {
           logger.logThinking(contentItem.text);
-        } else if (contentItem.type === "text") {
+        } else if (contentItem.type === 'text') {
           logger.logAssistantStep(contentItem.text);
-        } else if (contentItem.type === "tool-call") {
+        } else if (contentItem.type === 'tool-call') {
           logger.logToolCallProgress(contentItem.toolName, contentItem.args);
         }
       }
@@ -67,21 +67,23 @@ export async function runAgent(
   config: RuntimeConfiguration,
   session: AgentSession,
   isInteractive: boolean = false,
-  onMessageUpdate?: (message: CoreMessage) => void,
+  onMessageUpdate?: (message: CoreMessage) => void
 ): Promise<AgentResult & { messages?: CoreMessage[] }> {
   const startTime = Date.now();
   let hasToolErrors = false;
-  let toolErrorMessage = "";
+  let toolErrorMessage = '';
 
   // Handle both single message and conversation history
-  const messages: CoreMessage[] = Array.isArray(messagesOrUserMessage)
-    ? [...messagesOrUserMessage]
-    : [{ role: "user", content: messagesOrUserMessage }];
+  const messages: CoreMessage[] =
+    Array.isArray(messagesOrUserMessage) ?
+      [...messagesOrUserMessage]
+    : [{ role: 'user', content: messagesOrUserMessage }];
 
   // Extract user message for thinking analysis
-  const userMessage = Array.isArray(messagesOrUserMessage)
-    ? [...messagesOrUserMessage].reverse().find((m) => m.role === "user")
-        ?.content || ""
+  const userMessage =
+    Array.isArray(messagesOrUserMessage) ?
+      [...messagesOrUserMessage].reverse().find((m) => m.role === 'user')
+        ?.content || ''
     : messagesOrUserMessage;
 
   // Log user message for progress display (only for single messages, not conversation history)
@@ -95,28 +97,28 @@ export async function runAgent(
   try {
     const { model, tools, systemPrompt } = session;
 
-    logger.info("Using existing agent session", {
+    logger.info('Using existing agent session', {
       toolCount: Object.keys(tools).length,
       isInteractive,
-      systemPromptType: Array.isArray(systemPrompt) ? "array" : "string",
+      systemPromptType: Array.isArray(systemPrompt) ? 'array' : 'string',
     });
 
     const maxSteps = config.agent.maxSteps;
     while (currentStep < maxSteps) {
       try {
         // Apply Anthropic-specific message transformations if using array system prompts
-        const transformedMessages = Array.isArray(systemPrompt)
-          ? transformMessagesForAnthropic(messages, systemPrompt)
+        const transformedMessages =
+          Array.isArray(systemPrompt) ?
+            transformMessagesForAnthropic(messages, systemPrompt)
           : messages;
 
-        const systemConfig = Array.isArray(systemPrompt)
-          ? undefined
-          : systemPrompt;
+        const systemConfig =
+          Array.isArray(systemPrompt) ? undefined : systemPrompt;
 
         // Get thinking options
         const { providerOptions, headers } = createThinkingProviderOptions(
           model,
-          typeof userMessage === "string" ? userMessage : "",
+          typeof userMessage === 'string' ? userMessage : ''
         );
 
         const result = generateText({
@@ -160,7 +162,7 @@ export async function runAgent(
         await session.conversationPersistence?.persistMessages(messages);
 
         // Debug logging for termination decision
-        logger.debug("Evaluating termination conditions", {
+        logger.debug('Evaluating termination conditions', {
           finishReason,
           toolResultsCount: toolResults.length,
           textLength: text.trim().length,
@@ -174,11 +176,11 @@ export async function runAgent(
         // 2. AI provides text response without tool calls (completed response), OR
         // 3. AI only made tool calls but finishReason suggests completion
         const shouldTerminate =
-          finishReason === "stop" ||
-          finishReason === "length" ||
+          finishReason === 'stop' ||
+          finishReason === 'length' ||
           (toolResults.length === 0 && text.trim().length > 0); // AI gave final text response without tools
 
-        logger.debug("Termination decision", { shouldTerminate });
+        logger.debug('Termination decision', { shouldTerminate });
 
         if (shouldTerminate) {
           const executionTime = Date.now() - startTime;
@@ -195,10 +197,12 @@ export async function runAgent(
             };
             process.stdout.write(JSON.stringify(jsonResult, null, 2) + '\n');
           } else if (
-            logger.getCurrentLogProgress() === "none" &&
+            logger.getCurrentLogProgress() === 'none' &&
             !isInteractive
           ) {
-            process.stdout.write(ContentExtractor.extractTextContent(text) + '\n');
+            process.stdout.write(
+              ContentExtractor.extractTextContent(text) + '\n'
+            );
           }
 
           return {
@@ -213,7 +217,7 @@ export async function runAgent(
         }
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : "Unknown error occurred";
+          error instanceof Error ? error.message : 'Unknown error occurred';
 
         // Handle AI SDK errors appropriately
         if (APICallError.isInstance(error)) {
@@ -242,11 +246,11 @@ export async function runAgent(
           hasToolErrors = true;
           toolErrorMessage = errorMessage;
           messages.push({
-            role: "user",
+            role: 'user',
             content: `Tool call failed: ${errorMessage}. Please try a different approach or continue with available information.`,
           });
 
-          logger.warn("Step encountered tool error", {
+          logger.warn('Step encountered tool error', {
             stepNumber: currentStep,
             errorMessage,
             errorType: error.constructor.name,
@@ -263,9 +267,9 @@ export async function runAgent(
     const executionTime = Date.now() - startTime;
     const lastMessage = messages[messages.length - 1];
     const responseText =
-      lastMessage?.role === "assistant"
-        ? ContentExtractor.extractTextContent(lastMessage.content)
-        : "Maximum steps reached";
+      lastMessage?.role === 'assistant' ?
+        ContentExtractor.extractTextContent(lastMessage.content)
+      : 'Maximum steps reached';
 
     if (config.json) {
       const jsonResult = {
@@ -290,11 +294,11 @@ export async function runAgent(
   } catch (error) {
     const executionTime = Date.now() - startTime;
     const errorMessage =
-      error instanceof Error ? error.message : "Unknown error occurred";
+      error instanceof Error ? error.message : 'Unknown error occurred';
 
-    logger.error("Fatal agent error: " + errorMessage, {
+    logger.error('Fatal agent error: ' + errorMessage, {
       errorMessage,
-      errorType: error instanceof Error ? error.constructor.name : "unknown",
+      errorType: error instanceof Error ? error.constructor.name : 'unknown',
       executionTime,
     });
 
@@ -319,9 +323,9 @@ export async function runAgent(
 }
 
 export async function initializeAgent(
-  config: RuntimeConfiguration,
+  config: RuntimeConfiguration
 ): Promise<boolean> {
-  logger.info("Agent initialized", {
+  logger.info('Agent initialized', {
     provider: config.providers.default,
   });
   return true;

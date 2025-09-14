@@ -1,4 +1,4 @@
-import type { CoreMessage } from "ai";
+import type { CoreMessage } from 'ai';
 
 export type Command = {
   name: string;
@@ -22,18 +22,18 @@ export class CommandRegistry {
   }
 
   getSuggestions(prefix: string): Command[] {
-    const searchTerm = prefix.startsWith("/") ? prefix.slice(1) : prefix;
+    const searchTerm = prefix.startsWith('/') ? prefix.slice(1) : prefix;
     if (!searchTerm) {
       return this.getAll();
     }
 
     return this.getAll().filter((cmd) =>
-      cmd.name.toLowerCase().startsWith(searchTerm.toLowerCase()),
+      cmd.name.toLowerCase().startsWith(searchTerm.toLowerCase())
     );
   }
 
   parse(input: string): { command: Command | undefined; args: string[] } {
-    if (!input.startsWith("/")) {
+    if (!input.startsWith('/')) {
       return { command: undefined, args: [] };
     }
 
@@ -67,7 +67,7 @@ export class CommandRegistry {
 
   formatCommandMessage(commandInput: string): CoreMessage {
     return {
-      role: "user",
+      role: 'user',
       content: `<user-command>${commandInput}</user-command><system-hint>Note: This is a command executed by the user. Do not respond to this command.</system-hint>`,
     };
   }
@@ -75,4 +75,3 @@ export class CommandRegistry {
 
 // Create singleton instance
 export const commandRegistry = new CommandRegistry();
-

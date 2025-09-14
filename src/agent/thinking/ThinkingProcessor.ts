@@ -25,18 +25,18 @@ export class ThinkingProcessor {
 
     // Analyze message for thinking requirements
     const analysis =
-      message !== undefined
-        ? analyzeMessageForThinking(message)
-        : { level: 'none', budgetTokens: 0, enableInterleaved: false };
+      message !== undefined ?
+        analyzeMessageForThinking(message)
+      : { level: 'none', budgetTokens: 0, enableInterleaved: false };
 
     // Handle edge cases where analysis might be undefined
     if (!analysis || analysis.level === 'none') {
       return {
         providerOptions: {},
         headers:
-          analysis?.enableInterleaved && providerType === 'anthropic'
-            ? { 'anthropic-beta': 'interleaved-thinking-2025-05-14' }
-            : {},
+          analysis?.enableInterleaved && providerType === 'anthropic' ?
+            { 'anthropic-beta': 'interleaved-thinking-2025-05-14' }
+          : {},
       };
     }
 
@@ -54,8 +54,9 @@ export class ThinkingProcessor {
               },
             },
           },
-          headers: analysis.enableInterleaved
-            ? { 'anthropic-beta': 'interleaved-thinking-2025-05-14' }
+          headers:
+            analysis.enableInterleaved ?
+              { 'anthropic-beta': 'interleaved-thinking-2025-05-14' }
             : {},
         };
 
@@ -69,8 +70,9 @@ export class ThinkingProcessor {
         };
         const reasoningEffort = effortMap[analysis.level];
         return {
-          providerOptions: reasoningEffort
-            ? {
+          providerOptions:
+            reasoningEffort ?
+              {
                 openai: { reasoningEffort },
               }
             : {},
@@ -90,11 +92,11 @@ export class ThinkingProcessor {
         const thinkingBudget = googleBudgetMap[analysis.level];
         return {
           providerOptions:
-            thinkingBudget > 0
-              ? {
-                  google: { thinkingBudget },
-                }
-              : {},
+            thinkingBudget > 0 ?
+              {
+                google: { thinkingBudget },
+              }
+            : {},
           headers: {}, // Google doesn't support interleaved thinking
         };
       }

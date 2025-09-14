@@ -75,9 +75,10 @@ export async function loadSystemPromptFile(filePath: string): Promise<string> {
     const expandedPath = expandEnvironmentVariables(filePath);
 
     // Resolve relative paths from current working directory
-    const resolvedPath = isAbsolute(expandedPath)
-      ? expandedPath
-      : join(process.cwd(), expandedPath);
+    const resolvedPath =
+      isAbsolute(expandedPath) ? expandedPath : (
+        join(process.cwd(), expandedPath)
+      );
 
     const content = await readFile(resolvedPath, 'utf-8');
     return content.trim();

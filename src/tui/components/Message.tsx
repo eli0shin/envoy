@@ -1,54 +1,54 @@
-import { formatContent, formatBackground } from "../theme.js";
-import type { CoreMessage } from "ai";
+import { formatContent, formatBackground } from '../theme.js';
+import type { CoreMessage } from 'ai';
 
 type MessageProps = {
   message: CoreMessage;
-  contentType?: "normal" | "reasoning" | "tool";
+  contentType?: 'normal' | 'reasoning' | 'tool';
   width: number;
   key: string;
 };
 
 export function Message({
   message,
-  contentType = "normal",
+  contentType = 'normal',
   width,
 }: MessageProps) {
   const getDisplayContent = (message: CoreMessage): string => {
     let content: string;
-    
-    if (typeof message.content === "string") {
+
+    if (typeof message.content === 'string') {
       content = message.content;
     } else {
       // Extract text from array of content parts
       const textParts: string[] = [];
       for (const part of message.content) {
-        if (part?.type === "text" && "text" in part) {
+        if (part?.type === 'text' && 'text' in part) {
           textParts.push(part.text);
-        } else if (part?.type === "reasoning" && "text" in part) {
+        } else if (part?.type === 'reasoning' && 'text' in part) {
           textParts.push(part.text);
-        } else if (part?.type === "redacted-reasoning") {
-          textParts.push("[Reasoning redacted]");
-        } else if (part?.type === "tool-call" && "toolName" in part) {
+        } else if (part?.type === 'redacted-reasoning') {
+          textParts.push('[Reasoning redacted]');
+        } else if (part?.type === 'tool-call' && 'toolName' in part) {
           textParts.push(`🔧 Calling ${part.toolName}`);
-        } else if (part?.type === "tool-result" && "toolName" in part) {
+        } else if (part?.type === 'tool-result' && 'toolName' in part) {
           textParts.push(`✅ ${part.toolName} result`);
         }
       }
-      content = textParts.join("\n");
+      content = textParts.join('\n');
     }
-    
+
     // Only filter user messages for display
     if (message.role === 'user') {
-      // Remove <user-command> tags but keep contents  
+      // Remove <user-command> tags but keep contents
       content = content.replace(/<user-command>(.*?)<\/user-command>/gs, '$1');
-      
+
       // Remove <system-hint> tags and all contents (user doesn't need to see these)
       content = content.replace(/<system-hint>.*?<\/system-hint>/gs, '');
-      
+
       // Clean up extra whitespace
       content = content.trim();
     }
-    
+
     return content;
   };
 
@@ -62,7 +62,7 @@ export function Message({
     if (maxWidth <= 0) return text;
 
     // First split by existing newlines to preserve intentional line breaks
-    const existingLines = text.split("\n");
+    const existingLines = text.split('\n');
     const wrappedLines: string[] = [];
 
     // Process each existing line individually
@@ -71,8 +71,8 @@ export function Message({
         wrappedLines.push(line);
       } else {
         // Line needs wrapping, wrap by words
-        const words = line.split(" ");
-        let currentLine = "";
+        const words = line.split(' ');
+        let currentLine = '';
 
         for (const word of words) {
           const testLine = currentLine ? `${currentLine} ${word}` : word;
@@ -103,14 +103,14 @@ export function Message({
       }
     }
 
-    return wrappedLines.join("\n");
+    return wrappedLines.join('\n');
   };
 
   const wrappedContent = wrapText(displayContent, textWidth);
   const styledContent = formatContent(
     message.role,
     contentType,
-    wrappedContent,
+    wrappedContent
   );
   const backgroundColor = formatBackground(message.role);
 
@@ -119,7 +119,7 @@ export function Message({
       <text
         style={{
           width: textWidth,
-          flexWrap: "wrap",
+          flexWrap: 'wrap',
         }}
       >
         {styledContent}

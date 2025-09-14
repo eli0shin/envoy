@@ -1,9 +1,9 @@
-import { useState, useCallback } from "react";
-import { MultiLineInput } from "./MultiLineInput";
-import { CommandAutocomplete } from "./CommandAutocomplete";
-import { useModalState } from "./ModalProvider.js";
-import { colors } from "../theme.js";
-import { commandRegistry } from "../commands/registry.js";
+import { useState, useCallback } from 'react';
+import { MultiLineInput } from './MultiLineInput';
+import { CommandAutocomplete } from './CommandAutocomplete';
+import { useModalState } from './ModalProvider.js';
+import { colors } from '../theme.js';
+import { commandRegistry } from '../commands/registry.js';
 
 type InputAreaProps = {
   onSubmit: (message: string) => void;
@@ -26,7 +26,7 @@ export function InputArea({
   originalInput,
   setOriginalInput,
 }: InputAreaProps) {
-  const [value, setValue] = useState("");
+  const [value, setValue] = useState('');
   const { currentModal } = useModalState();
   const disabled = currentModal !== null;
 
@@ -34,34 +34,44 @@ export function InputArea({
     setValue(command);
   }, []);
 
-  const handleInputArrowKey = useCallback((direction: 'up' | 'down', isOnFirstLine: boolean): boolean => {
-    if (direction === 'up' && (historyIndex === -1 ? isOnFirstLine : true)) {
-      // Save original input when first entering history mode
-      if (historyIndex === -1) {
-        setOriginalInput(value);
-      }
+  const handleInputArrowKey = useCallback(
+    (direction: 'up' | 'down', isOnFirstLine: boolean): boolean => {
+      if (direction === 'up' && (historyIndex === -1 ? isOnFirstLine : true)) {
+        // Save original input when first entering history mode
+        if (historyIndex === -1) {
+          setOriginalInput(value);
+        }
 
-      const newIndex = historyIndex + 1;
-      if (newIndex < userHistory.length) {
-        const messageToLoad = userHistory[userHistory.length - 1 - newIndex];
-        setValue(messageToLoad);
+        const newIndex = historyIndex + 1;
+        if (newIndex < userHistory.length) {
+          const messageToLoad = userHistory[userHistory.length - 1 - newIndex];
+          setValue(messageToLoad);
+          setHistoryIndex(newIndex);
+          return true;
+        }
+      } else if (direction === 'down' && historyIndex >= 0) {
+        const newIndex = historyIndex - 1;
         setHistoryIndex(newIndex);
+
+        if (newIndex >= 0) {
+          setValue(userHistory[userHistory.length - 1 - newIndex]);
+        } else {
+          setValue(originalInput);
+        }
         return true;
       }
-    } else if (direction === 'down' && historyIndex >= 0) {
-      const newIndex = historyIndex - 1;
-      setHistoryIndex(newIndex);
 
-      if (newIndex >= 0) {
-        setValue(userHistory[userHistory.length - 1 - newIndex]);
-      } else {
-        setValue(originalInput);
-      }
-      return true;
-    }
-
-    return false;
-  }, [userHistory, historyIndex, setHistoryIndex, value, originalInput, setOriginalInput]);
+      return false;
+    },
+    [
+      userHistory,
+      historyIndex,
+      setHistoryIndex,
+      value,
+      originalInput,
+      setOriginalInput,
+    ]
+  );
 
   const handleInputChange = useCallback((newValue: string) => {
     setValue(newValue);
@@ -89,14 +99,14 @@ export function InputArea({
       onSubmit(trimmed);
     }
 
-    setValue("");
+    setValue('');
   };
 
   return (
     <box flexDirection="column">
       {/* Autocomplete positioned absolutely relative to viewport */}
       <CommandAutocomplete inputValue={value} onSelect={handleCommandSelect} />
-      
+
       {/* Input area with padding */}
       <box flexDirection="column" backgroundColor={colors.backgrounds.input}>
         {/* Top padding line */}
@@ -125,4 +135,3 @@ export function InputArea({
     </box>
   );
 }
-

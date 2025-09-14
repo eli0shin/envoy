@@ -46,7 +46,7 @@ export async function loadMCPServersWithClients(
   );
 
   // Phase 1: Initialize all servers in parallel with capability detection
-  const initPromises = serverConfigs.map(config =>
+  const initPromises = serverConfigs.map((config) =>
     initializeServerWithCapabilities(config)
   );
 
@@ -62,11 +62,11 @@ export async function loadMCPServersWithClients(
       successfulInits.push(result.value);
     } else {
       const error =
-        result.status === 'rejected'
-          ? result.reason instanceof Error
-            ? result.reason.message
-            : 'Unknown error'
-          : 'Server initialization returned null';
+        result.status === 'rejected' ?
+          result.reason instanceof Error ?
+            result.reason.message
+          : 'Unknown error'
+        : 'Server initialization returned null';
       errors.push({
         serverName: config.name,
         error: `Failed to initialize: ${error}`,
@@ -79,7 +79,7 @@ export async function loadMCPServersWithClients(
   );
 
   // Phase 2: Load capabilities and create wrappers in parallel
-  const wrapperPromises = successfulInits.map(serverInit =>
+  const wrapperPromises = successfulInits.map((serverInit) =>
     loadCapabilitiesAndCreateWrapper(serverInit)
   );
 
@@ -134,9 +134,9 @@ export async function loadMCPServersWithClients(
       }
     } else {
       const error =
-        result.reason instanceof Error
-          ? result.reason.message
-          : 'Unknown error';
+        result.reason instanceof Error ?
+          result.reason.message
+        : 'Unknown error';
       errors.push({
         serverName: serverInit.config.name,
         error: `Failed to load capabilities: ${error}`,

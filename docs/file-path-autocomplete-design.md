@@ -137,9 +137,8 @@ export async function getFilePathSuggestions(
   const files = await getDirectoryContents(baseDir);
 
   // Apply fuzzy matching if there's a search pattern
-  const matches = searchPattern
-    ? await fuzzyMatchFiles(files, searchPattern)
-    : files;
+  const matches =
+    searchPattern ? await fuzzyMatchFiles(files, searchPattern) : files;
 
   // Convert to suggestions
   return createSuggestions(matches, pathInput);
@@ -167,7 +166,7 @@ function parsePathInput(input: string): {
 async function getDirectoryContents(dir: string): Promise<FileEntry[]> {
   try {
     const entries = await fs.readdir(dir, { withFileTypes: true });
-    return entries.map(entry => ({
+    return entries.map((entry) => ({
       name: entry.name,
       path: join(dir, entry.name),
       isDirectory: entry.isDirectory(),
@@ -196,13 +195,13 @@ async function fuzzyMatchFiles(
   if (hasFzf) {
     // Use fzf for fuzzy matching
     try {
-      const fileNames = files.map(f => f.name).join('\n');
+      const fileNames = files.map((f) => f.name).join('\n');
       const { stdout } = await execAsync(
         `echo "${fileNames}" | fzf --filter="${pattern}" --no-sort`
       );
 
       const matchedNames = new Set(stdout.trim().split('\n').filter(Boolean));
-      return files.filter(f => matchedNames.has(f.name));
+      return files.filter((f) => matchedNames.has(f.name));
     } catch {
       // Fall back to prefix matching if fzf fails
       return prefixMatchFiles(files, pattern);
@@ -216,7 +215,7 @@ async function fuzzyMatchFiles(
 function prefixMatchFiles(files: FileEntry[], pattern: string): FileEntry[] {
   const lowerPattern = pattern.toLowerCase();
   return files.filter(
-    f =>
+    (f) =>
       f.name.toLowerCase().startsWith(lowerPattern) ||
       f.name.toLowerCase().includes(lowerPattern)
   );
@@ -226,7 +225,7 @@ function createSuggestions(
   files: FileEntry[],
   originalInput: string
 ): FilePathSuggestion[] {
-  return files.map(file => {
+  return files.map((file) => {
     const relativePath = getRelativePath(file.path, originalInput);
     return {
       value: `@${relativePath}${file.isDirectory ? '/' : ''}`,
@@ -320,7 +319,7 @@ export async function getSuggestions(
   // Handle file path autocomplete
   if (input.startsWith('@')) {
     const fileSuggestions = await getFilePathSuggestions(input);
-    return fileSuggestions.map(s => ({
+    return fileSuggestions.map((s) => ({
       value: s.value,
       description: s.description,
       type: s.type as 'file' | 'directory',
@@ -439,9 +438,8 @@ function formatFileContent(filePath: string, content: string): string {
   const maxLines = 100;
   const lines = content.split('\n');
   const truncated = lines.length > maxLines;
-  const displayContent = truncated
-    ? lines.slice(0, maxLines).join('\n')
-    : content;
+  const displayContent =
+    truncated ? lines.slice(0, maxLines).join('\n') : content;
 
   return `\n--- File: ${filePath} ---\n${displayContent}${
     truncated ? '\n... (truncated)' : ''
@@ -693,7 +691,6 @@ We will follow Test-Driven Development (TDD) principles throughout the implement
 ### Unit Tests
 
 1. **filePathSuggestions functions**
-
    - Test parsePathInput with various inputs
    - Test fuzzyMatchFiles with and without fzf
    - Test createSuggestions formatting
@@ -708,7 +705,6 @@ We will follow Test-Driven Development (TDD) principles throughout the implement
 ### Integration Tests
 
 1. **Autocomplete Flow**
-
    - Test @ prefix detection
    - Test suggestion display
    - Test Tab completion
@@ -891,19 +887,16 @@ We will follow Test-Driven Development (TDD) principles throughout the implement
 ## Future Enhancements
 
 1. **Smart Suggestions**
-
    - Recently used files
    - Contextual file suggestions
    - Project-aware suggestions
 
 2. **Enhanced Previews**
-
    - File content preview on hover
    - Syntax highlighting in preview
    - Image thumbnail previews
 
 3. **Advanced Patterns**
-
    - Glob pattern support (e.g., `@*.test.ts`)
    - Multiple file inclusion
    - File exclusion patterns

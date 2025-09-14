@@ -115,7 +115,7 @@ for (const config of serverConfigs) {
 
 ```typescript
 // Parallel loading (FAST)
-const serverPromises = serverConfigs.map(config =>
+const serverPromises = serverConfigs.map((config) =>
   initializeServerWithCapabilities(config, jsonMode)
 );
 const results = await Promise.allSettled(serverPromises);
@@ -126,13 +126,11 @@ const results = await Promise.allSettled(serverPromises);
 **New Functions to Implement**:
 
 1. **`initializeServerWithCapabilities()`**
-
    - Establishes connection with MCP initialize handshake
    - Detects server capabilities from initialize response
    - Returns structured result with client and capabilities
 
 2. **`detectServerCapabilities()`**
-
    - Parses ServerCapabilities from MCP initialize response
    - Returns typed capability structure
 
@@ -244,7 +242,7 @@ async function loadCapabilitiesSelectively(
   // Only load supported capabilities
   if (capabilities.tools) {
     promises.push(
-      loadToolsFromServer(config, jsonMode).catch(error => ({
+      loadToolsFromServer(config, jsonMode).catch((error) => ({
         tools: [],
         error: error.message,
       }))
@@ -253,7 +251,7 @@ async function loadCapabilitiesSelectively(
 
   if (capabilities.prompts) {
     promises.push(
-      loadPromptsFromServer(client, config.name).catch(error => ({
+      loadPromptsFromServer(client, config.name).catch((error) => ({
         prompts: [],
         error: error.message,
       }))
@@ -262,7 +260,7 @@ async function loadCapabilitiesSelectively(
 
   if (capabilities.resources) {
     promises.push(
-      loadResourcesFromServer(client, config.name).catch(error => ({
+      loadResourcesFromServer(client, config.name).catch((error) => ({
         resources: [],
         error: error.message,
       }))
@@ -289,7 +287,7 @@ export async function loadMCPTools(
   jsonMode: boolean = false
 ): Promise<ToolLoadResult> {
   // Phase 1: Initialize all servers in parallel
-  const initPromises = serverConfigs.map(config =>
+  const initPromises = serverConfigs.map((config) =>
     initializeServerWithCapabilities(config, jsonMode)
   );
 
@@ -301,7 +299,7 @@ export async function loadMCPTools(
       (result): result is PromiseFulfilledResult<ServerInitResult> =>
         result.status === 'fulfilled' && result.value !== null
     )
-    .map(result => result.value);
+    .map((result) => result.value);
 
   // Phase 2: Load capabilities selectively in parallel
   const capabilityPromises = successfulInits.map(

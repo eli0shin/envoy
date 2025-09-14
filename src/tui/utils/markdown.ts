@@ -7,11 +7,11 @@ import {
   fg,
   bg,
   stringToStyledText,
-} from "@opentui/core";
-import type { TextChunk } from "@opentui/core";
-import { marked } from "marked";
-import type { Token, Tokens } from "marked";
-import { colors as themeColors } from "../colors.js";
+} from '@opentui/core';
+import type { TextChunk } from '@opentui/core';
+import { marked } from 'marked';
+import type { Token, Tokens } from 'marked';
+import { colors as themeColors } from '../colors.js';
 
 // Markdown-specific color mappings using theme colors
 const colors = {
@@ -23,10 +23,10 @@ const colors = {
   link: themeColors.primary,
   list: themeColors.lightGray,
   quote: themeColors.muted,
-  quoteBorder: "#555555" as const, // Keep this slightly darker than muted for visual separation
+  quoteBorder: '#555555' as const, // Keep this slightly darker than muted for visual separation
   admonitionNote: themeColors.primary,
-  admonitionWarning: "#ffb347" as const, // Orange - could add to theme if needed frequently
-  admonitionError: "#ff6b6b" as const, // Red - could add to theme if needed frequently
+  admonitionWarning: '#ffb347' as const, // Orange - could add to theme if needed frequently
+  admonitionError: '#ff6b6b' as const, // Red - could add to theme if needed frequently
   admonitionSuccess: themeColors.success,
   definitionTerm: themeColors.lightGray,
   text: themeColors.lightGray, // Default text color for markdown content
@@ -35,7 +35,7 @@ const colors = {
 // Helper function to recursively process tokens and apply formatting
 function processTokensRecursively(
   tokens: Token[],
-  listDepth: number = 0,
+  listDepth: number = 0
 ): TextChunk[] {
   const chunks: TextChunk[] = [];
 
@@ -49,35 +49,35 @@ function processTokensRecursively(
 // Helper function to get appropriate bullet character for list depth
 function getBulletForDepth(depth: number, ordered: boolean = false): string {
   if (ordered) {
-    return "1. "; // For now, just use 1. for all ordered lists
+    return '1. '; // For now, just use 1. for all ordered lists
   }
 
   switch (depth % 3) {
     case 0:
-      return "• ";
+      return '• ';
     case 1:
-      return "◦ ";
+      return '◦ ';
     case 2:
-      return "▪ ";
+      return '▪ ';
     default:
-      return "• ";
+      return '• ';
   }
 }
 
 // Helper function to get indentation for list depth
 function getIndentForDepth(depth: number): string {
-  return "  ".repeat(depth);
+  return '  '.repeat(depth);
 }
 
 function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
   const chunks: TextChunk[] = [];
 
   switch (token.type) {
-    case "text": {
+    case 'text': {
       // Handle text tokens that may contain nested formatting
       const textToken = token as Token & { tokens?: Token[] }; // marked types incomplete for nested text tokens
       if (
-        "tokens" in textToken &&
+        'tokens' in textToken &&
         textToken.tokens &&
         textToken.tokens.length > 0
       ) {
@@ -90,18 +90,18 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
       break;
     }
 
-    case "strong": {
+    case 'strong': {
       // Bold text - process inner tokens recursively
       const strongToken = token as Tokens.Strong;
       const strongChunks = processTokensRecursively(
         strongToken.tokens,
-        listDepth,
+        listDepth
       );
       chunks.push(...strongChunks.map((chunk) => bold(chunk.plainText)));
       break;
     }
 
-    case "em": {
+    case 'em': {
       // Italic text - process inner tokens recursively
       const emToken = token as Tokens.Em;
       const emChunks = processTokensRecursively(emToken.tokens, listDepth);
@@ -109,7 +109,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
       break;
     }
 
-    case "del": {
+    case 'del': {
       // Strikethrough text - process inner tokens recursively
       const delToken = token as Tokens.Del;
       const delChunks = processTokensRecursively(delToken.tokens, listDepth);
@@ -117,47 +117,45 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
       break;
     }
 
-    case "codespan": {
+    case 'codespan': {
       // Inline code
       const codespanToken = token as Tokens.Codespan;
       chunks.push(
-        bg(colors.codeBackground)(fg(colors.code)(` ${codespanToken.text} `)),
+        bg(colors.codeBackground)(fg(colors.code)(` ${codespanToken.text} `))
       );
       break;
     }
 
-    case "code": {
+    case 'code': {
       // Code block
       const codeToken = token as Tokens.Code;
       chunks.push(
-        bg(colors.codeBackground)(fg(colors.code)(`\n${codeToken.text}\n`)),
+        bg(colors.codeBackground)(fg(colors.code)(`\n${codeToken.text}\n`))
       );
       break;
     }
 
-    case "heading": {
+    case 'heading': {
       // Headers - process inner tokens recursively for formatting
       const headingToken = token as Tokens.Heading;
       const level = headingToken.depth;
       const headerColor =
-        level === 1
-          ? colors.header1
-          : level === 2
-            ? colors.header2
-            : colors.header3;
+        level === 1 ? colors.header1
+        : level === 2 ? colors.header2
+        : colors.header3;
 
       // Process heading tokens recursively to preserve formatting
       const headingChunks = processTokensRecursively(
         headingToken.tokens,
-        listDepth,
+        listDepth
       );
       const headingText = headingChunks
         .map((chunk) => chunk.plainText)
-        .join("");
+        .join('');
 
       // Extract trailing whitespace from raw field
       const raw = headingToken.raw;
-      const trailingWhitespace = raw.match(/^#+\s+.+?(\s*)$/)?.[1] || "";
+      const trailingWhitespace = raw.match(/^#+\s+.+?(\s*)$/)?.[1] || '';
 
       chunks.push(bold(fg(headerColor)(headingText)));
       if (trailingWhitespace) {
@@ -166,7 +164,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
       break;
     }
 
-    case "list": {
+    case 'list': {
       // Lists - process each list item recursively with proper indentation
       const listToken = token as Tokens.List;
 
@@ -178,24 +176,24 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         const nestedChunks: TextChunk[] = [];
 
         for (const itemToken of item.tokens) {
-          if (itemToken.type === "paragraph") {
+          if (itemToken.type === 'paragraph') {
             // Process paragraph tokens recursively to preserve formatting
             const paraToken = itemToken as Tokens.Paragraph;
             itemChunks.push(
-              ...processTokensRecursively(paraToken.tokens, listDepth),
+              ...processTokensRecursively(paraToken.tokens, listDepth)
             );
-          } else if (itemToken.type === "list") {
+          } else if (itemToken.type === 'list') {
             // Handle nested lists separately - they should start on new lines
             nestedChunks.push(...tokenToStyledChunks(itemToken, listDepth + 1));
           } else if (
-            itemToken.type === "text" &&
-            "tokens" in itemToken &&
+            itemToken.type === 'text' &&
+            'tokens' in itemToken &&
             itemToken.tokens
           ) {
             // Handle text tokens that contain nested formatting
             const textToken = itemToken as Token & { tokens?: Token[] }; // marked types are incomplete for nested text tokens
             itemChunks.push(
-              ...processTokensRecursively(textToken.tokens || [], listDepth),
+              ...processTokensRecursively(textToken.tokens || [], listDepth)
             );
           } else {
             // Process other tokens directly
@@ -208,16 +206,16 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         let bullet: string;
 
         // Check if this is a task list item
-        if ("task" in item && item.task) {
+        if ('task' in item && item.task) {
           // Task list item - use checkbox instead of bullet
-          bullet = item.checked ? "☑ " : "☐ ";
+          bullet = item.checked ? '☑ ' : '☐ ';
         } else {
           // Regular list item
           bullet = getBulletForDepth(listDepth, listToken.ordered);
         }
 
         // Always start list items on a new line
-        chunks.push(fg(colors.text)("\n"));
+        chunks.push(fg(colors.text)('\n'));
 
         chunks.push(fg(colors.text)(indent));
         chunks.push(fg(colors.list)(bullet));
@@ -231,11 +229,11 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
       break;
     }
 
-    case "link": {
+    case 'link': {
       // Links - process inner tokens recursively and show URL
       const linkToken = token as Tokens.Link;
       const linkChunks = processTokensRecursively(linkToken.tokens, listDepth);
-      const linkText = linkChunks.map((chunk) => chunk.plainText).join("");
+      const linkText = linkChunks.map((chunk) => chunk.plainText).join('');
 
       // In terminal, show both link text and URL
       if (linkText === linkToken.href) {
@@ -249,137 +247,142 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
       break;
     }
 
-    case "paragraph": {
+    case 'paragraph': {
       // Paragraphs - process inner tokens recursively
       const paragraphToken = token as Tokens.Paragraph;
       chunks.push(
-        ...processTokensRecursively(paragraphToken.tokens, listDepth),
+        ...processTokensRecursively(paragraphToken.tokens, listDepth)
       );
       break;
     }
 
-    case "hr": {
+    case 'hr': {
       // Horizontal rules - render with proper separator line
-      chunks.push(fg(colors.text)("\n"));
-      chunks.push(fg(colors.quote)("─".repeat(60))); // 60-character horizontal line
-      chunks.push(fg(colors.text)("\n\n"));
+      chunks.push(fg(colors.text)('\n'));
+      chunks.push(fg(colors.quote)('─'.repeat(60))); // 60-character horizontal line
+      chunks.push(fg(colors.text)('\n\n'));
       break;
     }
 
-    case "space": {
+    case 'space': {
       // Whitespace/newlines
       const spaceToken = token as Tokens.Space;
       chunks.push(fg(colors.text)(spaceToken.raw));
       break;
     }
 
-    case "br": {
+    case 'br': {
       // Line breaks
-      chunks.push(fg(colors.text)("\n"));
+      chunks.push(fg(colors.text)('\n'));
       break;
     }
 
-    case "blockquote": {
+    case 'blockquote': {
       // Quote blocks - render with left border and indentation
       // Also handles admonitions/callouts (> [!NOTE], > [!WARNING], etc.)
       const blockquoteToken = token as Tokens.Blockquote;
-      
+
       // Process inner tokens to get the quote content
-      const quoteChunks = processTokensRecursively(blockquoteToken.tokens, listDepth);
-      const quoteText = quoteChunks.map((chunk) => chunk.plainText).join("");
-      
+      const quoteChunks = processTokensRecursively(
+        blockquoteToken.tokens,
+        listDepth
+      );
+      const quoteText = quoteChunks.map((chunk) => chunk.plainText).join('');
+
       // Check if this is an admonition (starts with [!TYPE])
-      const admonitionMatch = quoteText.match(/^\[!(NOTE|WARNING|ERROR|SUCCESS|INFO|TIP|CAUTION)\](.*)/is);
-      
-      chunks.push(fg(colors.text)("\n")); // Start with newline
-      
+      const admonitionMatch = quoteText.match(
+        /^\[!(NOTE|WARNING|ERROR|SUCCESS|INFO|TIP|CAUTION)\](.*)/is
+      );
+
+      chunks.push(fg(colors.text)('\n')); // Start with newline
+
       if (admonitionMatch) {
         // This is an admonition/callout
         const [, type, content] = admonitionMatch;
         const typeUpper = type.toUpperCase();
-        
+
         // Get appropriate color and icon for the admonition type
         let admonitionColor: string = colors.admonitionNote; // default
-        let icon = "ℹ️ "; // default info icon
-        
+        let icon = 'ℹ️ '; // default info icon
+
         switch (typeUpper) {
-          case "NOTE":
-          case "INFO":
+          case 'NOTE':
+          case 'INFO':
             admonitionColor = colors.admonitionNote;
-            icon = "ℹ️ ";
+            icon = 'ℹ️ ';
             break;
-          case "WARNING":
-          case "CAUTION":
+          case 'WARNING':
+          case 'CAUTION':
             admonitionColor = colors.admonitionWarning;
-            icon = "⚠️ ";
+            icon = '⚠️ ';
             break;
-          case "ERROR":
+          case 'ERROR':
             admonitionColor = colors.admonitionError;
-            icon = "❌ ";
+            icon = '❌ ';
             break;
-          case "SUCCESS":
-          case "TIP":
+          case 'SUCCESS':
+          case 'TIP':
             admonitionColor = colors.admonitionSuccess;
-            icon = "✅ ";
+            icon = '✅ ';
             break;
         }
-        
+
         // Render admonition header
-        chunks.push(bg(admonitionColor)(fg("#000000")(`${icon}${typeUpper}`)));
-        chunks.push(fg(colors.text)("\n"));
-        
+        chunks.push(bg(admonitionColor)(fg('#000000')(`${icon}${typeUpper}`)));
+        chunks.push(fg(colors.text)('\n'));
+
         // Render admonition content with left border
-        const contentLines = content.trim().split("\n");
+        const contentLines = content.trim().split('\n');
         for (let i = 0; i < contentLines.length; i++) {
           const line = contentLines[i];
-          chunks.push(fg(admonitionColor)("│ "));
+          chunks.push(fg(admonitionColor)('│ '));
           chunks.push(fg(colors.text)(line));
           if (i < contentLines.length - 1) {
-            chunks.push(fg(colors.text)("\n"));
+            chunks.push(fg(colors.text)('\n'));
           }
         }
       } else {
         // Regular quote block
-        const lines = quoteText.split("\n");
-        
+        const lines = quoteText.split('\n');
+
         for (let i = 0; i < lines.length; i++) {
           const line = lines[i];
-          chunks.push(fg(colors.quoteBorder)("│ ")); // Quote border character
+          chunks.push(fg(colors.quoteBorder)('│ ')); // Quote border character
           chunks.push(fg(colors.quote)(line));
           if (i < lines.length - 1) {
-            chunks.push(fg(colors.text)("\n"));
+            chunks.push(fg(colors.text)('\n'));
           }
         }
       }
-      
-      chunks.push(fg(colors.text)("\n")); // End with newline
+
+      chunks.push(fg(colors.text)('\n')); // End with newline
       break;
     }
 
-    case "table": {
+    case 'table': {
       // Tables - render with proper box drawing characters
       const tableToken = token as Tokens.Table;
-      chunks.push(fg(colors.text)("\n")); // Start with newline
+      chunks.push(fg(colors.text)('\n')); // Start with newline
 
       // Box drawing characters
       const box = {
-        topLeft: "┌",
-        topRight: "┐",
-        bottomLeft: "└",
-        bottomRight: "┘",
-        horizontal: "─",
-        vertical: "│",
-        topTee: "┬",
-        bottomTee: "┴",
-        leftTee: "├",
-        rightTee: "┤",
-        cross: "┼",
+        topLeft: '┌',
+        topRight: '┐',
+        bottomLeft: '└',
+        bottomRight: '┘',
+        horizontal: '─',
+        vertical: '│',
+        topTee: '┬',
+        bottomTee: '┴',
+        leftTee: '├',
+        rightTee: '┤',
+        cross: '┼',
       };
 
       // Process header row with formatting
       const headerRow = tableToken.header.map((cell) => {
         const cellChunks = processTokensRecursively(cell.tokens, listDepth);
-        return cellChunks.map((chunk) => chunk.plainText).join("");
+        return cellChunks.map((chunk) => chunk.plainText).join('');
       });
 
       // Process data rows with formatting
@@ -387,10 +390,10 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         row.map((cell) => {
           const cellChunks = processTokensRecursively(cell.tokens, listDepth);
           return {
-            text: cellChunks.map((chunk) => chunk.plainText).join(""),
+            text: cellChunks.map((chunk) => chunk.plainText).join(''),
             chunks: cellChunks,
           };
-        }),
+        })
       );
 
       // Calculate column widths (minimum 3 chars for padding)
@@ -412,22 +415,22 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
           .join(box.topTee) +
         box.topRight;
       chunks.push(fg(colors.quote)(topBorder));
-      chunks.push(fg(colors.text)("\n"));
+      chunks.push(fg(colors.text)('\n'));
 
       // Render header row
-      chunks.push(fg(colors.quote)(box.vertical + " "));
+      chunks.push(fg(colors.quote)(box.vertical + ' '));
       for (let colIndex = 0; colIndex < headerRow.length; colIndex++) {
         const header = headerRow[colIndex];
         chunks.push(
-          bold(fg(colors.header2)(header.padEnd(colWidths[colIndex]))),
+          bold(fg(colors.header2)(header.padEnd(colWidths[colIndex])))
         );
 
         if (colIndex < headerRow.length - 1) {
-          chunks.push(fg(colors.quote)(" " + box.vertical + " "));
+          chunks.push(fg(colors.quote)(' ' + box.vertical + ' '));
         }
       }
-      chunks.push(fg(colors.quote)(" " + box.vertical));
-      chunks.push(fg(colors.text)("\n"));
+      chunks.push(fg(colors.quote)(' ' + box.vertical));
+      chunks.push(fg(colors.text)('\n'));
 
       // Render header separator
       const headerSeparator =
@@ -437,11 +440,11 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
           .join(box.cross) +
         box.rightTee;
       chunks.push(fg(colors.quote)(headerSeparator));
-      chunks.push(fg(colors.text)("\n"));
+      chunks.push(fg(colors.text)('\n'));
 
       // Render data rows with formatting
       for (const row of dataRows) {
-        chunks.push(fg(colors.quote)(box.vertical + " "));
+        chunks.push(fg(colors.quote)(box.vertical + ' '));
 
         for (let colIndex = 0; colIndex < row.length; colIndex++) {
           const cell = row[colIndex];
@@ -452,20 +455,20 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
             // Add padding to match column width
             const padding = colWidths[colIndex] - cell.text.length;
             if (padding > 0) {
-              chunks.push(fg(colors.text)(" ".repeat(padding)));
+              chunks.push(fg(colors.text)(' '.repeat(padding)));
             }
           } else {
             // Empty cell
-            chunks.push(fg(colors.text)(" ".repeat(colWidths[colIndex])));
+            chunks.push(fg(colors.text)(' '.repeat(colWidths[colIndex])));
           }
 
           if (colIndex < row.length - 1) {
-            chunks.push(fg(colors.quote)(" " + box.vertical + " "));
+            chunks.push(fg(colors.quote)(' ' + box.vertical + ' '));
           }
         }
 
-        chunks.push(fg(colors.quote)(" " + box.vertical));
-        chunks.push(fg(colors.text)("\n"));
+        chunks.push(fg(colors.quote)(' ' + box.vertical));
+        chunks.push(fg(colors.text)('\n'));
       }
 
       // Render bottom border
@@ -476,16 +479,18 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
           .join(box.bottomTee) +
         box.bottomRight;
       chunks.push(fg(colors.quote)(bottomBorder));
-      chunks.push(fg(colors.text)("\n"));
+      chunks.push(fg(colors.text)('\n'));
 
-      chunks.push(fg(colors.text)("\n")); // End with extra newline
+      chunks.push(fg(colors.text)('\n')); // End with extra newline
       break;
     }
 
     default: {
       // Fallback for unhandled tokens - use raw text if available
       const rawText =
-        "raw" in token ? token.raw : "text" in token ? (token as Token & { text?: string }).text : "";
+        'raw' in token ? token.raw
+        : 'text' in token ? (token as Token & { text?: string }).text
+        : '';
       if (rawText) {
         chunks.push(fg(colors.text)(rawText));
       }
@@ -498,7 +503,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
 
 export function parseMarkdown(content: string): StyledText {
   try {
-    if (content === "") {
+    if (content === '') {
       return new StyledText([]);
     }
 

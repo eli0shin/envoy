@@ -302,7 +302,7 @@ if (result.response?.messages && result.response.messages.length > 0) {
 if (result.success && result.messages) {
   // ✅ CHANGED: Preserve thinking messages from streaming
   const thinkingMessages = this.session.messages.filter(
-    msg => (msg as any).thinking === true
+    (msg) => (msg as any).thinking === true
   );
 
   // Combine thinking messages + final response messages
@@ -328,7 +328,7 @@ export function transformMessagesForAnthropic(
   // ... existing logic
 
   // ✅ ADD: Preserve thinking messages with signatures
-  const processedMessages = messages.map(message => {
+  const processedMessages = messages.map((message) => {
     if ((message as any).thinking === true) {
       // Preserve thinking messages exactly as received
       return message;
