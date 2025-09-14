@@ -5,6 +5,7 @@ import type { InputRenderable } from '@opentui/core';
 import { colors } from '../theme.js';
 import { useKeys, parseKeys } from '../keys/index.js';
 import { usePrefixState } from '../keys/prefixContext.js';
+import { copyToClipboard, pasteFromClipboard } from '../clipboard.js';
 
 type MultiLineInputProps = {
   value: string;
@@ -43,8 +44,9 @@ export function MultiLineInput({
   const [cursorPosition, setCursorPosition] = useState(0);
   const inputRef = useRef<InputRenderable | null>(null);
 
-  // Treat active prefix as a form of disabled state
-  const isDisabled = disabled || !!activePrefix;
+  // Separate concerns: input focus vs key handler enablement
+  const isDisabled = disabled;
+  const shouldDisableTextInput = disabled || !!activePrefix; // Prevent typing during prefix sequences
   const { width: terminalWidth } = useTerminalDimensions();
   const lines = useMemo(() => (value ? value.split('\n') : ['']), [value]);
 
@@ -73,12 +75,12 @@ export function MultiLineInput({
 
   // Sync cursor position to the actual input element
   useEffect(() => {
-    if (inputRef.current && !isDisabled) {
+    if (inputRef.current && !shouldDisableTextInput) {
       // Set cursor position directly on the InputRenderable instance
       // This must happen after the value is set
       inputRef.current.cursorPosition = cursorPosition;
     }
-  }, [cursorPosition, isDisabled]);
+  }, [cursorPosition, shouldDisableTextInput]);
 
   // Handle external cursor position changes (e.g., from file autocomplete)
   useEffect(() => {
@@ -299,6 +301,95 @@ export function MultiLineInput({
         return true;
       }
 
+      // Clear input - <leader>c
+      if (
+        parseKeys(
+          key,
+          'input.clear',
+          () => {
+            onChange('');
+            setEditingLine(0);
+            updateCursorPosition(0, 0);
+            onResize?.();
+          },
+          'input'
+        )
+      ) {
+        return true;
+      }
+
+      // Copy to clipboard - <leader>y
+      if (
+        parseKeys(
+          key,
+          'input.copy',
+          () => {
+            copyToClipboard(value);
+          },
+          'input'
+        )
+      ) {
+        return true;
+      }
+
+      // Cut to clipboard - <leader>x
+      if (
+        parseKeys(
+          key,
+          'input.cut',
+          () => {
+            copyToClipboard(value).then(() => {
+              // Clear input after successful copy
+              onChange('');
+              setEditingLine(0);
+              updateCursorPosition(0, 0);
+              onResize?.();
+            });
+          },
+          'input'
+        )
+      ) {
+        return true;
+      }
+
+      // Paste from clipboard - <leader>p
+      if (
+        parseKeys(
+          key,
+          'input.paste',
+          () => {
+            pasteFromClipboard().then((clipboardText) => {
+              if (clipboardText) {
+                // Calculate absolute position for insertion
+                const absolutePos = getAbsoluteCursorPosition(editingLine, cursorPosition);
+                const beforePaste = value.slice(0, absolutePos);
+                const afterPaste = value.slice(absolutePos);
+                const newValue = beforePaste + clipboardText + afterPaste;
+
+                onChange(newValue);
+
+                // Update cursor position after paste
+                const pastedLines = clipboardText.split('\n');
+                if (pastedLines.length === 1) {
+                  // Single line paste - move cursor to end of pasted text
+                  updateCursorPosition(cursorPosition + clipboardText.length, editingLine);
+                } else {
+                  // Multi-line paste - move to end of last pasted line
+                  const newEditingLine = editingLine + pastedLines.length - 1;
+                  setEditingLine(newEditingLine);
+                  updateCursorPosition(pastedLines[pastedLines.length - 1].length, newEditingLine);
+                }
+
+                onResize?.();
+              }
+            });
+          },
+          'input'
+        )
+      ) {
+        return true;
+      }
+
       return false;
     },
     { scope: 'input', enabled: !isDisabled }
@@ -323,7 +414,7 @@ export function MultiLineInput({
                 ref={inputRef}
                 value={line}
                 placeholder={index === 0 && !value ? placeholder : ''}
-                focused={!isDisabled}
+                focused={!shouldDisableTextInput}
                 onInput={handleLineInput}
                 backgroundColor={backgroundColor}
                 textColor={textColor}

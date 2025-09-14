@@ -14,6 +14,10 @@ export const defaultKeybindings: KeybindingsConfig = {
     'input.newline': 'S-enter',
     'input.cursorUp': 'up',
     'input.cursorDown': 'down',
+    'input.clear': '<leader>c',
+    'input.copy': '<leader>y',
+    'input.paste': '<leader>p',
+    'input.cut': '<leader>x',
   },
   autocomplete: {
     'command.accept': 'tab',
