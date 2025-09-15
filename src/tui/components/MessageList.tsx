@@ -3,7 +3,6 @@ import { Message } from './Message.js';
 import type { CoreMessage } from 'ai';
 import type { ScrollBoxRenderable } from '@opentui/core';
 import { useKeys, parseKeys } from '../keys/index.js';
-import { formatToolCall, renderToolCallWithErrorMarkers } from '../utils/toolFormatting.js';
 
 type MessageListProps = {
   messages: (CoreMessage & { id: string })[];
@@ -114,16 +113,27 @@ export function MessageList({ messages, width }: MessageListProps) {
       } else if (part?.type === 'redacted-reasoning') {
         displayContent = '[Reasoning redacted]';
         contentType = 'reasoning';
-      } else if (part?.type === 'tool-call' && 'toolName' in part && 'toolCallId' in part) {
+      } else if (
+        part?.type === 'tool-call' &&
+        'toolName' in part &&
+        'toolCallId' in part
+      ) {
         // Look ahead to subsequent messages for matching tool result
         let matchingResult = null;
         let matchingResultMessageIndex = -1;
 
-        for (let resultMessageIndex = messageIndex + 1; resultMessageIndex < allMessages.length; resultMessageIndex++) {
+        for (
+          let resultMessageIndex = messageIndex + 1;
+          resultMessageIndex < allMessages.length;
+          resultMessageIndex++
+        ) {
           const resultMessage = allMessages[resultMessageIndex];
 
           // Look for tool role messages
-          if (resultMessage.role === 'tool' && Array.isArray(resultMessage.content)) {
+          if (
+            resultMessage.role === 'tool' &&
+            Array.isArray(resultMessage.content)
+          ) {
             for (const resultPart of resultMessage.content) {
               if (
                 resultPart?.type === 'tool-result' &&
@@ -139,21 +149,46 @@ export function MessageList({ messages, width }: MessageListProps) {
           }
         }
 
-        // Format the tool call with or without result
-        const formatted = formatToolCall(
-          part.toolName,
-          part.args,
-          matchingResult ? ('result' in matchingResult ? matchingResult.result : undefined) : undefined,
-          matchingResult ? ('isError' in matchingResult ? matchingResult.isError : false) : undefined
-        );
+        const toolData = {
+          toolName: part.toolName,
+          args: part.args,
+          result:
+            matchingResult ?
+              'result' in matchingResult ?
+                matchingResult.result
+              : undefined
+            : undefined,
+          isError:
+            matchingResult ?
+              'isError' in matchingResult ?
+                matchingResult.isError
+              : false
+            : undefined,
+        };
 
-        displayContent = renderToolCallWithErrorMarkers(formatted);
-        contentType = 'tool';
+        // Create message with tool data for custom component rendering
+        const partMessage: CoreMessage & { toolData?: typeof toolData } = {
+          role: 'assistant',
+          content: '', // Empty since component will render
+          toolData,
+        };
+
+        parts.push(
+          <Message
+            key={`${message.id}-part-${partIndex}`}
+            message={partMessage}
+            contentType="tool"
+            width={width}
+          />
+        );
 
         // Mark result message as consumed if we found one
         if (matchingResultMessageIndex >= 0) {
           consumedMessageIndices.add(matchingResultMessageIndex);
         }
+
+        // Skip the normal message creation below
+        continue;
       }
 
       if (displayContent) {
@@ -191,7 +226,12 @@ export function MessageList({ messages, width }: MessageListProps) {
     processedMessages.push({
       message,
       messageIndex,
-      renderedParts: renderMessage(message, messageIndex, messages, consumedMessageIndices)
+      renderedParts: renderMessage(
+        message,
+        messageIndex,
+        messages,
+        consumedMessageIndices
+      ),
     });
   }
 

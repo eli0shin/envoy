@@ -1,8 +1,17 @@
 import { formatContent, formatBackground } from '../theme.js';
+import { getToolConfig } from '../toolFormatters/index.js';
+import { ErrorBoundary } from './ErrorBoundary.js';
 import type { CoreMessage } from 'ai';
 
+type ToolData = {
+  toolName: string;
+  args: unknown;
+  result?: unknown;
+  isError?: boolean;
+};
+
 type MessageProps = {
-  message: CoreMessage;
+  message: CoreMessage & { toolData?: ToolData };
   contentType?: 'normal' | 'reasoning' | 'tool';
   width: number;
   key: string;
@@ -13,6 +22,33 @@ export function Message({
   contentType = 'normal',
   width,
 }: MessageProps) {
+  // Handle tool messages with custom components
+  if (contentType === 'tool' && message.toolData) {
+    const { toolName, args, result, isError } = message.toolData;
+    const config = getToolConfig(toolName);
+    const ToolComponent = config.component;
+
+    return (
+      <box
+        padding={0}
+        paddingLeft={1}
+        paddingRight={1}
+        backgroundColor={formatBackground(message.role)}
+        width={width - 4}
+      >
+        <ErrorBoundary>
+          <ToolComponent
+            toolName={toolName}
+            displayName={config.displayName}
+            args={args}
+            result={result}
+            isError={isError}
+            width={width}
+          />
+        </ErrorBoundary>
+      </box>
+    );
+  }
   const getDisplayContent = (message: CoreMessage): string => {
     let content: string;
 
