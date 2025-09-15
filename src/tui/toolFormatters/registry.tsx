@@ -1,6 +1,7 @@
 import { DefaultToolMessage } from './components/DefaultToolMessage.js';
 import { EditToolMessage } from './components/EditToolMessage.js';
 import { ReadToolMessage } from './components/ReadToolMessage.js';
+import { WriteToolMessage } from './components/WriteToolMessage.js';
 import { ListDirectoryToolMessage } from './components/ListDirectoryToolMessage.js';
 import type { ToolRegistry, ToolConfig } from './types.js';
 
@@ -28,7 +29,7 @@ export const toolRegistry: ToolRegistry = {
   },
   'filesystem_write_file': {
     displayName: 'Write File',
-    component: DefaultToolMessage
+    component: WriteToolMessage
   },
 
   // Command execution

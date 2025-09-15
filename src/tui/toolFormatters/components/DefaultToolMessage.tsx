@@ -1,5 +1,6 @@
 import { formatToolName, formatToolArgs, truncateValue } from '../../utils/toolFormatting.js';
 import { fg, bold } from '@opentui/core';
+import { error, info } from '../../theme.js';
 import type { ToolMessageComponentProps } from '../types.js';
 
 export function DefaultToolMessage({
@@ -28,8 +29,8 @@ export function DefaultToolMessage({
       </text>
       {resultText ? (
         <text paddingLeft={2}>
-          {fg(isError ? '#FF6B6B' : '#4ECDC4')(
-            `└ ${isError ? 'Error:' : ''} ${truncateValue(resultText)}`
+          {fg(isError ? error : info)(
+            `└ ${truncateValue(resultText)}`
           )}
         </text>
       ) : null}

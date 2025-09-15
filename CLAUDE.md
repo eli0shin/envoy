@@ -61,3 +61,4 @@ Use `--log-level DEBUG` to enable detailed logging during development.
 - Use types instead of interfaces for typescript - ALWAYS use `type` keyword, never `interface`
 - Use zod for validations
 - do not mock in test unless the mock simulates a network call.
+- always reference the theme file when adding colors. never add color values inline

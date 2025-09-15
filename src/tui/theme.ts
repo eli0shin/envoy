@@ -19,6 +19,14 @@ export {
   lightGray,
   accent,
   text,
+  error,
+  info,
+  filePath,
+  diffAddition,
+  diffDeletion,
+  quoteBorder,
+  admonitionWarning,
+  admonitionText,
   backgrounds,
   type ColorName,
   type BackgroundColor,
@@ -74,7 +82,7 @@ export const contentFormatters = {
         if (line.startsWith('[ERROR]')) {
           // Remove the [ERROR] marker and style the error line in red
           const errorLine = line.substring(7); // Remove "[ERROR]" prefix
-          chunks.push(fg('#FF6B6B')(errorLine)); // Red color for error
+          chunks.push(fg(colors.error)(errorLine)); // Red color for error
         } else {
           chunks.push(fg(colors.accent)(line));
         }

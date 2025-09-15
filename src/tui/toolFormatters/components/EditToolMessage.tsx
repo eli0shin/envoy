@@ -1,4 +1,12 @@
 import { fg, bg, bold } from '@opentui/core';
+import {
+  error,
+  info,
+  filePath as filePathColor,
+  diffAddition,
+  diffDeletion,
+  backgrounds,
+} from '../../theme.js';
 import type { ToolMessageComponentProps } from '../types.js';
 import type { FilesystemEditFileArgs } from '../../toolTypes.js';
 
@@ -40,6 +48,23 @@ function wrapLine(line: string, maxWidth: number): string[] {
   return segments;
 }
 
+// Helper function to parse diff change counts
+function parseDiffCounts(diffText: string) {
+  const lines = diffText.split('\n');
+  let additions = 0;
+  let deletions = 0;
+
+  for (const line of lines) {
+    if (line.startsWith('+') && !line.startsWith('+++')) {
+      additions++;
+    } else if (line.startsWith('-') && !line.startsWith('---')) {
+      deletions++;
+    }
+  }
+
+  return { additions, deletions };
+}
+
 export function EditToolMessage({
   displayName,
   args,
@@ -51,9 +76,22 @@ export function EditToolMessage({
   const typedArgs = args as FilesystemEditFileArgs;
   const filePath = typedArgs?.path || 'unknown';
 
+  // Check if result content indicates an error (starts with "Error:")
+  const resultText = result
+    ? (typeof result === 'object' && result !== null && 'result' in result
+        ? (result as { result: string }).result
+        : String(result))
+    : '';
+
+  const hasErrorContent = resultText.startsWith('Error:');
+  const actualError = isError || hasErrorContent;
+
+  // Clean error message by removing "Error:" prefix if present
+  const cleanErrorMessage = hasErrorContent ? resultText.substring(6).trim() : resultText;
+
   // Parse the diff result if present
   const renderDiff = () => {
-    if (!result || isError) return null;
+    if (!result || actualError) return null;
 
     // Handle result structure - it might be { result: string } or just string
     let diffText =
@@ -62,6 +100,16 @@ export function EditToolMessage({
       : String(result);
 
     if (!diffText) return null;
+
+    // Parse diff change counts before cleaning
+    const { additions, deletions } = parseDiffCounts(diffText);
+
+    // Convert absolute path to relative if it contains the project
+    let displayPath = filePath;
+    const projectMatch = filePath.match(/.*\/(src\/.+)$/);
+    if (projectMatch) {
+      displayPath = projectMatch[1];
+    }
 
     // Aggressively remove all backtick-based diff wrappers
     // First, trim whitespace
@@ -83,7 +131,8 @@ export function EditToolMessage({
     // Also check for just backticks at the start without 'diff'
     if (diffText.startsWith('```')) {
       const firstNewline = diffText.indexOf('\n');
-      if (firstNewline !== -1 && firstNewline <= 10) { // Only if newline is close to start
+      if (firstNewline !== -1 && firstNewline <= 10) {
+        // Only if newline is close to start
         diffText = diffText.substring(firstNewline + 1);
       }
     }
@@ -99,12 +148,18 @@ export function EditToolMessage({
     const lines = diffText.split('\n');
 
     // Calculate available width for diff content
-    // Subtract padding and margins from total width
-    const maxLineWidth = width ? width - 10 : 80; // Default to 80 if no width provided
+    // Subtract padding and margins from total width (extra padding for diff background)
+    const maxLineWidth = width ? width - 12 : 78; // Account for diff background padding
 
     return (
       <box flexDirection="column">
-        {lines.map((line, i) => {
+        {displayPath && (additions > 0 || deletions > 0) ? (
+          <text paddingLeft={2}>
+            {fg(info)(`└ Updated ${displayPath} with ${additions} additions and ${deletions} deletions`)}
+          </text>
+        ) : null}
+        <box flexDirection="column" backgroundColor={backgrounds.diffArea} padding={1}>
+          {lines.map((line, i) => {
           // Skip empty lines at the end
           if (i === lines.length - 1 && !line) return null;
 
@@ -131,11 +186,7 @@ export function EditToolMessage({
             return segments.map((segment, segmentIdx) => {
               // Use segment content hash for uniqueness
               const segmentKey = `${lineKey}-add-${segment.substring(0, 10)}-${segmentIdx}`;
-              return (
-                <text key={segmentKey}>
-                  {bg('#2d4a2b')(segment)}
-                </text>
-              );
+              return <text key={segmentKey}>{bg(diffAddition)(segment)}</text>;
             });
           } else if (line.startsWith('-')) {
             // Deletion - red background, strip the - prefix
@@ -145,27 +196,21 @@ export function EditToolMessage({
             return segments.map((segment, segmentIdx) => {
               // Use segment content hash for uniqueness
               const segmentKey = `${lineKey}-del-${segment.substring(0, 10)}-${segmentIdx}`;
-              return (
-                <text key={segmentKey}>
-                  {bg('#4a2b2d')(segment)}
-                </text>
-              );
+              return <text key={segmentKey}>{bg(diffDeletion)(segment)}</text>;
             });
           } else {
             // Context line or other
-            const segments = wrapLine(line, maxLineWidth);
+            const lineContent = line.startsWith(' ') ? line.substring(1) : line;
+            const segments = wrapLine(lineContent, maxLineWidth);
 
             return segments.map((segment, segmentIdx) => {
               // Use segment content hash for uniqueness
               const segmentKey = `${lineKey}-ctx-${segment.substring(0, 10)}-${segmentIdx}`;
-              return (
-                <text key={segmentKey}>
-                  {segment}
-                </text>
-              );
+              return <text key={segmentKey}>{segment}</text>;
             });
           }
-        })}
+          })}
+        </box>
       </box>
     );
   };
@@ -174,13 +219,12 @@ export function EditToolMessage({
     <box flexDirection="column">
       <text>
         {bold(displayName || 'Edit File')}
-        {fg('#A0A0A0')(`(${filePath})`)}
+        {fg(filePathColor)(`(${filePath})`)}
       </text>
-      {renderDiff()}
-      {isError ?
-        <text>{fg('#FF6B6B')(`Error: ${String(result)}`)}</text>
-      : null}
+      {!actualError ? renderDiff() : null}
+      {actualError ? (
+        <text paddingLeft={2}>{fg(error)(`└ ${cleanErrorMessage}`)}</text>
+      ) : null}
     </box>
   );
 }
-

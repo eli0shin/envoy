@@ -23,10 +23,10 @@ const colors = {
   link: themeColors.primary,
   list: themeColors.lightGray,
   quote: themeColors.muted,
-  quoteBorder: '#555555' as const, // Keep this slightly darker than muted for visual separation
+  quoteBorder: themeColors.quoteBorder,
   admonitionNote: themeColors.primary,
-  admonitionWarning: '#ffb347' as const, // Orange - could add to theme if needed frequently
-  admonitionError: '#ff6b6b' as const, // Red - could add to theme if needed frequently
+  admonitionWarning: themeColors.admonitionWarning,
+  admonitionError: themeColors.error,
   admonitionSuccess: themeColors.success,
   definitionTerm: themeColors.lightGray,
   text: themeColors.lightGray, // Default text color for markdown content
@@ -328,7 +328,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         }
 
         // Render admonition header
-        chunks.push(bg(admonitionColor)(fg('#000000')(`${icon}${typeUpper}`)));
+        chunks.push(bg(admonitionColor)(fg(themeColors.admonitionText)(`${icon}${typeUpper}`)));
         chunks.push(fg(colors.text)('\n'));
 
         // Render admonition content with left border

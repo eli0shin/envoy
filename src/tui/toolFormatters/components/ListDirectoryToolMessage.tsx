@@ -1,4 +1,5 @@
 import { fg, bold } from '@opentui/core';
+import { error, info, filePath } from '../../theme.js';
 import type { ToolMessageComponentProps } from '../types.js';
 import type { FilesystemListDirectoryArgs } from '../../toolTypes.js';
 
@@ -56,16 +57,16 @@ export function ListDirectoryToolMessage({
     <box flexDirection="column">
       <text>
         {bold(displayName || 'List Directory')}
-        {fg('#A0A0A0')(`(${path})`)}
+        {fg(filePath)(`(${path})`)}
       </text>
       {!isError && result ? (
         <text paddingLeft={2}>
-          {fg('#4ECDC4')(`└ ${getCountMessage()}`)}
+          {fg(info)(`└ ${getCountMessage()}`)}
         </text>
       ) : null}
       {isError ? (
         <text paddingLeft={2}>
-          {fg('#FF6B6B')(`Error: ${String(result)}`)}
+          {fg(error)(`${String(result)}`)}
         </text>
       ) : null}
     </box>

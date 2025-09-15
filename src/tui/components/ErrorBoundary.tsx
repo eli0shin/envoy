@@ -1,5 +1,6 @@
 import { ErrorBoundary as ReactErrorBoundary } from 'react-error-boundary';
 import { fg, bold } from '@opentui/core';
+import { error as errorColor, filePath } from '../theme.js';
 import type { ReactNode } from 'react';
 
 type ErrorFallbackProps = {
@@ -13,14 +14,14 @@ function ErrorFallback({ error }: ErrorFallbackProps) {
       flexDirection="column"
       padding={2}
       borderStyle="single"
-      borderColor="#FF6B6B"
+      borderColor={errorColor}
     >
-      <text>{bold(fg('#FF6B6B')('Error: Component Crashed'))}</text>
+      <text>{bold(fg(errorColor)('Error: Component Crashed'))}</text>
       <text paddingTop={1}>
-        {fg('#FF6B6B')(error.message || 'Unknown error')}
+        {fg(errorColor)(error.message || 'Unknown error')}
       </text>
       <text paddingTop={1}>
-        {fg('#A0A0A0')(error.stack || 'No stack trace')}
+        {fg(filePath)(error.stack || 'No stack trace')}
       </text>
     </box>
   );
