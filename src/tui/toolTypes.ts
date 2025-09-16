@@ -25,6 +25,10 @@ export type FilesystemEditFileArgs = {
   }>;
 };
 
+export type FilesystemReadMultipleFilesArgs = {
+  paths: string[];
+};
+
 // Tool call results
 export type FilesystemReadTextFileResult = {
   result: string;
@@ -39,6 +43,10 @@ export type FilesystemWriteFileResult = {
 };
 
 export type FilesystemEditFileResult = {
+  result: string;
+};
+
+export type FilesystemReadMultipleFilesResult = {
   result: string;
 };
 
@@ -62,6 +70,7 @@ export type ToolResult = {
 // Tool names as seen in conversation
 export type ToolName =
   | 'filesystem_read_text_file'
+  | 'filesystem_read_multiple_files'
   | 'filesystem_list_directory'
   | 'filesystem_write_file'
   | 'filesystem_edit_file';

@@ -1,6 +1,7 @@
 import { DefaultToolMessage } from './components/DefaultToolMessage.js';
 import { EditToolMessage } from './components/EditToolMessage.js';
 import { ReadToolMessage } from './components/ReadToolMessage.js';
+import { ReadMultipleFilesToolMessage } from './components/ReadMultipleFilesToolMessage.js';
 import { WriteToolMessage } from './components/WriteToolMessage.js';
 import { ListDirectoryToolMessage } from './components/ListDirectoryToolMessage.js';
 import type { ToolRegistry, ToolConfig } from './types.js';
@@ -22,6 +23,10 @@ export const toolRegistry: ToolRegistry = {
   'filesystem_read_text_file': {
     displayName: 'Read File',
     component: ReadToolMessage
+  },
+  'filesystem_read_multiple_files': {
+    displayName: 'Read Files',
+    component: ReadMultipleFilesToolMessage
   },
   'filesystem_list_directory': {
     displayName: 'List Directory',
