@@ -6,11 +6,12 @@ import { useKeys, parseKeys } from '../keys/index.js';
 
 type MessageListProps = {
   messages: (CoreMessage & { id: string })[];
+  queuedMessages: (CoreMessage & { id: string })[];
   width: number;
   key: string;
 };
 
-export function MessageList({ messages, width }: MessageListProps) {
+export function MessageList({ messages, queuedMessages, width }: MessageListProps) {
   const scrollBoxRef = useRef<ScrollBoxRenderable>(null);
 
   const scrollToBottom = () => {
@@ -54,7 +55,7 @@ export function MessageList({ messages, width }: MessageListProps) {
     setImmediate(() => {
       scrollToBottom();
     });
-  }, [messages]);
+  }, [messages, queuedMessages]);
 
   // Keybindings for scrolling the messages area
   useKeys(
@@ -235,6 +236,13 @@ export function MessageList({ messages, width }: MessageListProps) {
     });
   }
 
+  // Add queued messages as separate entries
+  const queuedProcessed = queuedMessages.map((message) => ({
+    message,
+    messageIndex: -1, // Not part of main conversation
+    renderedParts: [<Message message={message} width={width} key={message.id} isQueued={true} />],
+  }));
+
   return (
     <scrollbox
       ref={scrollBoxRef}
@@ -252,6 +260,10 @@ export function MessageList({ messages, width }: MessageListProps) {
       }}
     >
       {processedMessages.map(({ message, renderedParts }) => (
+        <box key={message.id}>{renderedParts}</box>
+      ))}
+
+      {queuedProcessed.map(({ message, renderedParts }) => (
         <box key={message.id}>{renderedParts}</box>
       ))}
     </scrollbox>

@@ -1,6 +1,8 @@
 import { formatContent, formatBackground } from '../theme.js';
 import { getToolConfig } from '../toolFormatters/index.js';
 import { ErrorBoundary } from './ErrorBoundary.js';
+import { colors } from '../theme.js';
+import { StyledText, fg } from '@opentui/core';
 import type { CoreMessage } from 'ai';
 
 type ToolData = {
@@ -15,12 +17,14 @@ type MessageProps = {
   contentType?: 'normal' | 'reasoning' | 'tool';
   width: number;
   key: string;
+  isQueued?: boolean;
 };
 
 export function Message({
   message,
   contentType = 'normal',
   width,
+  isQueued = false,
 }: MessageProps) {
   // Handle tool messages with custom components
   if (contentType === 'tool' && message.toolData) {
@@ -143,11 +147,30 @@ export function Message({
   };
 
   const wrappedContent = wrapText(displayContent, textWidth);
-  const styledContent = formatContent(
-    message.role,
-    contentType,
-    wrappedContent
-  );
+
+  // Use custom formatting for queued messages
+  let styledContent: StyledText;
+  if (isQueued && message.role === 'user') {
+    // Custom styling for queued user messages - gray prefix and dimmed text
+    const lines = wrappedContent.split('\n');
+    if (lines.length === 1) {
+      styledContent = new StyledText([
+        fg(colors.muted)(`> `),
+        fg(colors.muted)(wrappedContent),
+      ]);
+    } else {
+      const chunks = [];
+      chunks.push(fg(colors.muted)(`> `));
+      chunks.push(fg(colors.muted)(lines[0]));
+      for (let i = 1; i < lines.length; i++) {
+        chunks.push(fg(colors.muted)(`\n  ${lines[i]}`));
+      }
+      styledContent = new StyledText(chunks);
+    }
+  } else {
+    styledContent = formatContent(message.role, contentType, wrappedContent);
+  }
+
   const backgroundColor = formatBackground(message.role);
 
   // Use reduced padding for tool messages to avoid extra spacing

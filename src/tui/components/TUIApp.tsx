@@ -41,6 +41,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
   const [messages, setMessages] = useState<(CoreMessage & { id: string })[]>(
     []
   );
+  const [queuedMessages, setQueuedMessages] = useState<(CoreMessage & { id: string })[]>([]);
   const [status, setStatus] = useState<Status>('READY');
   const [resizeKey, setResizeKey] = useState(0);
   const [modalState, setModalState] = useState<ModalType>(null);
@@ -186,6 +187,78 @@ export function TUIApp({ config, session }: TUIAppProps) {
     [messages, session]
   );
 
+  const handleQueuePop = useCallback(() => {
+    if (queuedMessages.length === 0) return null;
+
+    const lastQueued = queuedMessages[queuedMessages.length - 1];
+    setQueuedMessages(prev => prev.slice(0, -1));
+
+    // Extract string content from message
+    if (typeof lastQueued.content === 'string') {
+      return lastQueued.content;
+    }
+
+    // If content is an array, extract text parts
+    if (Array.isArray(lastQueued.content)) {
+      const textParts: string[] = [];
+      for (const part of lastQueued.content) {
+        if (part?.type === 'text' && 'text' in part) {
+          textParts.push(part.text);
+        }
+      }
+      return textParts.join('\n');
+    }
+
+    return null;
+  }, [queuedMessages]);
+
+  const processQueue = useCallback(async () => {
+    if (queuedMessages.length === 0) return;
+
+    // Calculate the full conversation before any state updates
+    const allMessages = [...messages, ...queuedMessages];
+
+    // Move all queued messages to main conversation
+    setMessages(prev => [...prev, ...queuedMessages]);
+    setQueuedMessages([]);
+
+    // Process entire conversation including newly added messages
+    setStatus('PROCESSING');
+    try {
+      await runAgent(allMessages, config, session, true, (message) => {
+        setMessages((prev) => {
+          return [
+            ...prev,
+            {
+              ...message,
+              id:
+                'id' in message && typeof message.id === 'string' ?
+                  message.id
+                : `agent-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+            },
+          ];
+        });
+      });
+    } catch (error) {
+      // Add error message
+      const errorMessage: CoreMessage & { id: string } = {
+        role: 'assistant',
+        content: `Error: ${error instanceof Error ? error.message : String(error)}`,
+        id: `error-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+      };
+      setMessages((prev) => [...prev, errorMessage]);
+    } finally {
+      setStatus('READY');
+    }
+  }, [queuedMessages, messages, config, session]);
+
+  // Process queue when agent becomes ready
+  useEffect(() => {
+    if (status === 'READY' && queuedMessages.length > 0) {
+      processQueue();
+    }
+  }, [status, processQueue, queuedMessages.length]);
+
   const handleSendMessage = useCallback(
     async (content: string) => {
       // Reset history navigation state
@@ -198,8 +271,15 @@ export function TUIApp({ config, session }: TUIAppProps) {
         content,
         id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       };
-      const newMessages = [...messages, userMessage];
 
+      if (status === 'PROCESSING') {
+        // Agent is busy - add to queue
+        setQueuedMessages(prev => [...prev, userMessage]);
+        return;
+      }
+
+      // Agent is ready - process immediately
+      const newMessages = [...messages, userMessage];
       setMessages((prev) => [...prev, userMessage]);
       setStatus('PROCESSING');
 
@@ -231,7 +311,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
         setStatus('READY');
       }
     },
-    [messages, config, session]
+    [messages, status, config, session]
   );
 
   // Cleanup timeout on component unmount
@@ -274,8 +354,9 @@ export function TUIApp({ config, session }: TUIAppProps) {
         >
           <Header />
           <MessageList
-            key={`${resizeKey}-${messages.length}`}
+            key={`${resizeKey}-${messages.length}-${queuedMessages.length}`}
             messages={messages}
+            queuedMessages={queuedMessages}
             width={width}
           />
           <InputArea
@@ -287,11 +368,14 @@ export function TUIApp({ config, session }: TUIAppProps) {
             setHistoryIndex={setHistoryIndex}
             originalInput={originalInput}
             setOriginalInput={setOriginalInput}
+            queuedMessages={queuedMessages}
+            onQueuePop={handleQueuePop}
           />
           <StatusBar
             status={status}
             session={session}
             exitConfirmation={!!exitConfirmation}
+            queuedMessages={queuedMessages}
           />
           <ModalDisplay />
         </box>

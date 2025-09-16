@@ -1,6 +1,7 @@
 import { fg } from '@opentui/core';
 import { statusColors, colors } from '../theme.js';
 import type { AgentSession } from '../../agentSession.js';
+import type { CoreMessage } from 'ai';
 
 type Status = 'READY' | 'PROCESSING';
 
@@ -8,14 +9,22 @@ type StatusBarProps = {
   status: Status;
   session: AgentSession;
   exitConfirmation?: boolean;
+  queuedMessages?: (CoreMessage & { id: string })[];
 };
 
 export function StatusBar({
   status,
   session,
   exitConfirmation,
+  queuedMessages = [],
 }: StatusBarProps) {
-  const statusText = status === 'PROCESSING' ? 'Working...' : 'Ready';
+  const queuedCount = queuedMessages.length;
+  let statusText = status === 'PROCESSING' ? 'Working...' : 'Ready';
+
+  if (status === 'PROCESSING' && queuedCount > 0) {
+    statusText = `Working... (${queuedCount} message${queuedCount > 1 ? 's' : ''} queued)`;
+  }
+
   const statusColor = statusColors[status];
 
   // Extract provider, model, and auth info from session

@@ -6,6 +6,7 @@ import { useModalState } from './ModalProvider.js';
 import { colors } from '../theme.js';
 import { commandRegistry } from '../commands/registry.js';
 import { parseFilePattern } from '../utils/inputParser.js';
+import type { CoreMessage } from 'ai';
 
 type InputAreaProps = {
   onSubmit: (message: string) => void;
@@ -16,6 +17,8 @@ type InputAreaProps = {
   setHistoryIndex: (index: number) => void;
   originalInput: string;
   setOriginalInput: (input: string) => void;
+  queuedMessages: (CoreMessage & { id: string })[];
+  onQueuePop: () => string | null;
 };
 
 export function InputArea({
@@ -27,6 +30,8 @@ export function InputArea({
   setHistoryIndex,
   originalInput,
   setOriginalInput,
+  queuedMessages,
+  onQueuePop,
 }: InputAreaProps) {
   const [value, setValue] = useState('');
   const [cursorPosition, setCursorPosition] = useState(0);
@@ -61,6 +66,15 @@ export function InputArea({
   const handleInputArrowKey = useCallback(
     (direction: 'up' | 'down', isOnFirstLine: boolean): boolean => {
       if (direction === 'up' && (historyIndex === -1 ? isOnFirstLine : true)) {
+        // Check for queued messages first when on first line
+        if (historyIndex === -1 && isOnFirstLine && queuedMessages.length > 0) {
+          const queuedContent = onQueuePop();
+          if (queuedContent) {
+            setValue(queuedContent);
+            return true;
+          }
+        }
+
         // Save original input when first entering history mode
         if (historyIndex === -1) {
           setOriginalInput(value);
@@ -94,6 +108,8 @@ export function InputArea({
       value,
       originalInput,
       setOriginalInput,
+      queuedMessages.length,
+      onQueuePop,
     ]
   );
 
