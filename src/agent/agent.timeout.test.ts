@@ -25,7 +25,6 @@ import {
 // Mock the AI SDK
 vi.mock('ai', () => ({
   generateText: vi.fn(),
-  streamText: vi.fn(),
   APICallError: {
     isInstance: vi.fn(() => false),
   },
@@ -81,9 +80,13 @@ vi.mock('../agentSession.js', () => ({
 }));
 
 // Import mocked modules
-import { streamText } from 'ai';
+import { generateText, ToolExecutionError } from 'ai';
 
-const mockStreamText = streamText as MockedFunction<typeof streamText>;
+const mockGenerateText = generateText as MockedFunction<typeof generateText>;
+const mockToolExecutionErrorIsInstance =
+  ToolExecutionError.isInstance as MockedFunction<
+    typeof ToolExecutionError.isInstance
+  >;
 
 // Helper function to create proper StreamTextResult mock
 function createMockStreamTextResult(
@@ -166,10 +169,14 @@ describe('Agent Timeout Error Handling', () => {
     mockSession = createMockAgentSession();
 
     mockConfig = createMockRuntimeConfiguration();
+
+    mockToolExecutionErrorIsInstance.mockReset();
+    mockToolExecutionErrorIsInstance.mockReturnValue(false);
   });
 
   afterEach(() => {
     vi.useRealTimers();
+    mockToolExecutionErrorIsInstance.mockReset();
   });
 
   describe('AI SDK Generation Timeout', () => {
@@ -181,7 +188,7 @@ describe('Agent Timeout Error Handling', () => {
       timeoutError.name = 'DOMException';
 
       // In simplified agent, timeouts would cause streamText itself to throw
-      mockStreamText.mockImplementation(() => {
+      mockGenerateText.mockImplementation(() => {
         throw timeoutError;
       });
 
@@ -202,7 +209,7 @@ describe('Agent Timeout Error Handling', () => {
       timeoutError.name = 'DOMException';
 
       // In simplified agent, timeouts would cause streamText itself to throw
-      mockStreamText.mockImplementation(() => {
+      mockGenerateText.mockImplementation(() => {
         throw timeoutError;
       });
 
@@ -210,12 +217,12 @@ describe('Agent Timeout Error Handling', () => {
 
       // Verify error logging matches simplified agent format
       expect(logger.error).toHaveBeenCalledWith(
-        'Fatal agent error',
-        expect.objectContaining({
+        'Fatal agent error: The operation was aborted due to timeout',
+        {
           errorMessage: 'The operation was aborted due to timeout',
           errorType: 'Error', // The error type is actually Error, not DOMException in tests
           executionTime: expect.any(Number),
-        })
+        }
       );
     });
 
@@ -226,7 +233,7 @@ describe('Agent Timeout Error Handling', () => {
       timeoutError.name = 'DOMException';
 
       // In simplified agent, timeouts would cause streamText itself to throw
-      mockStreamText.mockImplementation(() => {
+      mockGenerateText.mockImplementation(() => {
         throw timeoutError;
       });
 
@@ -246,7 +253,7 @@ describe('Agent Timeout Error Handling', () => {
       timeoutError.name = 'DOMException';
 
       // In simplified agent, timeouts would cause streamText itself to throw
-      mockStreamText.mockImplementation(() => {
+      mockGenerateText.mockImplementation(() => {
         throw timeoutError;
       });
 
@@ -269,7 +276,7 @@ describe('Agent Timeout Error Handling', () => {
       timeoutError.name = 'DOMException';
 
       // In simplified agent, timeouts would cause streamText itself to throw
-      mockStreamText.mockImplementation(() => {
+      mockGenerateText.mockImplementation(() => {
         throw timeoutError;
       });
 
@@ -293,80 +300,75 @@ describe('Agent Timeout Error Handling', () => {
 
   describe('Tool Call Timeout Handling', () => {
     it('should handle tool result timeout errors', async () => {
-      const mockStream = createMockStreamTextResult(async function* () {
-        yield { type: 'step-start' };
-        yield {
-          type: 'tool-call',
-          toolName: 'agent-spawner_spawn_agent',
-          toolCallId: 'test-tool-call-id',
-          args: { message: 'test message' },
-        };
-
-        // Simulate tool result timeout
-        yield {
-          type: 'tool-result',
-          toolCallId: 'test-tool-call-id',
-          toolName: 'agent-spawner_spawn_agent',
-          result: { error: 'timeout' },
-        };
+      // In simplified agent, tool errors cause generateText to fail
+      const toolError = new Error('Tool timeout');
+      mockToolExecutionErrorIsInstance.mockImplementation(
+        (error: unknown) => error === toolError
+      );
+      mockConfig.agent.maxSteps = 1;
+      mockGenerateText.mockImplementation(() => {
+        throw toolError;
       });
 
-      mockStreamText.mockReturnValue(mockStream);
-
-      const messageCallback = vi.fn();
       const result = await runAgent(
         'test message',
         mockConfig,
         mockSession,
-        false,
-        messageCallback
+        false
       );
 
-      expect(result.success).toBe(true);
+      expect(mockToolExecutionErrorIsInstance).toHaveBeenCalledWith(toolError);
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Step encountered tool error',
+        expect.objectContaining({
+          errorMessage: 'Tool timeout',
+          errorType: 'Error',
+        })
+      );
 
-      // In simplified implementation, tool results come from final response, not streaming
-      // Verify the agent completed successfully despite timeout
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('Tool timeout');
+      expect(result.messages).toBeDefined();
+      const lastMessage = result.messages?.at(-1);
+      expect(lastMessage?.role).toBe('user');
+      expect(lastMessage?.content).toContain('Tool call failed: Tool timeout');
     });
 
     it('should handle MCP server timeout (60 second hardcoded timeout)', async () => {
-      const mockStream = createMockStreamTextResult(async function* () {
-        yield { type: 'step-start' };
-        yield {
-          type: 'tool-call',
-          toolName: 'agent-spawner_spawn_agent',
-          toolCallId: 'test-tool-call-id',
-          args: { message: 'complex task requiring thinking' },
-        };
-
-        // Simulate MCP server timeout (60 seconds)
-        yield {
-          type: 'tool-result',
-          toolCallId: 'test-tool-call-id',
-          toolName: 'agent-spawner_spawn_agent',
-          result: {
-            error: 'MCP error -32001: Request timed out',
-            data: { timeout: 60000 },
-          },
-        };
+      // In simplified agent, MCP timeouts cause generateText to fail
+      const mcpError = new Error('MCP error -32001: Request timed out');
+      mockToolExecutionErrorIsInstance.mockImplementation(
+        (error: unknown) => error === mcpError
+      );
+      mockConfig.agent.maxSteps = 1;
+      mockGenerateText.mockImplementation(() => {
+        throw mcpError;
       });
 
-      mockStreamText.mockReturnValue(mockStream);
-
-      const messageCallback = vi.fn();
       const result = await runAgent(
         'complex task',
         mockConfig,
         mockSession,
-        false,
-        messageCallback
+        false
       );
 
-      expect(result.success).toBe(true);
+      expect(mockToolExecutionErrorIsInstance).toHaveBeenCalledWith(mcpError);
+      expect(logger.warn).toHaveBeenCalledWith(
+        'Step encountered tool error',
+        expect.objectContaining({
+          errorMessage: 'MCP error -32001: Request timed out',
+          errorType: 'Error',
+        })
+      );
 
-      // In simplified implementation, tool results come from final response, not streaming
-      // Verify the agent completed successfully despite timeout
-      expect(result.success).toBe(true);
+      expect(result.success).toBe(false);
+      expect(result.error).toBe('MCP error -32001: Request timed out');
+      expect(result.messages).toBeDefined();
+      const lastMessage = result.messages?.at(-1);
+      expect(lastMessage?.role).toBe('user');
+      expect(lastMessage?.content).toContain(
+        'Tool call failed: MCP error -32001: Request timed out'
+      );
     });
   });
 
@@ -374,7 +376,7 @@ describe('Agent Timeout Error Handling', () => {
     it('should handle error chunks from streamText', async () => {
       // In simplified agent, error chunks would cause streamText to throw
       const apiError = new Error('API error: API timeout error');
-      mockStreamText.mockImplementation(() => {
+      mockGenerateText.mockImplementation(() => {
         throw apiError;
       });
 
@@ -387,7 +389,7 @@ describe('Agent Timeout Error Handling', () => {
     it('should handle error chunks with no error message', async () => {
       // In simplified agent, error chunks would cause streamText to throw
       const unknownError = new Error('API error: Unknown error');
-      mockStreamText.mockImplementation(() => {
+      mockGenerateText.mockImplementation(() => {
         throw unknownError;
       });
 

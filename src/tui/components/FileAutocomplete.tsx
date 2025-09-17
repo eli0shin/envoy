@@ -37,8 +37,9 @@ export function FileAutocomplete({
     const loadSuggestions = async () => {
       try {
         const mode = filePattern.pattern.includes('/') ? 'browse' : 'fuzzy';
-        const results = mode === 'fuzzy'
-          ? await fuzzyGitSearch(filePattern.pattern)
+        const results =
+          mode === 'fuzzy' ?
+            await fuzzyGitSearch(filePattern.pattern)
           : await browseDirectory(filePattern.pattern);
         setSuggestions(results);
       } catch (error) {
@@ -56,12 +57,19 @@ export function FileAutocomplete({
     if (shouldShowAutocomplete && suggestions.length > 0 && filePattern) {
       const selected = suggestions[selectedIndex];
       // Add space after completion if path doesn't end with / (i.e., it's a file)
-      const completion = selected.endsWith('/') ? `@${selected}` : `@${selected} `;
+      const completion =
+        selected.endsWith('/') ? `@${selected}` : `@${selected} `;
       onSelect(completion, filePattern.startIndex, filePattern.endIndex);
       return true;
     }
     return false;
-  }, [shouldShowAutocomplete, suggestions, selectedIndex, filePattern, onSelect]);
+  }, [
+    shouldShowAutocomplete,
+    suggestions,
+    selectedIndex,
+    filePattern,
+    onSelect,
+  ]);
 
   // Handle arrow key navigation
   const handleArrowKey = useCallback(

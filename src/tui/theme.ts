@@ -3,7 +3,7 @@
  * All colors used throughout the application should be defined here.
  */
 
-import { StyledText, fg } from '@opentui/core';
+import { StyledText, fg, italic } from '@opentui/core';
 import { parseMarkdown } from './utils/markdown.js';
 
 // Re-export colors from the colors module
@@ -40,24 +40,47 @@ import { colors } from './colors.js';
 // Helper function to format multi-line user content with proper indentation
 const formatUserContent = (content: string): StyledText => {
   const lines = content.split('\n');
-  if (lines.length === 1) {
-    // Single line - just add the prefix
-    return new StyledText([
-      fg(colors.primary)(`> `),
-      fg(colors.lightGray)(content),
-    ]);
-  }
-
-  // Multi-line - build styled chunks for proper indentation
   const chunks = [];
 
-  // First line with prefix
-  chunks.push(fg(colors.primary)(`> `));
-  chunks.push(fg(colors.lightGray)(lines[0]));
+  //Add empty line at the top (with background color)
+  // chunks.push(fg(colors.lightGray)('\n'));
 
-  // Subsequent lines with indentation (2 spaces to align with content after "> ")
-  for (let i = 1; i < lines.length; i++) {
-    chunks.push(fg(colors.lightGray)(`\n  ${lines[i]}`));
+  if (lines.length === 1) {
+    // Single line - just add the prefix
+    chunks.push(fg(colors.primary)(`> `));
+    chunks.push(fg(colors.lightGray)(content));
+  } else {
+    // Multi-line - build styled chunks for proper indentation
+    // First line with prefix
+    chunks.push(fg(colors.primary)(`> `));
+    chunks.push(fg(colors.lightGray)(lines[0]));
+
+    // Subsequent lines with indentation (2 spaces to align with content after "> ")
+    for (let i = 1; i < lines.length; i++) {
+      chunks.push(fg(colors.lightGray)(`\n  ${lines[i]}`));
+    }
+  }
+
+  return new StyledText(chunks);
+};
+
+// Helper function to format queued user messages
+const formatQueuedUserContent = (content: string): StyledText => {
+  const lines = content.split('\n');
+  const chunks = [];
+
+  // No top blank line for queued messages - relies on spacing from message above
+  if (lines.length === 1) {
+    chunks.push(fg(colors.muted)(`> `));
+    chunks.push(fg(colors.muted)(content));
+  } else {
+    // Multi-line - build styled chunks with muted color
+    chunks.push(fg(colors.muted)(`> `));
+    chunks.push(fg(colors.muted)(lines[0]));
+
+    for (let i = 1; i < lines.length; i++) {
+      chunks.push(fg(colors.muted)(`\n  ${lines[i]}`));
+    }
   }
 
   return new StyledText(chunks);
@@ -68,9 +91,22 @@ export const contentFormatters = {
   'user-normal': (content: string): StyledText => formatUserContent(content),
   'user-reasoning': (content: string): StyledText => formatUserContent(content),
   'user-tool': (content: string): StyledText => formatUserContent(content),
+  'user-normal-queued': (content: string): StyledText =>
+    formatQueuedUserContent(content),
+  'user-reasoning-queued': (content: string): StyledText =>
+    formatQueuedUserContent(content),
+  'user-tool-queued': (content: string): StyledText =>
+    formatQueuedUserContent(content),
   'assistant-normal': (content: string): StyledText => parseMarkdown(content),
-  'assistant-reasoning': (content: string): StyledText =>
-    parseMarkdown(content),
+  'assistant-reasoning': (content: string): StyledText => {
+    const parsed = parseMarkdown(content);
+    // Apply italic styling to reasoning content with darker color
+    const italicChunks = parsed.chunks.map(chunk => {
+      // Preserve any existing styling but add italic and use reasoning color
+      return italic(fg(colors.reasoning)(chunk.text));
+    });
+    return new StyledText(italicChunks);
+  },
   'assistant-tool': (content: string): StyledText => {
     // Handle error styling for tool calls
     if (content.includes('[ERROR]')) {
@@ -124,9 +160,12 @@ const defaultBackground = colors.backgrounds.main;
 export const formatContent = (
   role: 'user' | 'assistant' | 'system' | 'tool',
   contentType: 'normal' | 'reasoning' | 'tool',
-  content: string
+  content: string,
+  isQueued: boolean = false
 ): StyledText => {
-  const key = `${role}-${contentType}` as keyof typeof contentFormatters;
+  const suffix = isQueued && role === 'user' ? '-queued' : '';
+  const key =
+    `${role}-${contentType}${suffix}` as keyof typeof contentFormatters;
   const formatter = contentFormatters[key] ?? defaultContentFormatter;
   return formatter(content);
 };

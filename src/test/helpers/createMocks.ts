@@ -38,8 +38,10 @@ export function createMockLogger() {
       error: vi.fn(),
 
       // Specialized logging methods
+      logUserStep: vi.fn(),
       logAssistantStep: vi.fn(),
       logToolCallProgress: vi.fn(),
+      logThinking: vi.fn(),
       logMcpTool: vi.fn(),
 
       // Configuration methods
@@ -465,6 +467,53 @@ export function createMockAISDK() {
     ToolExecutionError: { isInstance: vi.fn(() => false) },
     InvalidMessageRoleError: { isInstance: vi.fn(() => false) },
     InvalidArgumentError: { isInstance: vi.fn(() => false) },
+  };
+}
+
+/**
+ * Creates a mock generate text result
+ * Used for AI SDK mock centralization
+ */
+export function createMockGenerateTextResult(overrides?: {
+  text?: string;
+  finishReason?: string;
+  usage?: { totalTokens: number; promptTokens: number; completionTokens: number };
+  messages?: Array<{ role: string; content: string; id: string }>;
+  toolResults?: Array<unknown>;
+}) {
+  return {
+    text: overrides?.text || 'Test response',
+    finishReason: overrides?.finishReason || 'stop',
+    usage: overrides?.usage || {
+      totalTokens: 100,
+      promptTokens: 50,
+      completionTokens: 50,
+    },
+    response: {
+      messages: overrides?.messages || [
+        { role: 'assistant', content: overrides?.text || 'Test response', id: 'test-msg-id' },
+      ],
+      id: 'test-id',
+      timestamp: new Date(),
+      modelId: 'test-model',
+    },
+    toolResults: overrides?.toolResults || [],
+    reasoning: undefined,
+    files: [],
+    reasoningDetails: undefined,
+    sources: undefined,
+    responseMessages: overrides?.messages || [
+      { role: 'assistant', content: overrides?.text || 'Test response', id: 'test-msg-id' },
+    ],
+    roundtrips: [],
+    steps: [],
+    request: {},
+    warnings: undefined,
+    logprobs: undefined,
+    experimental_providerMetadata: undefined,
+    experimental_output: undefined,
+    toolCalls: [],
+    providerMetadata: undefined,
   };
 }
 

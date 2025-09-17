@@ -440,9 +440,7 @@ describe('parseMarkdown', () => {
 
     // Verify specific formatted content
     expect(boldChunks.some((chunk) => chunk.text === 'bold')).toBe(true);
-    expect(italicChunks.some((chunk) => chunk.text === 'italic')).toBe(
-      true
-    );
+    expect(italicChunks.some((chunk) => chunk.text === 'italic')).toBe(true);
   });
 
   it('should handle nested formatting in table cells', () => {
@@ -482,12 +480,8 @@ describe('parseMarkdown', () => {
 
     // Verify specific formatted content
     expect(boldChunks.some((chunk) => chunk.text === 'John')).toBe(true);
-    expect(boldChunks.some((chunk) => chunk.text === 'Inactive')).toBe(
-      true
-    );
-    expect(italicChunks.some((chunk) => chunk.text === 'Active')).toBe(
-      true
-    );
+    expect(boldChunks.some((chunk) => chunk.text === 'Inactive')).toBe(true);
+    expect(italicChunks.some((chunk) => chunk.text === 'Active')).toBe(true);
   });
 
   it('should handle complex nested formatting', () => {
@@ -756,9 +750,7 @@ describe('parseMarkdown', () => {
     const regularQuote = parseMarkdown('> Just a regular quote');
     const admonition = parseMarkdown('> [!NOTE]\n> This is a note');
 
-    const regularText = regularQuote.chunks
-      .map((chunk) => chunk.text)
-      .join('');
+    const regularText = regularQuote.chunks.map((chunk) => chunk.text).join('');
     const admonitionText = admonition.chunks
       .map((chunk) => chunk.text)
       .join('');
@@ -780,5 +772,65 @@ describe('parseMarkdown', () => {
 
     expect(regularBgChunks.length).toBe(0); // Regular quotes shouldn't have background
     expect(admonitionBgChunks.length).toBeGreaterThan(0); // Admonitions should have background
+  });
+
+  it('should NOT have double newlines between heading and list', () => {
+    const markdown = '# My Heading\n- Item 1\n- Item 2';
+    const result = parseMarkdown(markdown);
+
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
+
+    // Should have only ONE newline between heading and list
+    expect(allText).toContain('My Heading\n• Item 1');
+    expect(allText).not.toContain('My Heading\n\n• Item 1');
+
+    // Count consecutive newlines - should never have more than 1
+    const doubleNewlines = allText.match(/\n\n+/g);
+    expect(doubleNewlines).toBeNull();
+  });
+
+  it('should handle heading followed by list without extra spacing', () => {
+    const markdown =
+      '## Section Title\n- First item\n- Second item\n- Third item';
+    const result = parseMarkdown(markdown);
+
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
+
+    // Should have proper formatting with single newlines
+    expect(allText).toContain('Section Title\n• First item');
+
+    // Verify no double newlines exist
+    const lines = allText.split('\n');
+    for (let i = 0; i < lines.length - 1; i++) {
+      if (lines[i] === '' && lines[i + 1] === '') {
+        throw new Error('Found double empty lines in output');
+      }
+    }
+  });
+
+  it('should handle multiple headings and lists without double newlines', () => {
+    const markdown = `# Main Title
+- Item A
+- Item B
+
+## Subtitle
+- Item C
+- Item D
+
+### Small Title
+- Item E`;
+
+    const result = parseMarkdown(markdown);
+    const allText = result.chunks.map((chunk) => chunk.text).join('');
+
+    // Check that headings are directly followed by lists with single newline
+    expect(allText).toContain('Main Title\n• Item A');
+    expect(allText).toContain('Subtitle\n• Item C');
+    expect(allText).toContain('Small Title\n• Item E');
+
+    // Should not have double newlines right after headings
+    expect(allText).not.toContain('Main Title\n\n• Item A');
+    expect(allText).not.toContain('Subtitle\n\n• Item C');
+    expect(allText).not.toContain('Small Title\n\n• Item E');
   });
 });

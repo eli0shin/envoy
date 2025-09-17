@@ -1,7 +1,10 @@
 import { fg, bold } from '@opentui/core';
-import { error, info, filePath as filePathColor } from '../../theme.js';
+import { error, info, filePath as filePathColor, lightGray } from '../../theme.js';
 import type { ToolMessageComponentProps } from '../types.js';
-import type { FilesystemReadMultipleFilesArgs, FilesystemReadMultipleFilesResult } from '../../toolTypes.js';
+import type {
+  FilesystemReadMultipleFilesArgs,
+  FilesystemReadMultipleFilesResult,
+} from '../../toolTypes.js';
 
 export function ReadMultipleFilesToolMessage({
   args,
@@ -15,8 +18,9 @@ export function ReadMultipleFilesToolMessage({
   const parseResult = (result: unknown): Map<string, number> | null => {
     if (!result || isError) return null;
 
-    const resultText = typeof result === 'object' && 'result' in result
-      ? String((result as FilesystemReadMultipleFilesResult).result)
+    const resultText =
+      typeof result === 'object' && 'result' in result ?
+        String((result as FilesystemReadMultipleFilesResult).result)
       : '';
 
     if (!resultText) return null;
@@ -46,7 +50,7 @@ export function ReadMultipleFilesToolMessage({
       // Assume equal distribution of lines if we can't parse
       const totalLines = resultText.split('\n').length;
       const linesPerFile = Math.floor(totalLines / paths.length);
-      paths.forEach(path => {
+      paths.forEach((path) => {
         fileLineCounts.set(path, linesPerFile);
       });
     }
@@ -55,14 +59,15 @@ export function ReadMultipleFilesToolMessage({
   };
 
   const fileLineCounts = parseResult(result);
-  const formattedPaths = paths && paths.length > 0
-    ? paths.map(p => p.split('/').pop() || p).join(', ')
+  const formattedPaths =
+    paths && paths.length > 0 ?
+      paths.map((p) => p.split('/').pop() || p).join(', ')
     : 'Unknown files';
 
   return (
     <box flexDirection="column">
       <text>
-        {bold('Read Files')}
+        {bold(fg(lightGray)('Read Files'))}
         {fg(filePathColor)(`(${formattedPaths})`)}
       </text>
       {!isError && fileLineCounts && fileLineCounts.size > 0 ?

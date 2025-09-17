@@ -12,11 +12,14 @@ Currently, when the agent is processing and a user submits another prompt, `runA
 
 ```typescript
 const [messages, setMessages] = useState<(CoreMessage & { id: string })[]>([]);
-const [queuedMessages, setQueuedMessages] = useState<(CoreMessage & { id: string })[]>([]);
+const [queuedMessages, setQueuedMessages] = useState<
+  (CoreMessage & { id: string })[]
+>([]);
 const [status, setStatus] = useState<Status>('READY');
 ```
 
 Two separate arrays:
+
 - `messages`: The actual conversation history in correct chronological order
 - `queuedMessages`: User messages waiting to be processed when agent is busy
 
@@ -32,16 +35,16 @@ type MessageListProps = {
   width: number;
 };
 
-export function MessageList({ messages, queuedMessages, width }: MessageListProps) {
+export function MessageList({
+  messages,
+  queuedMessages,
+  width,
+}: MessageListProps) {
   return (
     <>
       {/* Render actual conversation */}
       {messages.map((message) => (
-        <Message
-          key={message.id}
-          message={message}
-          width={width}
-        />
+        <Message key={message.id} message={message} width={width} />
       ))}
 
       {/* Visual separator if there are queued messages */}
@@ -77,9 +80,10 @@ type MessageProps = {
 
 function Message({ message, width, isQueued = false }: MessageProps) {
   // Queued messages have gray prefix instead of blue
-  const prefix = isQueued ?
-    <text color={colors.text.muted}>{'>'}</text> :
-    <text color={colors.primary.main}>{'>'}</text>;
+  const prefix =
+    isQueued ?
+      <text color={colors.text.muted}>{'>'}</text>
+    : <text color={colors.primary.main}>{'>'}</text>;
 
   // Dimmed text for queued messages
   const textOpacity = isQueued ? 0.6 : 1;
@@ -101,19 +105,25 @@ const handleSendMessage = async (content: string) => {
 
   if (status === 'PROCESSING') {
     // Agent is busy - add to queue
-    setQueuedMessages(prev => [...prev, userMessage]);
+    setQueuedMessages((prev) => [...prev, userMessage]);
     // Clear input, show visual feedback
     return;
   }
 
   // Agent is ready - process immediately
-  setMessages(prev => [...prev, userMessage]);
+  setMessages((prev) => [...prev, userMessage]);
   setStatus('PROCESSING');
 
   try {
-    await runAgent([...messages, userMessage], config, session, true, (message) => {
-      setMessages(prev => [...prev, { ...message, id: generateId() }]);
-    });
+    await runAgent(
+      [...messages, userMessage],
+      config,
+      session,
+      true,
+      (message) => {
+        setMessages((prev) => [...prev, { ...message, id: generateId() }]);
+      }
+    );
   } finally {
     setStatus('READY');
     await processQueue();
@@ -129,22 +139,16 @@ const processQueue = async () => {
 
   // Move all queued messages to main conversation
   const allQueued = [...queuedMessages];
-  setMessages(prev => [...prev, ...allQueued]);
+  setMessages((prev) => [...prev, ...allQueued]);
   setQueuedMessages([]);
 
   // Process entire conversation including newly added messages
   setStatus('PROCESSING');
   try {
     const allMessages = [...messages, ...allQueued];
-    await runAgent(
-      allMessages,
-      config,
-      session,
-      true,
-      (message) => {
-        setMessages(prev => [...prev, { ...message, id: generateId() }]);
-      }
-    );
+    await runAgent(allMessages, config, session, true, (message) => {
+      setMessages((prev) => [...prev, { ...message, id: generateId() }]);
+    });
   } finally {
     setStatus('READY');
     // Recursively process any messages that were queued during processing
@@ -164,7 +168,7 @@ const handleInputArrowKey = (direction, isOnFirstLine) => {
     const lastQueued = queuedMessages[queuedMessages.length - 1];
 
     // Remove from queue
-    setQueuedMessages(prev => prev.slice(0, -1));
+    setQueuedMessages((prev) => prev.slice(0, -1));
 
     // Populate input field
     setValue(lastQueued.content);

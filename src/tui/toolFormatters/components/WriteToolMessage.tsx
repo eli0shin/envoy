@@ -1,5 +1,5 @@
 import { fg, bold } from '@opentui/core';
-import { error, info, filePath as filePathColor } from '../../theme.js';
+import { error, info, filePath as filePathColor, lightGray } from '../../theme.js';
 import type { ToolMessageComponentProps } from '../types.js';
 
 export function WriteToolMessage({
@@ -17,17 +17,17 @@ export function WriteToolMessage({
   return (
     <box flexDirection="column">
       <text>
-        {bold('Write File')}
+        {bold(fg(lightGray)('Write File'))}
         {fg(filePathColor)(`(${filePath})`)}
       </text>
-      {!isError && result ? (
+      {!isError && result ?
         <text paddingLeft={2}>
           {fg(info)(`└ Wrote ${lineCount} lines to ${filePath}`)}
         </text>
-      ) : null}
-      {isError ? (
+      : null}
+      {isError ?
         <text paddingLeft={2}>{fg(error)(`${String(result)}`)}</text>
-      ) : null}
+      : null}
     </box>
   );
 }

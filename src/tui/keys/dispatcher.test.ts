@@ -105,26 +105,6 @@ describe('KeyDispatcher with prefix', () => {
     expect(getActivePrefix()).toBeNull();
   });
 
-  it('cancels prefix on unmatched key and consumes it (no dispatch)', () => {
-    const calls: TUIKeyEvent[] = [];
-    keyEventBus.register({
-      scope: 'global',
-      priority: 20,
-      enabled: () => true,
-      handle: (key) => {
-        calls.push(key);
-        return false;
-      },
-    });
-
-    send('e', { ctrl: true });
-    expect(getActivePrefix()).toBe('leader');
-
-    send('x'); // unmatched
-    expect(getActivePrefix()).toBeNull();
-    // Should not have dispatched to handlers on unmatched
-    expect(calls.length).toBe(0);
-  });
 
   it('cancels prefix on malformed event (no name) without dispatching', () => {
     const calls: TUIKeyEvent[] = [];

@@ -42,17 +42,17 @@ export function InputArea({
     setValue(command);
   }, []);
 
-  const handleFileSelect = useCallback((replacement: string, start: number, end: number) => {
-    const newValue =
-      value.slice(0, start) +
-      replacement +
-      value.slice(end);
-    setValue(newValue);
-    // Use setTimeout to ensure the value update completes before setting cursor
-    setTimeout(() => {
-      setCursorPosition(start + replacement.length);
-    }, 0);
-  }, [value]);
+  const handleFileSelect = useCallback(
+    (replacement: string, start: number, end: number) => {
+      const newValue = value.slice(0, start) + replacement + value.slice(end);
+      setValue(newValue);
+      // Use setTimeout to ensure the value update completes before setting cursor
+      setTimeout(() => {
+        setCursorPosition(start + replacement.length);
+      }, 0);
+    },
+    [value]
+  );
 
   const handleCursorChange = useCallback((position: number) => {
     setCursorPosition(position);
@@ -146,7 +146,10 @@ export function InputArea({
     <box flexDirection="column">
       {/* Autocomplete positioned absolutely relative to viewport */}
       {showCommandAutocomplete && !showFileAutocomplete && (
-        <CommandAutocomplete inputValue={value} onSelect={handleCommandSelect} />
+        <CommandAutocomplete
+          inputValue={value}
+          onSelect={handleCommandSelect}
+        />
       )}
       {showFileAutocomplete && (
         <FileAutocomplete

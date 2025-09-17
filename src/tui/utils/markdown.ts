@@ -32,6 +32,19 @@ const colors = {
   text: themeColors.lightGray, // Default text color for markdown content
 } as const;
 
+// Helper function to safely append a newline only if needed
+function appendNewlineIfNeeded(chunks: TextChunk[]): void {
+  if (chunks.length === 0) {
+    chunks.push(fg(colors.text)('\n'));
+    return;
+  }
+
+  const lastChunk = chunks[chunks.length - 1];
+  if (lastChunk && lastChunk.text && !lastChunk.text.endsWith('\n')) {
+    chunks.push(fg(colors.text)('\n'));
+  }
+}
+
 // Helper function to recursively process tokens and apply formatting
 function processTokensRecursively(
   tokens: Token[],
@@ -97,7 +110,10 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         strongToken.tokens,
         listDepth
       );
-      chunks.push(...strongChunks.map((chunk) => bold(chunk.text)));
+      // Apply bold with the same text color (not brighter)
+      chunks.push(
+        ...strongChunks.map((chunk) => bold(fg(colors.text)(chunk.text)))
+      );
       break;
     }
 
@@ -149,17 +165,15 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         headingToken.tokens,
         listDepth
       );
-      const headingText = headingChunks
-        .map((chunk) => chunk.text)
-        .join('');
+      const headingText = headingChunks.map((chunk) => chunk.text).join('');
 
-      // Extract trailing whitespace from raw field
-      const raw = headingToken.raw;
-      const trailingWhitespace = raw.match(/^#+\s+.+?(\s*)$/)?.[1] || '';
-
+      // Add the heading text
       chunks.push(bold(fg(headerColor)(headingText)));
-      if (trailingWhitespace) {
-        chunks.push(fg(colors.text)(trailingWhitespace));
+
+      // Check if raw ends with newline and add it
+      const raw = headingToken.raw;
+      if (raw.endsWith('\n')) {
+        chunks.push(fg(colors.text)('\n'));
       }
       break;
     }
@@ -167,6 +181,17 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
     case 'list': {
       // Lists - process each list item recursively with proper indentation
       const listToken = token as Tokens.List;
+
+      // Only add a newline before the list if chunks don't already end with one
+      // This prevents double newlines after headings
+      // For nested lists (listDepth > 0), we don't add initial newline as parent handles it
+      if (listDepth === 0 && chunks.length > 0) {
+        const lastChunk = chunks[chunks.length - 1];
+        const needsNewline = !lastChunk || !lastChunk.text || !lastChunk.text.endsWith('\n');
+        if (needsNewline) {
+          chunks.push(fg(colors.text)('\n'));
+        }
+      }
 
       for (let i = 0; i < listToken.items.length; i++) {
         const item = listToken.items[i];
@@ -214,8 +239,12 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
           bullet = getBulletForDepth(listDepth, listToken.ordered);
         }
 
-        // Always start list items on a new line
-        chunks.push(fg(colors.text)('\n'));
+        // Add newline before each item
+        // For top-level lists, skip first item if we already added newline above
+        // For nested lists, always add newline before items
+        if (i > 0 || listDepth > 0) {
+          chunks.push(fg(colors.text)('\n'));
+        }
 
         chunks.push(fg(colors.text)(indent));
         chunks.push(fg(colors.list)(bullet));
@@ -223,6 +252,8 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
 
         // Add nested lists on separate lines with proper newline separation
         if (nestedChunks.length > 0) {
+          // Nested lists should start on a new line
+          chunks.push(fg(colors.text)('\n'));
           chunks.push(...nestedChunks);
         }
       }
@@ -258,22 +289,30 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
 
     case 'hr': {
       // Horizontal rules - render with proper separator line
-      chunks.push(fg(colors.text)('\n'));
+      appendNewlineIfNeeded(chunks);
       chunks.push(fg(colors.quote)('─'.repeat(60))); // 60-character horizontal line
-      chunks.push(fg(colors.text)('\n\n'));
+      appendNewlineIfNeeded(chunks);
       break;
     }
 
     case 'space': {
-      // Whitespace/newlines
+      // Whitespace/newlines - but avoid double newlines
       const spaceToken = token as Tokens.Space;
+      // Only add space if it won't create double newlines
+      if (spaceToken.raw === '\n' && chunks.length > 0) {
+        const lastChunk = chunks[chunks.length - 1];
+        if (lastChunk && lastChunk.text && lastChunk.text.endsWith('\n')) {
+          // Skip this newline as it would create a double newline
+          break;
+        }
+      }
       chunks.push(fg(colors.text)(spaceToken.raw));
       break;
     }
 
     case 'br': {
       // Line breaks
-      chunks.push(fg(colors.text)('\n'));
+      appendNewlineIfNeeded(chunks);
       break;
     }
 
@@ -294,7 +333,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         /^\[!(NOTE|WARNING|ERROR|SUCCESS|INFO|TIP|CAUTION)\](.*)/is
       );
 
-      chunks.push(fg(colors.text)('\n')); // Start with newline
+      appendNewlineIfNeeded(chunks); // Start with newline
 
       if (admonitionMatch) {
         // This is an admonition/callout
@@ -328,8 +367,12 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         }
 
         // Render admonition header
-        chunks.push(bg(admonitionColor)(fg(themeColors.admonitionText)(`${icon}${typeUpper}`)));
-        chunks.push(fg(colors.text)('\n'));
+        chunks.push(
+          bg(admonitionColor)(
+            fg(themeColors.admonitionText)(`${icon}${typeUpper}`)
+          )
+        );
+        appendNewlineIfNeeded(chunks);
 
         // Render admonition content with left border
         const contentLines = content.trim().split('\n');
@@ -338,7 +381,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
           chunks.push(fg(admonitionColor)('│ '));
           chunks.push(fg(colors.text)(line));
           if (i < contentLines.length - 1) {
-            chunks.push(fg(colors.text)('\n'));
+            appendNewlineIfNeeded(chunks);
           }
         }
       } else {
@@ -350,19 +393,19 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
           chunks.push(fg(colors.quoteBorder)('│ ')); // Quote border character
           chunks.push(fg(colors.quote)(line));
           if (i < lines.length - 1) {
-            chunks.push(fg(colors.text)('\n'));
+            appendNewlineIfNeeded(chunks);
           }
         }
       }
 
-      chunks.push(fg(colors.text)('\n')); // End with newline
+      appendNewlineIfNeeded(chunks); // End with newline
       break;
     }
 
     case 'table': {
       // Tables - render with proper box drawing characters
       const tableToken = token as Tokens.Table;
-      chunks.push(fg(colors.text)('\n')); // Start with newline
+      appendNewlineIfNeeded(chunks); // Start with newline
 
       // Box drawing characters
       const box = {
@@ -415,7 +458,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
           .join(box.topTee) +
         box.topRight;
       chunks.push(fg(colors.quote)(topBorder));
-      chunks.push(fg(colors.text)('\n'));
+      appendNewlineIfNeeded(chunks);
 
       // Render header row
       chunks.push(fg(colors.quote)(box.vertical + ' '));
@@ -430,7 +473,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         }
       }
       chunks.push(fg(colors.quote)(' ' + box.vertical));
-      chunks.push(fg(colors.text)('\n'));
+      appendNewlineIfNeeded(chunks);
 
       // Render header separator
       const headerSeparator =
@@ -440,7 +483,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
           .join(box.cross) +
         box.rightTee;
       chunks.push(fg(colors.quote)(headerSeparator));
-      chunks.push(fg(colors.text)('\n'));
+      appendNewlineIfNeeded(chunks);
 
       // Render data rows with formatting
       for (const row of dataRows) {
@@ -468,7 +511,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         }
 
         chunks.push(fg(colors.quote)(' ' + box.vertical));
-        chunks.push(fg(colors.text)('\n'));
+        appendNewlineIfNeeded(chunks);
       }
 
       // Render bottom border
@@ -479,9 +522,8 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
           .join(box.bottomTee) +
         box.bottomRight;
       chunks.push(fg(colors.quote)(bottomBorder));
-      chunks.push(fg(colors.text)('\n'));
+      appendNewlineIfNeeded(chunks);
 
-      chunks.push(fg(colors.text)('\n')); // End with extra newline
       break;
     }
 

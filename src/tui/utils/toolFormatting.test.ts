@@ -6,13 +6,15 @@ import {
   extractResultText,
   formatToolCall,
   renderToolCall,
-  renderToolCallWithErrorMarkers
+  renderToolCallWithErrorMarkers,
 } from './toolFormatting.js';
 
 describe('toolFormatting', () => {
   describe('formatToolName', () => {
     it('should convert snake_case to Title Case', () => {
-      expect(formatToolName('filesystem_read_file')).toBe('Filesystem Read File');
+      expect(formatToolName('filesystem_read_file')).toBe(
+        'Filesystem Read File'
+      );
       expect(formatToolName('simple_tool')).toBe('Simple Tool');
       expect(formatToolName('already_formatted')).toBe('Already Formatted');
     });
@@ -45,7 +47,8 @@ describe('toolFormatting', () => {
     });
 
     it('should truncate long argument values', () => {
-      const longPath = '/very/long/path/that/should/be/truncated/because/it/exceeds/fifty/characters.txt';
+      const longPath =
+        '/very/long/path/that/should/be/truncated/because/it/exceeds/fifty/characters.txt';
       const args = { path: longPath };
       const result = formatToolArgs(args);
       expect(result).toContain('...');
@@ -63,6 +66,44 @@ describe('toolFormatting', () => {
       const result = formatToolArgs(args);
       expect(result).toContain('{"enabled":true,"count":5}');
     });
+
+    it('should handle arrays safely', () => {
+      const args = { files: ['file1.txt', 'file2.txt', 'file3.txt'] };
+      const result = formatToolArgs(args);
+      expect(result).toContain('files: [file1.txt, file2.txt, file3.txt]');
+    });
+
+    it('should handle arrays with mixed types', () => {
+      const args = { mixed: ['string', 42, true, null] };
+      const result = formatToolArgs(args);
+      expect(result).toContain('mixed: [string, 42, true, null]');
+    });
+
+    it('should handle empty arrays', () => {
+      const args = { empty: [] };
+      const result = formatToolArgs(args);
+      expect(result).toContain('empty: []');
+    });
+
+    it('should handle arrays with objects', () => {
+      const args = { items: [{ name: 'test' }, 'string', 42] };
+      const result = formatToolArgs(args);
+      expect(result).toContain('items: [[object Object], string, 42]');
+    });
+
+    it('should handle numbers and booleans', () => {
+      const args = { count: 42, enabled: true, disabled: false };
+      const result = formatToolArgs(args);
+      expect(result).toBe('count: 42, enabled: true, disabled: false');
+    });
+
+    it('should handle non-serializable objects gracefully', () => {
+      const circular: any = { name: 'test' };
+      circular.self = circular; // Create circular reference
+      const args = { data: circular };
+      const result = formatToolArgs(args);
+      expect(result).toContain('data: {object}');
+    });
   });
 
   describe('extractResultText', () => {
@@ -73,7 +114,7 @@ describe('toolFormatting', () => {
     it('should extract text from array with text objects', () => {
       const result = [
         { type: 'text', text: 'first part' },
-        { type: 'text', text: 'second part' }
+        { type: 'text', text: 'second part' },
       ];
       expect(extractResultText(result)).toBe('first part second part');
     });
@@ -103,7 +144,9 @@ describe('toolFormatting', () => {
 
   describe('formatToolCall', () => {
     it('should format pending tool call', () => {
-      const result = formatToolCall('filesystem_read_file', { path: 'test.txt' });
+      const result = formatToolCall('filesystem_read_file', {
+        path: 'test.txt',
+      });
       expect(result.formattedName).toBe('Filesystem Read File');
       expect(result.formattedArgs).toBe('path: test.txt');
       expect(result.state).toBe('pending');
@@ -134,7 +177,9 @@ describe('toolFormatting', () => {
 
   describe('renderToolCall', () => {
     it('should render pending tool call with bold name', () => {
-      const formatted = formatToolCall('filesystem_read_file', { path: 'test.txt' });
+      const formatted = formatToolCall('filesystem_read_file', {
+        path: 'test.txt',
+      });
       const result = renderToolCall(formatted);
       expect(result).toBe('**Filesystem Read File** (path: test.txt)');
     });
@@ -147,7 +192,9 @@ describe('toolFormatting', () => {
         false
       );
       const result = renderToolCall(formatted);
-      expect(result).toBe('**Filesystem Read File** (path: test.txt)\n└ Result: file contents');
+      expect(result).toBe(
+        '**Filesystem Read File** (path: test.txt)\n└ Result: file contents'
+      );
     });
 
     it('should render error tool call', () => {
@@ -158,7 +205,9 @@ describe('toolFormatting', () => {
         true
       );
       const result = renderToolCall(formatted);
-      expect(result).toBe('**Filesystem Read File** (path: missing.txt)\n└ Error: File not found');
+      expect(result).toBe(
+        '**Filesystem Read File** (path: missing.txt)\n└ Error: File not found'
+      );
     });
   });
 

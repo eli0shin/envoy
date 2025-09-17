@@ -10,7 +10,7 @@
 export function formatToolName(toolName: string): string {
   return toolName
     .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
 
@@ -37,24 +37,41 @@ export function formatToolArgs(args: unknown): string {
     return '';
   }
 
-  const entries = Object.entries(args);
-  if (entries.length === 0) {
-    return '';
-  }
+  try {
+    const entries = Object.entries(args);
+    if (entries.length === 0) {
+      return '';
+    }
 
-  return entries
-    .map(([key, value]) => {
-      let valueStr = '';
-      if (typeof value === 'string') {
-        valueStr = value;
-      } else if (value === null || value === undefined) {
-        valueStr = String(value);
-      } else {
-        valueStr = JSON.stringify(value);
-      }
-      return `${key}: ${truncateValue(valueStr)}`;
-    })
-    .join(', ');
+    return entries
+      .map(([key, value]) => {
+        let valueStr = '';
+        if (typeof value === 'string') {
+          valueStr = value;
+        } else if (value === null || value === undefined) {
+          valueStr = String(value);
+        } else if (typeof value === 'number' || typeof value === 'boolean') {
+          valueStr = String(value);
+        } else if (Array.isArray(value)) {
+          valueStr = `[${value.map(item => item === null ? 'null' : item === undefined ? 'undefined' : String(item)).join(', ')}]`;
+        } else if (typeof value === 'object') {
+          try {
+            const jsonStr = JSON.stringify(value);
+            // If JSON.stringify returns undefined or fails, fall back to a safe representation
+            valueStr = jsonStr !== undefined ? jsonStr : '{object}';
+          } catch {
+            valueStr = '{object}';
+          }
+        } else {
+          valueStr = String(value);
+        }
+        return `${key}: ${truncateValue(valueStr)}`;
+      })
+      .join(', ');
+  } catch {
+    // If Object.entries fails or any other error occurs, return a safe fallback
+    return '{invalid args}';
+  }
 }
 
 /**
@@ -70,7 +87,13 @@ export function extractResultText(result: unknown): string {
   if (Array.isArray(result)) {
     const textParts: string[] = [];
     for (const item of result) {
-      if (item && typeof item === 'object' && 'type' in item && item.type === 'text' && 'text' in item) {
+      if (
+        item &&
+        typeof item === 'object' &&
+        'type' in item &&
+        item.type === 'text' &&
+        'text' in item
+      ) {
         textParts.push(String(item.text));
       }
     }
@@ -123,7 +146,7 @@ export function formatToolCall(
     return {
       formattedName,
       formattedArgs,
-      state: 'pending'
+      state: 'pending',
     };
   }
 
@@ -133,7 +156,7 @@ export function formatToolCall(
       formattedName,
       formattedArgs,
       state: 'error',
-      errorText: truncateValue(errorText)
+      errorText: truncateValue(errorText),
     };
   }
 
@@ -142,7 +165,7 @@ export function formatToolCall(
     formattedName,
     formattedArgs,
     state: 'success',
-    resultText: truncateValue(resultText)
+    resultText: truncateValue(resultText),
   };
 }
 
@@ -175,7 +198,9 @@ export function renderToolCall(formatted: FormattedToolCall): string {
  * @param formatted - The formatted tool call structure
  * @returns Multi-line string with error markers for styling
  */
-export function renderToolCallWithErrorMarkers(formatted: FormattedToolCall): string {
+export function renderToolCallWithErrorMarkers(
+  formatted: FormattedToolCall
+): string {
   let output = `**${formatted.formattedName}**`;
 
   if (formatted.formattedArgs) {

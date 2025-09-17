@@ -1,6 +1,10 @@
-import { formatToolName, formatToolArgs, truncateValue } from '../../utils/toolFormatting.js';
+import {
+  formatToolName,
+  formatToolArgs,
+  truncateValue,
+} from '../../utils/toolFormatting.js';
 import { fg, bold } from '@opentui/core';
-import { error, info } from '../../theme.js';
+import { error, info, filePath, lightGray } from '../../theme.js';
 import type { ToolMessageComponentProps } from '../types.js';
 
 export function DefaultToolMessage({
@@ -9,31 +13,28 @@ export function DefaultToolMessage({
   args,
   result,
   isError,
-  width
+  width,
 }: ToolMessageComponentProps) {
   const formattedArgs = formatToolArgs(args);
   const toolDisplayName = displayName || formatToolName(toolName);
-  const titleText = `${toolDisplayName}${formattedArgs ? ` (${formattedArgs})` : ''}`;
+  const titleText = `${toolDisplayName}${formattedArgs ? fg(filePath)(`(${formattedArgs})`) : ''}`;
 
   // Extract the actual result string from { result: string } structure
-  const resultText = result
-    ? (typeof result === 'object' && result !== null && 'result' in result
-        ? (result as { result: string }).result
-        : String(result))
+  const resultText =
+    result ?
+      typeof result === 'object' && result !== null && 'result' in result ?
+        (result as { result: string }).result
+      : String(result)
     : '';
 
   return (
     <box flexDirection="column" width={width - 4}>
-      <text>
-        {bold(titleText)}
-      </text>
-      {resultText ? (
+      <text>{bold(fg(lightGray)(titleText))}</text>
+      {resultText ?
         <text paddingLeft={2}>
-          {fg(isError ? error : info)(
-            `└ ${truncateValue(resultText)}`
-          )}
+          {fg(isError ? error : info)(`└ ${truncateValue(resultText)}`)}
         </text>
-      ) : null}
+      : null}
     </box>
   );
 }

@@ -1,4 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+
+// Mock TUI modules at the top level to avoid React import issues
+vi.mock('../../tui/index.js', () => ({
+  launchTUI: vi.fn(),
+}));
+
 import { main } from './index.js';
 import { parseArguments } from './config/argumentParser.js';
 import { readStdin } from './io/inputHandler.js';
@@ -45,14 +51,21 @@ vi.mock('../ui/inkInteractiveMode.js', () => ({
 describe('CLI Tests', () => {
   const originalArgv = process.argv;
   const originalExit = process.exit;
-  const originalConsoleError = console.error;
-  const originalConsoleLog = console.log;
+  // Mock process.stdout.write and process.stderr.write methods
+  const mockStdoutWrite = vi.fn();
+  const mockStderrWrite = vi.fn();
+  Object.defineProperty(process.stdout, 'write', {
+    value: mockStdoutWrite,
+    writable: true,
+  });
+  Object.defineProperty(process.stderr, 'write', {
+    value: mockStderrWrite,
+    writable: true,
+  });
 
   beforeEach(() => {
     vi.clearAllMocks();
-    console.error = vi.fn();
-    console.log = vi.fn();
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     process.exit = vi.fn() as any;
 
     // Set up the mock wrapper reference for tests using centralized constructor
@@ -112,8 +125,6 @@ describe('CLI Tests', () => {
   afterEach(() => {
     process.argv = originalArgv;
     process.exit = originalExit;
-    console.error = originalConsoleError;
-    console.log = originalConsoleLog;
   });
 
   describe('parseArguments', () => {
@@ -348,7 +359,7 @@ describe('CLI Tests', () => {
 
       await main();
 
-      expect(console.error).toHaveBeenCalledWith('Message cannot be empty');
+      expect(mockStderrWrite).toHaveBeenCalledWith('Message cannot be empty\n');
       expect(process.exit).toHaveBeenCalledWith(1);
     });
 
@@ -371,7 +382,7 @@ describe('CLI Tests', () => {
 
       await main();
 
-      expect(console.error).toHaveBeenCalledWith('Message cannot be empty');
+      expect(mockStderrWrite).toHaveBeenCalledWith('Message cannot be empty\n');
       expect(process.exit).toHaveBeenCalledWith(1);
     });
 
@@ -440,7 +451,7 @@ describe('CLI Tests', () => {
 
       await main();
 
-      expect(console.error).toHaveBeenCalledWith('Execution Summary');
+      expect(mockStderrWrite).toHaveBeenCalledWith('Execution Summary\n');
     });
 
     it('should not print summary in json mode', async () => {
@@ -463,7 +474,7 @@ describe('CLI Tests', () => {
 
       await main();
 
-      expect(console.error).not.toHaveBeenCalledWith(
+      expect(mockStderrWrite).not.toHaveBeenCalledWith(
         expect.stringContaining('Summary')
       );
     });
@@ -477,7 +488,7 @@ describe('CLI Tests', () => {
 
       await main();
 
-      expect(console.error).toHaveBeenCalledWith('Fatal error: Fatal error');
+      expect(mockStderrWrite).toHaveBeenCalledWith('Fatal error: Fatal error\n');
       expect(process.exit).toHaveBeenCalledWith(1);
     });
 
@@ -488,8 +499,8 @@ describe('CLI Tests', () => {
 
       await main();
 
-      expect(console.error).toHaveBeenCalledWith(
-        'Fatal error: Unknown error occurred'
+      expect(mockStderrWrite).toHaveBeenCalledWith(
+        'Fatal error: Unknown error occurred\n'
       );
       expect(process.exit).toHaveBeenCalledWith(1);
     });
@@ -541,44 +552,32 @@ describe('CLI Tests', () => {
       const originalExit = process.exit;
       process.exit = mockExit;
 
-      const originalConsoleError = console.error;
-      console.error = vi.fn();
-
+      
       // Simulate uncaught exception
       const error = new Error('Test uncaught exception');
       process.emit('uncaughtException', error);
 
-      expect(console.error).toHaveBeenCalledWith(
-        'Uncaught exception:',
-        'Test uncaught exception'
-      );
+      expect(mockStderrWrite).toHaveBeenCalledWith('Uncaught exception: Test uncaught exception\n');
       expect(mockExit).toHaveBeenCalledWith(1);
 
       process.exit = originalExit;
-      console.error = originalConsoleError;
-    });
+          });
 
     it('should handle unhandled rejections', () => {
       const mockExit = vi.fn() as never;
       const originalExit = process.exit;
       process.exit = mockExit;
 
-      const originalConsoleError = console.error;
-      console.error = vi.fn();
-
+      
       // Simulate unhandled rejection
       const reason = 'Test unhandled rejection';
       process.emit('unhandledRejection', reason, Promise.resolve());
 
-      expect(console.error).toHaveBeenCalledWith(
-        'Unhandled rejection:',
-        reason
-      );
+      expect(mockStderrWrite).toHaveBeenCalledWith('Unhandled rejection: Test unhandled rejection\n');
       expect(mockExit).toHaveBeenCalledWith(1);
 
       process.exit = originalExit;
-      console.error = originalConsoleError;
-    });
+          });
   });
 
   describe('MCP Prompts and Resources CLI', () => {
@@ -676,30 +675,30 @@ describe('CLI Tests', () => {
         await main();
 
         // Verify correct prompt listing output format
-        expect(console.log).toHaveBeenCalledWith('\nAvailable Prompts (2):\n');
+        expect(mockStdoutWrite).toHaveBeenCalledWith('\nAvailable Prompts (2):\n\n');
 
         // Verify first prompt details
-        expect(console.log).toHaveBeenCalledWith('test-server:test-prompt');
-        expect(console.log).toHaveBeenCalledWith(
-          '  Description: A test prompt for demonstration'
+        expect(mockStdoutWrite).toHaveBeenCalledWith('test-server:test-prompt\n');
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          '  Description: A test prompt for demonstration\n'
         );
-        expect(console.log).toHaveBeenCalledWith('  Arguments:');
-        expect(console.log).toHaveBeenCalledWith(
-          '    - arg1 (required): Test argument'
+        expect(mockStdoutWrite).toHaveBeenCalledWith('  Arguments:\n');
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          '    - arg1 (required): Test argument\n'
         );
-        expect(console.log).toHaveBeenCalledWith(
-          '    - arg2: Optional argument'
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          '    - arg2: Optional argument\n'
         );
 
         // Verify second prompt details
-        expect(console.log).toHaveBeenCalledWith('test-server:another-prompt');
-        expect(console.log).toHaveBeenCalledWith(
-          '  Description: Another example prompt'
+        expect(mockStdoutWrite).toHaveBeenCalledWith('test-server:another-prompt\n');
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          '  Description: Another example prompt\n'
         );
 
         // Verify no argument section for prompt without arguments
-        const consoleCalls = vi.mocked(console.log).mock.calls.flat();
-        const argumentSectionCount = consoleCalls.filter((call) =>
+        const stdoutCalls = mockStdoutWrite.mock.calls.flat();
+        const argumentSectionCount = stdoutCalls.filter((call) =>
           call.includes('Arguments:')
         ).length;
         expect(argumentSectionCount).toBe(1); // Only first prompt should have arguments section
@@ -723,7 +722,7 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(console.log).toHaveBeenCalledWith(
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
           JSON.stringify(
             [
               {
@@ -735,7 +734,7 @@ describe('CLI Tests', () => {
             ],
             null,
             2
-          )
+          ) + '\n'
         );
         expect(process.exit).toHaveBeenCalledWith(0);
       });
@@ -747,8 +746,8 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(console.log).toHaveBeenCalledWith(
-          'No prompts available from any MCP server.'
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          'No prompts available from any MCP server.\n'
         );
         expect(process.exit).toHaveBeenCalledWith(0);
       });
@@ -776,10 +775,10 @@ describe('CLI Tests', () => {
         );
 
         await main();
-        expect(console.log).toHaveBeenCalledWith(
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
           expect.stringContaining('Available Resources')
         );
-        expect(console.log).toHaveBeenCalledWith(
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
           expect.stringContaining('test-server: file:///test.md')
         );
         expect(process.exit).toHaveBeenCalledWith(0);
@@ -807,7 +806,7 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(console.log).toHaveBeenCalledWith(
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
           JSON.stringify(
             [
               {
@@ -820,7 +819,7 @@ describe('CLI Tests', () => {
             ],
             null,
             2
-          )
+          ) + '\n'
         );
         expect(process.exit).toHaveBeenCalledWith(0);
       });
@@ -853,19 +852,19 @@ describe('CLI Tests', () => {
         await main();
 
         // Verify correct output format for prompt execution
-        expect(console.log).toHaveBeenCalledWith(
-          '\nPrompt: test-server:test-prompt'
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          '\nPrompt: test-server:test-prompt\n'
         );
-        expect(console.log).toHaveBeenCalledWith(
-          'Description: This is the result of executing the test prompt\n'
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          'Description: This is the result of executing the test prompt\n\n'
         );
 
         // Verify all messages are properly formatted and displayed
-        expect(console.log).toHaveBeenCalledWith(
-          '[user] Hello from the prompt'
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          '[user] Hello from the prompt\n'
         );
-        expect(console.log).toHaveBeenCalledWith(
-          '[assistant] Response from the agent'
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          '[assistant] Response from the agent\n'
         );
 
         expect(process.exit).toHaveBeenCalledWith(0);
@@ -910,7 +909,7 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(console.error).toHaveBeenCalledWith(
+        expect(mockStderrWrite).toHaveBeenCalledWith(
           expect.stringContaining('Invalid JSON in --prompt-args')
         );
         expect(process.exit).toHaveBeenCalledWith(1);
@@ -923,8 +922,8 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(console.error).toHaveBeenCalledWith(
-          "Prompt 'nonexistent-prompt' not found in any MCP server"
+        expect(mockStderrWrite).toHaveBeenCalledWith(
+          "Prompt 'nonexistent-prompt' not found in any MCP server\n"
         );
         expect(process.exit).toHaveBeenCalledWith(1);
       });
@@ -942,7 +941,7 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(console.log).toHaveBeenCalledWith(
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
           JSON.stringify(
             {
               server: 'test-server',
@@ -951,7 +950,7 @@ describe('CLI Tests', () => {
             },
             null,
             2
-          )
+          ) + '\n'
         );
         expect(process.exit).toHaveBeenCalledWith(0);
       });
@@ -965,8 +964,8 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(console.log).toHaveBeenCalledWith(
-          'No prompts available from any MCP server.'
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          'No prompts available from any MCP server.\n'
         );
         expect(process.exit).toHaveBeenCalledWith(1);
       });
@@ -978,12 +977,12 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(console.log).toHaveBeenCalledWith(
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
           JSON.stringify(
             { error: 'No prompts available from any MCP server.' },
             null,
             2
-          )
+          ) + '\n'
         );
         expect(process.exit).toHaveBeenCalledWith(1);
       });
@@ -1010,7 +1009,7 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(console.log).toHaveBeenCalledWith(
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
           JSON.stringify(
             {
               message:
@@ -1032,7 +1031,7 @@ describe('CLI Tests', () => {
             },
             null,
             2
-          )
+          ) + '\n'
         );
         expect(process.exit).toHaveBeenCalledWith(0);
       });
@@ -1091,13 +1090,13 @@ describe('CLI Tests', () => {
           'simple-prompt',
           {}
         );
-        expect(console.log).toHaveBeenCalledWith(
-          'Prompt: test-server:simple-prompt'
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          'Prompt: test-server:simple-prompt\n'
         );
-        expect(console.log).toHaveBeenCalledWith(
-          'Description: Generated prompt result\n'
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          'Description: Generated prompt result\n\n'
         );
-        expect(console.log).toHaveBeenCalledWith('[user] Execute this task');
+        expect(mockStdoutWrite).toHaveBeenCalledWith('[user] Execute this task\n');
         expect(process.exit).toHaveBeenCalledWith(0);
       });
 
@@ -1299,8 +1298,8 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(console.error).toHaveBeenCalledWith(
-          "Failed to execute prompt 'test-server:failing-prompt': Prompt execution failed"
+        expect(mockStderrWrite).toHaveBeenCalledWith(
+          "Failed to execute prompt 'test-server:failing-prompt': Prompt execution failed\n"
         );
         expect(process.exit).toHaveBeenCalledWith(1);
       });
@@ -1327,8 +1326,8 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(console.log).toHaveBeenCalledWith(
-          'Interactive mode requires a TTY terminal. Use --list-prompts to see available prompts, then use --prompt <name> to execute one.'
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          'Interactive mode requires a TTY terminal. Use --list-prompts to see available prompts, then use --prompt <name> to execute one.\n'
         );
         expect(process.exit).toHaveBeenCalledWith(0);
       });
@@ -1418,7 +1417,7 @@ describe('CLI Tests', () => {
           'prompt2',
           {}
         );
-        expect(console.log).toHaveBeenCalledWith('[user] Result from server 2');
+        expect(mockStdoutWrite).toHaveBeenCalledWith('[user] Result from server 2\n');
         expect(process.exit).toHaveBeenCalledWith(0);
       });
 
@@ -1448,8 +1447,8 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(console.error).toHaveBeenCalledWith(
-          'Error: Server nonexistent-server not found'
+        expect(mockStderrWrite).toHaveBeenCalledWith(
+          'Error: Server nonexistent-server not found\n'
         );
         expect(process.exit).toHaveBeenCalledWith(1);
       });
@@ -1514,13 +1513,13 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(console.error).toHaveBeenCalledWith(
+        expect(mockStderrWrite).toHaveBeenCalledWith(
           expect.stringContaining(
             "Warning: Could not connect to MCP server 'test-server'"
           )
         );
-        expect(console.error).toHaveBeenCalledWith(
-          'No MCP servers available for prompts and resources operations'
+        expect(mockStderrWrite).toHaveBeenCalledWith(
+          'No MCP servers available for prompts and resources operations\n'
         );
         expect(process.exit).toHaveBeenCalledWith(1);
       });
@@ -1536,7 +1535,7 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(console.error).toHaveBeenCalledWith(
+        expect(mockStderrWrite).toHaveBeenCalledWith(
           expect.stringContaining("Failed to execute prompt 'test-prompt'")
         );
         expect(process.exit).toHaveBeenCalledWith(1);
@@ -1857,7 +1856,7 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(console.error).toHaveBeenCalledWith('Message cannot be empty');
+        expect(mockStderrWrite).toHaveBeenCalledWith('Message cannot be empty\n');
         expect(process.exit).toHaveBeenCalledWith(1);
       });
 
@@ -2159,7 +2158,7 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(console.error).toHaveBeenCalledWith('Message cannot be empty');
+        expect(mockStderrWrite).toHaveBeenCalledWith('Message cannot be empty\n');
         expect(process.exit).toHaveBeenCalledWith(1);
       });
 
@@ -2264,7 +2263,7 @@ describe('CLI Tests', () => {
         await main();
 
         // Should not exit with error about empty message
-        expect(console.error).not.toHaveBeenCalledWith(
+        expect(mockStderrWrite).not.toHaveBeenCalledWith(
           'Message cannot be empty'
         );
         expect(process.exit).toHaveBeenCalledWith(0);

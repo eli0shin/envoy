@@ -1,5 +1,5 @@
 import { fg, bold } from '@opentui/core';
-import { error, info, filePath as filePathColor } from '../../theme.js';
+import { error, info, filePath as filePathColor, lightGray } from '../../theme.js';
 import type { ToolMessageComponentProps } from '../types.js';
 
 export function ReadToolMessage({
@@ -20,7 +20,7 @@ export function ReadToolMessage({
   return (
     <box flexDirection="column">
       <text>
-        {bold('Read File')}
+        {bold(fg(lightGray)('Read File'))}
         {fg(filePathColor)(`(${filePath})`)}
       </text>
       {!isError && result ?
@@ -34,4 +34,3 @@ export function ReadToolMessage({
     </box>
   );
 }
-

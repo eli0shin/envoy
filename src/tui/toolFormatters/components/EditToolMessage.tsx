@@ -6,6 +6,7 @@ import {
   diffAddition,
   diffDeletion,
   backgrounds,
+  lightGray,
 } from '../../theme.js';
 import type { ToolMessageComponentProps } from '../types.js';
 import type { FilesystemEditFileArgs } from '../../toolTypes.js';
@@ -77,17 +78,19 @@ export function EditToolMessage({
   const filePath = typedArgs?.path || 'unknown';
 
   // Check if result content indicates an error (starts with "Error:")
-  const resultText = result
-    ? (typeof result === 'object' && result !== null && 'result' in result
-        ? (result as { result: string }).result
-        : String(result))
+  const resultText =
+    result ?
+      typeof result === 'object' && result !== null && 'result' in result ?
+        (result as { result: string }).result
+      : String(result)
     : '';
 
   const hasErrorContent = resultText.startsWith('Error:');
   const actualError = isError || hasErrorContent;
 
   // Clean error message by removing "Error:" prefix if present
-  const cleanErrorMessage = hasErrorContent ? resultText.substring(6).trim() : resultText;
+  const cleanErrorMessage =
+    hasErrorContent ? resultText.substring(6).trim() : resultText;
 
   // Parse the diff result if present
   const renderDiff = () => {
@@ -153,62 +156,73 @@ export function EditToolMessage({
 
     return (
       <box flexDirection="column">
-        {displayPath && (additions > 0 || deletions > 0) ? (
+        {displayPath && (additions > 0 || deletions > 0) ?
           <text paddingLeft={2}>
-            {fg(info)(`└ Updated ${displayPath} with ${additions} additions and ${deletions} deletions`)}
+            {fg(info)(
+              `└ Updated ${displayPath} with ${additions} additions and ${deletions} deletions`
+            )}
           </text>
-        ) : null}
-        <box flexDirection="column" backgroundColor={backgrounds.diffArea} padding={1}>
+        : null}
+        <box
+          flexDirection="column"
+          backgroundColor={backgrounds.diffArea}
+          padding={1}
+        >
           {lines.map((line, i) => {
-          // Skip empty lines at the end
-          if (i === lines.length - 1 && !line) return null;
+            // Skip empty lines at the end
+            if (i === lines.length - 1 && !line) return null;
 
-          // Skip preamble lines and hunk headers
-          if (
-            line.startsWith('Index:') ||
-            line.startsWith('===') ||
-            line.startsWith('---') ||
-            line.startsWith('+++') ||
-            line.startsWith('@@')
-          ) {
-            return null;
-          }
+            // Skip preamble lines and hunk headers
+            if (
+              line.startsWith('Index:') ||
+              line.startsWith('===') ||
+              line.startsWith('---') ||
+              line.startsWith('+++') ||
+              line.startsWith('@@')
+            ) {
+              return null;
+            }
 
-          // Create unique key using line content and position
-          const lineKey = `diff-line-${i}`;
+            // Create unique key using line content and position
+            const lineKey = `diff-line-${i}`;
 
-          // Determine line styling based on prefix
-          if (line.startsWith('+')) {
-            // Addition - green background, strip the + prefix
-            const lineContent = line.substring(1);
-            const segments = wrapLine(lineContent, maxLineWidth);
+            // Determine line styling based on prefix
+            if (line.startsWith('+')) {
+              // Addition - green background, strip the + prefix
+              const lineContent = line.substring(1);
+              const segments = wrapLine(lineContent, maxLineWidth);
 
-            return segments.map((segment, segmentIdx) => {
-              // Use segment content hash for uniqueness
-              const segmentKey = `${lineKey}-add-${segment.substring(0, 10)}-${segmentIdx}`;
-              return <text key={segmentKey}>{bg(diffAddition)(segment)}</text>;
-            });
-          } else if (line.startsWith('-')) {
-            // Deletion - red background, strip the - prefix
-            const lineContent = line.substring(1);
-            const segments = wrapLine(lineContent, maxLineWidth);
+              return segments.map((segment, segmentIdx) => {
+                // Use segment content hash for uniqueness
+                const segmentKey = `${lineKey}-add-${segment.substring(0, 10)}-${segmentIdx}`;
+                return (
+                  <text key={segmentKey}>{bg(diffAddition)(segment)}</text>
+                );
+              });
+            } else if (line.startsWith('-')) {
+              // Deletion - red background, strip the - prefix
+              const lineContent = line.substring(1);
+              const segments = wrapLine(lineContent, maxLineWidth);
 
-            return segments.map((segment, segmentIdx) => {
-              // Use segment content hash for uniqueness
-              const segmentKey = `${lineKey}-del-${segment.substring(0, 10)}-${segmentIdx}`;
-              return <text key={segmentKey}>{bg(diffDeletion)(segment)}</text>;
-            });
-          } else {
-            // Context line or other
-            const lineContent = line.startsWith(' ') ? line.substring(1) : line;
-            const segments = wrapLine(lineContent, maxLineWidth);
+              return segments.map((segment, segmentIdx) => {
+                // Use segment content hash for uniqueness
+                const segmentKey = `${lineKey}-del-${segment.substring(0, 10)}-${segmentIdx}`;
+                return (
+                  <text key={segmentKey}>{bg(diffDeletion)(segment)}</text>
+                );
+              });
+            } else {
+              // Context line or other
+              const lineContent =
+                line.startsWith(' ') ? line.substring(1) : line;
+              const segments = wrapLine(lineContent, maxLineWidth);
 
-            return segments.map((segment, segmentIdx) => {
-              // Use segment content hash for uniqueness
-              const segmentKey = `${lineKey}-ctx-${segment.substring(0, 10)}-${segmentIdx}`;
-              return <text key={segmentKey}>{segment}</text>;
-            });
-          }
+              return segments.map((segment, segmentIdx) => {
+                // Use segment content hash for uniqueness
+                const segmentKey = `${lineKey}-ctx-${segment.substring(0, 10)}-${segmentIdx}`;
+                return <text key={segmentKey}>{segment}</text>;
+              });
+            }
           })}
         </box>
       </box>
@@ -218,13 +232,13 @@ export function EditToolMessage({
   return (
     <box flexDirection="column">
       <text>
-        {bold(displayName || 'Edit File')}
+        {bold(fg(lightGray)(displayName || 'Edit File'))}
         {fg(filePathColor)(`(${filePath})`)}
       </text>
       {!actualError ? renderDiff() : null}
-      {actualError ? (
+      {actualError ?
         <text paddingLeft={2}>{fg(error)(`└ ${cleanErrorMessage}`)}</text>
-      ) : null}
+      : null}
     </box>
   );
 }

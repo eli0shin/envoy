@@ -35,6 +35,12 @@ import {
   handleResourceInclusion,
   handleAutoResourceDiscovery,
 } from '../handlers/mcpCommands.js';
+
+// Mock TUI modules to avoid React import issues
+vi.mock('../../tui/index.js', () => ({
+  launchTUI: vi.fn(),
+}));
+
 import {
   handleSessionListing,
   handlePromptResourceCommands,
@@ -76,6 +82,14 @@ vi.mock('../../config/index.js', () => ({
   getMCPServersFromConfig: vi.fn().mockReturnValue([]),
 }));
 
+// Mock @opentui/react to avoid import issues
+vi.mock('@opentui/react', () => ({
+  useKeyboard: vi.fn(),
+  render: vi.fn(),
+  Text: vi.fn(() => null),
+  Box: vi.fn(() => null),
+}));
+
 vi.mock('../../agent/index.js', () => ({
   runAgent: vi.fn(),
   formatExecutionSummary: vi.fn().mockReturnValue('Mock execution summary'),
@@ -112,14 +126,15 @@ vi.mock('../handlers/mcpCommands.js', () => ({
   handleAutoResourceDiscovery: vi.fn(),
 }));
 
-// Mock console methods
-const mockConsole = {
-  log: vi.fn(),
-  error: vi.fn(),
-};
-
-Object.defineProperty(global, 'console', {
-  value: mockConsole,
+// Mock process.stdout.write and process.stderr.write methods
+const mockStdoutWrite = vi.fn();
+const mockStderrWrite = vi.fn();
+Object.defineProperty(process.stdout, 'write', {
+  value: mockStdoutWrite,
+  writable: true,
+});
+Object.defineProperty(process.stderr, 'write', {
+  value: mockStderrWrite,
   writable: true,
 });
 
@@ -133,8 +148,8 @@ Object.defineProperty(process, 'exit', {
 describe('executionFlow', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockConsole.log.mockClear();
-    mockConsole.error.mockClear();
+    mockStdoutWrite.mockClear();
+    mockStderrWrite.mockClear();
     mockExit.mockClear();
   });
 
@@ -184,7 +199,7 @@ describe('executionFlow', () => {
       const result = await handleSessionListing(options);
 
       expect(result).toEqual({ handled: true, success: true });
-      expect(mockConsole.log).toHaveBeenCalledWith(
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
         expect.stringContaining('Conversation Sessions')
       );
     });
@@ -206,8 +221,8 @@ describe('executionFlow', () => {
       const result = await handleSessionListing(options);
 
       expect(result).toEqual({ handled: true, success: true });
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        'No conversation sessions found for this project.'
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        'No conversation sessions found for this project.\n'
       );
     });
 
@@ -229,8 +244,8 @@ describe('executionFlow', () => {
       const result = await handleSessionListing(options);
 
       expect(result).toEqual({ handled: true, success: true });
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        'No conversation sessions found for this project.'
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        'No conversation sessions found for this project.\n'
       );
     });
 
@@ -252,7 +267,7 @@ describe('executionFlow', () => {
       const result = await handleSessionListing(options);
 
       expect(result).toEqual({ handled: true, success: false });
-      expect(mockConsole.error).toHaveBeenCalledWith(
+      expect(mockStderrWrite).toHaveBeenCalledWith(
         expect.stringContaining('Error listing sessions')
       );
     });
@@ -415,7 +430,7 @@ describe('executionFlow', () => {
       const result = await handlePromptResourceCommands(options, mockConfig);
 
       expect(result).toEqual({ handled: true, success: false });
-      expect(mockConsole.error).toHaveBeenCalledWith(
+      expect(mockStderrWrite).toHaveBeenCalledWith(
         expect.stringContaining('No MCP servers available')
       );
     });
@@ -695,7 +710,7 @@ describe('executionFlow', () => {
 
       await main();
 
-      expect(mockConsole.error).toHaveBeenCalledWith(
+      expect(mockStderrWrite).toHaveBeenCalledWith(
         expect.stringContaining('Fatal error')
       );
       expect(mockExit).toHaveBeenCalledWith(1);

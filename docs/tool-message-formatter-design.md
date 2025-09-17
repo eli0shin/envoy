@@ -7,6 +7,7 @@ This document outlines the design for a flexible, component-based tool message f
 ## Problem Statement
 
 The current tool message rendering system uses a one-size-fits-all approach that:
+
 - Shows all tool arguments regardless of relevance
 - Displays results uniformly across all tool types
 - Cannot customize layout or styling per tool type
@@ -53,12 +54,12 @@ src/tui/
 // toolFormatters/types.ts
 
 export type ToolMessageComponentProps = {
-  toolName: string;           // Original tool identifier
-  displayName?: string;       // User-friendly display name
-  args: unknown;             // Tool arguments
-  result?: unknown;          // Tool execution result
-  isError?: boolean;         // Whether the result is an error
-  width: number;             // Available width for rendering
+  toolName: string; // Original tool identifier
+  displayName?: string; // User-friendly display name
+  args: unknown; // Tool arguments
+  result?: unknown; // Tool execution result
+  isError?: boolean; // Whether the result is an error
+  width: number; // Available width for rendering
 };
 
 export type ToolConfig = {
@@ -89,73 +90,75 @@ import type { ToolRegistry, ToolConfig } from './types';
 
 export const toolRegistry: ToolRegistry = {
   // File operations
-  'edit': {
+  edit: {
     displayName: 'Edit File',
-    component: EditToolMessage
+    component: EditToolMessage,
   },
-  'multi_edit': {
+  multi_edit: {
     displayName: 'Multi-Edit File',
-    component: EditToolMessage  // Can reuse same component
+    component: EditToolMessage, // Can reuse same component
   },
-  'read': {
+  read: {
     displayName: 'Read File',
-    component: ReadToolMessage
+    component: ReadToolMessage,
   },
-  'write': {
+  write: {
     displayName: 'Write File',
-    component: EditToolMessage  // Shows diff for new files
+    component: EditToolMessage, // Shows diff for new files
   },
 
   // Command execution
-  'bash': {
+  bash: {
     displayName: 'Run Command',
-    component: BashToolMessage
+    component: BashToolMessage,
   },
-  'bash_output': {
+  bash_output: {
     displayName: 'Check Output',
-    component: BashToolMessage
+    component: BashToolMessage,
   },
 
   // Search operations
-  'grep': {
+  grep: {
     displayName: 'Search Files',
-    component: GrepToolMessage
+    component: GrepToolMessage,
   },
-  'glob': {
+  glob: {
     displayName: 'Find Files',
-    component: GrepToolMessage
+    component: GrepToolMessage,
   },
 
   // Task management
-  'todo_write': {
+  todo_write: {
     displayName: 'Update Todos',
-    component: TodoToolMessage
+    component: TodoToolMessage,
   },
 
   // Web operations
-  'web_fetch': {
+  web_fetch: {
     displayName: 'Fetch URL',
-    component: WebFetchToolMessage
+    component: WebFetchToolMessage,
   },
-  'web_search': {
+  web_search: {
     displayName: 'Web Search',
-    component: WebFetchToolMessage
-  }
+    component: WebFetchToolMessage,
+  },
 };
 
 // Get tool configuration with fallback to default
 export function getToolConfig(toolName: string): ToolConfig {
-  return toolRegistry[toolName] || {
-    component: DefaultToolMessage,
-    displayName: formatToolName(toolName) // Convert snake_case to Title Case
-  };
+  return (
+    toolRegistry[toolName] || {
+      component: DefaultToolMessage,
+      displayName: formatToolName(toolName), // Convert snake_case to Title Case
+    }
+  );
 }
 
 // Helper to convert snake_case to Title Case
 function formatToolName(toolName: string): string {
   return toolName
     .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
 ```
@@ -552,17 +555,20 @@ export function TodoToolMessage({
 ## Implementation Plan
 
 ### Phase 1: Core Infrastructure
+
 1. Create toolFormatters directory structure
 2. Define types in types.ts
 3. Implement registry system
 4. Create DefaultToolMessage component
 
 ### Phase 2: Integration
+
 1. Modify Message.tsx to support tool components
 2. Update MessageList.tsx to pass tool data
 3. Test with DefaultToolMessage
 
 ### Phase 3: Tool-Specific Components
+
 1. Implement EditToolMessage with diff view
 2. Implement ReadToolMessage with success confirmation
 3. Implement BashToolMessage with output truncation
@@ -570,6 +576,7 @@ export function TodoToolMessage({
 5. Add more tool components as needed
 
 ### Phase 4: Enhancements
+
 1. Add configuration options (icons, colors, etc.)
 2. Implement collapsible sections for long output
 3. Add timestamp display options

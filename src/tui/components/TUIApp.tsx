@@ -41,7 +41,9 @@ export function TUIApp({ config, session }: TUIAppProps) {
   const [messages, setMessages] = useState<(CoreMessage & { id: string })[]>(
     []
   );
-  const [queuedMessages, setQueuedMessages] = useState<(CoreMessage & { id: string })[]>([]);
+  const [queuedMessages, setQueuedMessages] = useState<
+    (CoreMessage & { id: string })[]
+  >([]);
   const [status, setStatus] = useState<Status>('READY');
   const [resizeKey, setResizeKey] = useState(0);
   const [modalState, setModalState] = useState<ModalType>(null);
@@ -191,7 +193,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
     if (queuedMessages.length === 0) return null;
 
     const lastQueued = queuedMessages[queuedMessages.length - 1];
-    setQueuedMessages(prev => prev.slice(0, -1));
+    setQueuedMessages((prev) => prev.slice(0, -1));
 
     // Extract string content from message
     if (typeof lastQueued.content === 'string') {
@@ -219,7 +221,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
     const allMessages = [...messages, ...queuedMessages];
 
     // Move all queued messages to main conversation
-    setMessages(prev => [...prev, ...queuedMessages]);
+    setMessages((prev) => [...prev, ...queuedMessages]);
     setQueuedMessages([]);
 
     // Process entire conversation including newly added messages
@@ -274,7 +276,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
 
       if (status === 'PROCESSING') {
         // Agent is busy - add to queue
-        setQueuedMessages(prev => [...prev, userMessage]);
+        setQueuedMessages((prev) => [...prev, userMessage]);
         return;
       }
 

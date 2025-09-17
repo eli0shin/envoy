@@ -1,14 +1,13 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
 import { LanguageModel, CoreMessage } from 'ai';
-import { streamText } from 'ai';
+import { generateText } from 'ai';
 import { RuntimeConfiguration } from '../config/types.js';
 import { createThinkingProviderOptions, runAgent } from './index.js';
-import { createMockAgentSession } from '../test/helpers/createMocks.js';
+import { createMockAgentSession, createMockGenerateTextResult } from '../test/helpers/createMocks.js';
 
 // Mock the AI SDK
 vi.mock('ai', () => ({
   generateText: vi.fn(),
-  streamText: vi.fn(),
   APICallError: { isInstance: vi.fn(() => false) },
   InvalidPromptError: { isInstance: vi.fn(() => false) },
   NoSuchProviderError: { isInstance: vi.fn(() => false) },
@@ -278,26 +277,8 @@ describe('Agent Dynamic Thinking Integration', () => {
 
   describe('runAgent with dynamic thinking', () => {
     beforeEach(() => {
-      // Configure the mocked streamText
-      vi.mocked(streamText).mockReturnValue({
-        fullStream: (async function* () {
-          yield { type: 'text-delta', textDelta: 'Test response' };
-          yield { type: 'step-finish' };
-        })(),
-        response: Promise.resolve({
-          messages: [{ role: 'assistant', content: 'Test response' }],
-          id: 'test-id',
-          timestamp: new Date(),
-          modelId: 'test-model',
-        }),
-        finishReason: Promise.resolve('stop'),
-        usage: Promise.resolve({
-          totalTokens: 100,
-          promptTokens: 50,
-          completionTokens: 50,
-        }),
-        // Add missing properties with unknown types to satisfy TS
-      } as unknown as ReturnType<typeof streamText>);
+      // Configure the mocked generateText
+      vi.mocked(generateText).mockResolvedValue(createMockGenerateTextResult());
     });
 
     it('should not include thinking options for messages without keywords', async () => {
@@ -310,7 +291,7 @@ describe('Agent Dynamic Thinking Integration', () => {
 
       await runAgent('Just a regular message', mockConfig, mockSession);
 
-      expect(vi.mocked(streamText)).toHaveBeenCalledWith(
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
         expect.objectContaining({
           providerOptions: {},
           headers: undefined,
@@ -328,7 +309,7 @@ describe('Agent Dynamic Thinking Integration', () => {
 
       await runAgent('Think about this problem', mockConfig, mockSession);
 
-      expect(vi.mocked(streamText)).toHaveBeenCalledWith(
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
         expect.objectContaining({
           providerOptions: {
             anthropic: {
@@ -353,7 +334,7 @@ describe('Agent Dynamic Thinking Integration', () => {
 
       await runAgent('Solve this step by step', mockConfig, mockSession);
 
-      expect(vi.mocked(streamText)).toHaveBeenCalledWith(
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
         expect.objectContaining({
           providerOptions: {},
           headers: {
@@ -381,7 +362,7 @@ describe('Agent Dynamic Thinking Integration', () => {
       await runAgent(conversationMessages, mockConfig, mockSession);
 
       // Should use the last user message ("Think harder...") for thinking analysis
-      expect(vi.mocked(streamText)).toHaveBeenCalledWith(
+      expect(vi.mocked(generateText)).toHaveBeenCalledWith(
         expect.objectContaining({
           providerOptions: {
             anthropic: {

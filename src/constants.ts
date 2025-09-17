@@ -112,7 +112,7 @@ export const SYSTEM_PROMPT = buildSystemPrompt();
  * full paths using the current shell environment, so you can use them directly
  * without needing to specify absolute paths.
  */
-export const MCP_SERVERS: MCPServerConfig[] = [
+export const MCP_SERVERS: EnhancedMCPServerConfig[] = [
   // Example stdio MCP server (local)
   // {
   //   name: 'echo-server',
@@ -141,12 +141,19 @@ export const MCP_SERVERS: MCPServerConfig[] = [
     type: 'stdio',
     command: 'npx',
     args: ['-y', '@modelcontextprotocol/server-filesystem', process.cwd()],
+    disabledTools: [
+      'read_file',
+      'list_allowed_directories',
+      'get_file_info',
+      'directory_tree',
+    ],
   },
   {
     name: 'shell',
     type: 'stdio',
     command: 'npx',
     args: ['-y', 'mcp-shell'],
+    disabledTools: ['list_resources', 'read_resource'],
   },
   // Example SSE MCP server (remote)
   // {

@@ -41,12 +41,14 @@ export async function browseDirectory(pattern: string): Promise<string[]> {
   const filePrefix = pattern.slice(lastSlash + 1);
 
   try {
-    const entries = await fs.readdir(path.resolve(dir), { withFileTypes: true });
+    const entries = await fs.readdir(path.resolve(dir), {
+      withFileTypes: true,
+    });
 
     return entries
-      .filter(entry => entry.name.startsWith(filePrefix))
+      .filter((entry) => entry.name.startsWith(filePrefix))
       .slice(0, 10)
-      .map(entry => {
+      .map((entry) => {
         const relativePath = path.join(dir, entry.name);
         return entry.isDirectory() ? `${relativePath}/` : relativePath;
       });

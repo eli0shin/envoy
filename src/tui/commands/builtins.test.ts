@@ -1,8 +1,24 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { commandRegistry } from './registry.js';
+import { setCommandCallbacks } from './builtins.js';
 import './builtins.js'; // Import to trigger registration
 
 describe('Built-in Commands Registration', () => {
+  let mockHelpCallback: ReturnType<typeof vi.fn>;
+  let mockClearCallback: ReturnType<typeof vi.fn>;
+  let mockExitCallback: ReturnType<typeof vi.fn>;
+
+  beforeEach(() => {
+    mockHelpCallback = vi.fn();
+    mockClearCallback = vi.fn();
+    mockExitCallback = vi.fn();
+
+    setCommandCallbacks({
+      onHelp: mockHelpCallback,
+      onClear: mockClearCallback,
+      onExit: mockExitCallback,
+    });
+  });
   it('should have commands registered when module loads', () => {
     const all = commandRegistry.getAll();
 
@@ -28,15 +44,12 @@ describe('Built-in Commands Registration', () => {
     expect(suggestions[0].name).toBe('clear');
   });
 
-  it('help command should work and return text', () => {
+  it('help command should call help callback and return undefined', () => {
     const result = commandRegistry.execute('/help');
 
     expect(result.isCommand).toBe(true);
-    expect(result.result).toBeDefined();
-    expect(result.result).toContain('Available commands:');
-    expect(result.result).toContain('/clear');
-    expect(result.result).toContain('/help');
-    expect(result.result).toContain('/exit');
+    expect(result.result).toBeUndefined();
+    expect(mockHelpCallback).toHaveBeenCalledTimes(1);
   });
 
   it('clear command should work but return undefined', () => {

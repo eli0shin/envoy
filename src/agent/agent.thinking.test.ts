@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { streamText } from 'ai';
+import { generateText } from 'ai';
 import { MockLanguageModelV1 } from 'ai/test';
 import { runAgent } from './index.js';
 import type { AgentSession } from '../agentSession.js';
@@ -11,12 +11,12 @@ import type { RuntimeConfiguration } from '../config/types.js';
 import {
   createMockAgentSession,
   createMockRuntimeConfiguration,
+  createMockGenerateTextResult,
 } from '../test/helpers/createMocks.js';
 
 // Mock the AI SDK
 vi.mock('ai', () => ({
   generateText: vi.fn(),
-  streamText: vi.fn(),
   APICallError: { isInstance: vi.fn(() => false) },
   InvalidPromptError: { isInstance: vi.fn(() => false) },
   NoSuchProviderError: { isInstance: vi.fn(() => false) },
@@ -50,7 +50,7 @@ vi.mock('./constants.js', () => ({
 }));
 
 // Import the functions we want to test
-const mockStreamText = streamText as ReturnType<typeof vi.fn>;
+const mockGenerateText = generateText as ReturnType<typeof vi.fn>;
 
 describe('Agent Thinking Integration', () => {
   beforeEach(() => {
@@ -200,14 +200,7 @@ describe('Agent Thinking Integration', () => {
         yield { type: 'step-finish' };
       })();
 
-      mockStreamText.mockReturnValue({
-        fullStream: mockFullStream,
-        response: Promise.resolve({
-          messages: [{ role: 'assistant', content: 'Test response' }],
-        }),
-        finishReason: Promise.resolve('stop'),
-        usage: Promise.resolve({ totalTokens: 100 }),
-      });
+      mockGenerateText.mockResolvedValue(createMockGenerateTextResult());
 
       // Import and call runAgent to trigger streamText
       const mockSession: AgentSession = createMockAgentSession({
@@ -237,7 +230,7 @@ describe('Agent Thinking Integration', () => {
       );
 
       // Verify streamText was called with thinking headers
-      expect(mockStreamText).toHaveBeenCalledWith(
+      expect(mockGenerateText).toHaveBeenCalledWith(
         expect.objectContaining({
           headers: {
             'anthropic-beta': 'interleaved-thinking-2025-05-14',

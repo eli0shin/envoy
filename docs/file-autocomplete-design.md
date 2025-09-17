@@ -19,7 +19,10 @@ This document describes the design for file path autocomplete using the `@` pref
 The system identifies file patterns by finding the last `@` symbol that has proper boundaries:
 
 ```typescript
-function parseFilePattern(input: string, cursorPosition: number): FilePattern | null {
+function parseFilePattern(
+  input: string,
+  cursorPosition: number
+): FilePattern | null {
   // Find all @ symbols preceded by space/newline or at start
   const regex = /(^|[\s\n])@([^\s]*)/g;
   let lastMatch: RegExpExecArray | null = null;
@@ -37,7 +40,7 @@ function parseFilePattern(input: string, cursorPosition: number): FilePattern | 
     fullMatch: lastMatch[0],
     pattern: lastMatch[2], // everything after @ until space
     startIndex: lastMatch.index! + lastMatch[1].length,
-    endIndex: lastMatch.index! + lastMatch[0].length
+    endIndex: lastMatch.index! + lastMatch[0].length,
   };
 }
 ```
@@ -92,12 +95,14 @@ async function browseDirectory(pattern: string): Promise<string[]> {
   const filePrefix = pattern.slice(lastSlash + 1);
 
   try {
-    const entries = await fs.readdir(path.resolve(dir), { withFileTypes: true });
+    const entries = await fs.readdir(path.resolve(dir), {
+      withFileTypes: true,
+    });
 
     return entries
-      .filter(entry => entry.name.startsWith(filePrefix))
+      .filter((entry) => entry.name.startsWith(filePrefix))
       .slice(0, 10)
-      .map(entry => {
+      .map((entry) => {
         const relativePath = path.join(dir, entry.name);
         return entry.isDirectory() ? `${relativePath}/` : relativePath;
       });
@@ -266,21 +271,25 @@ Shows:
 ## Implementation Plan
 
 ### Phase 1: Core Functions
+
 1. Create `fileSearch.ts` with `fuzzyGitSearch` and `browseDirectory`
 2. Create `inputParser.ts` with `parseFilePattern` function
 3. Test with command line scripts before UI integration
 
 ### Phase 2: FileAutocomplete Component
+
 1. Create `FileAutocomplete.tsx` component
 2. Implement keyboard navigation (reuse existing keybinding patterns)
 3. Position autocomplete box relative to cursor position
 
 ### Phase 3: Integration
+
 1. Update `InputArea.tsx` to track cursor position
 2. Add `FileAutocomplete` rendering logic
 3. Handle selection and text replacement
 
 ### Phase 4: Testing
+
 1. Test multiple @ symbols in input
 2. Test fuzzy search with/without fzf
 3. Test directory browsing including `../` and absolute paths
@@ -299,13 +308,13 @@ Shows:
 
 ## Differences from Command Autocomplete
 
-| Feature | Command Autocomplete | File Autocomplete |
-|---------|---------------------|-------------------|
-| Trigger | `/` at start only | `@` anywhere with boundary |
-| Position | Start of input | Anywhere in input |
-| Selection | Replaces entire input | Replaces partial text |
-| Data Source | Registered commands | Git files or filesystem |
-| Caching | Commands are static | No caching, fresh each time |
+| Feature     | Command Autocomplete  | File Autocomplete           |
+| ----------- | --------------------- | --------------------------- |
+| Trigger     | `/` at start only     | `@` anywhere with boundary  |
+| Position    | Start of input        | Anywhere in input           |
+| Selection   | Replaces entire input | Replaces partial text       |
+| Data Source | Registered commands   | Git files or filesystem     |
+| Caching     | Commands are static   | No caching, fresh each time |
 
 ## Performance Considerations
 

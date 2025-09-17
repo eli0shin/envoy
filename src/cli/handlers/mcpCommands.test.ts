@@ -30,14 +30,17 @@ vi.mock('inquirer', () => ({
   },
 }));
 
-// Mock console methods
-const mockConsole = {
-  log: vi.fn(),
-  error: vi.fn(),
-};
+// Mock process.stdout.write and process.stderr.write methods
+const mockStdoutWrite = vi.fn();
+const mockStderrWrite = vi.fn();
 
-Object.defineProperty(global, 'console', {
-  value: mockConsole,
+Object.defineProperty(process.stdout, 'write', {
+  value: mockStdoutWrite,
+  writable: true,
+});
+
+Object.defineProperty(process.stderr, 'write', {
+  value: mockStderrWrite,
   writable: true,
 });
 
@@ -48,8 +51,8 @@ describe('mcpCommands', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockConsole.log.mockClear();
-    mockConsole.error.mockClear();
+    mockStdoutWrite.mockClear();
+    mockStderrWrite.mockClear();
 
     mockPrompts = [
       {
@@ -95,7 +98,7 @@ describe('mcpCommands', () => {
     it('should list prompts in JSON mode', async () => {
       await handleListPrompts([mockClientWrapper], true);
 
-      expect(mockConsole.log).toHaveBeenCalledWith(
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
         JSON.stringify(
           [
             {
@@ -113,27 +116,28 @@ describe('mcpCommands', () => {
           ],
           null,
           2
-        )
+        ) + '\n'
       );
     });
 
     it('should list prompts in regular mode', async () => {
       await handleListPrompts([mockClientWrapper], false);
 
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        '\nAvailable Prompts (2):\n'
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        '\nAvailable Prompts (2):\n\n'
       );
-      expect(mockConsole.log).toHaveBeenCalledWith('test-server:analyze-code');
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        '  Description: Analyze code for issues'
+      expect(mockStdoutWrite).toHaveBeenCalledWith('test-server:analyze-code\n');
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        '  Description: Analyze code for issues\n'
       );
-      expect(mockConsole.log).toHaveBeenCalledWith('  Arguments:');
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        '    - file (required): File to analyze'
+      expect(mockStdoutWrite).toHaveBeenCalledWith('  Arguments:\n');
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        '    - file (required): File to analyze\n'
       );
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        '    - severity: Severity level'
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        '    - severity: Severity level\n'
       );
+      expect(mockStdoutWrite).toHaveBeenCalledWith('\n');
     });
 
     it('should handle empty prompts list', async () => {
@@ -141,8 +145,8 @@ describe('mcpCommands', () => {
 
       await handleListPrompts([mockClientWrapper], false);
 
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        'No prompts available from any MCP server.'
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        'No prompts available from any MCP server.\n'
       );
     });
 
@@ -153,8 +157,8 @@ describe('mcpCommands', () => {
 
       await handleListPrompts([mockClientWrapper], false);
 
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        'No prompts available from any MCP server.'
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        'No prompts available from any MCP server.\n'
       );
     });
 
@@ -170,10 +174,10 @@ describe('mcpCommands', () => {
 
       await handleListPrompts([mockClientWrapper, mockClientWrapper2], false);
 
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        '\nAvailable Prompts (3):\n'
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        '\nAvailable Prompts (3):\n\n'
       );
-      expect(mockConsole.log).toHaveBeenCalledWith('test-server-2:test-prompt');
+      expect(mockStdoutWrite).toHaveBeenCalledWith('test-server-2:test-prompt\n');
     });
   });
 
@@ -181,7 +185,7 @@ describe('mcpCommands', () => {
     it('should list resources in JSON mode', async () => {
       await handleListResources([mockClientWrapper], true);
 
-      expect(mockConsole.log).toHaveBeenCalledWith(
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
         JSON.stringify(
           [
             {
@@ -201,26 +205,27 @@ describe('mcpCommands', () => {
           ],
           null,
           2
-        )
+        ) + '\n'
       );
     });
 
     it('should list resources in regular mode', async () => {
       await handleListResources([mockClientWrapper], false);
 
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        '\nAvailable Resources (2):\n'
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        '\nAvailable Resources (2):\n\n'
       );
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        'test-server: file:///project/config.json'
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        'test-server: file:///project/config.json\n'
       );
-      expect(mockConsole.log).toHaveBeenCalledWith('  Name: config');
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        '  Description: Project configuration'
+      expect(mockStdoutWrite).toHaveBeenCalledWith('  Name: config\n');
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        '  Description: Project configuration\n'
       );
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        '  MIME Type: application/json'
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        '  MIME Type: application/json\n'
       );
+      expect(mockStdoutWrite).toHaveBeenCalledWith('\n');
     });
 
     it('should handle empty resources list', async () => {
@@ -228,8 +233,8 @@ describe('mcpCommands', () => {
 
       await handleListResources([mockClientWrapper], false);
 
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        'No resources available from any MCP server.'
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        'No resources available from any MCP server.\n'
       );
     });
 
@@ -240,8 +245,8 @@ describe('mcpCommands', () => {
 
       await handleListResources([mockClientWrapper], false);
 
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        'No resources available from any MCP server.'
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        'No resources available from any MCP server.\n'
       );
     });
 
@@ -255,9 +260,10 @@ describe('mcpCommands', () => {
 
       await handleListResources([mockClientWrapper], false);
 
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        'test-server: file:///project/minimal.txt'
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        'test-server: file:///project/minimal.txt\n'
       );
+      expect(mockStdoutWrite).toHaveBeenCalledWith('\n');
     });
   });
 
@@ -283,15 +289,15 @@ describe('mcpCommands', () => {
       expect(mockClientWrapper.getPrompt).toHaveBeenCalledWith('analyze-code', {
         file: 'test.js',
       });
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        '\nPrompt: test-server:analyze-code'
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        '\nPrompt: test-server:analyze-code\n'
       );
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        'Description: Analysis complete\n'
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        'Description: Analysis complete\n\n'
       );
-      expect(mockConsole.log).toHaveBeenCalledWith('[user] Analyze this code');
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        '[assistant] Code looks good'
+      expect(mockStdoutWrite).toHaveBeenCalledWith('[user] Analyze this code\n');
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        '[assistant] Code looks good\n'
       );
     });
 
@@ -309,7 +315,7 @@ describe('mcpCommands', () => {
       );
 
       expect(result).toBe(true);
-      expect(mockConsole.log).toHaveBeenCalledWith(
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
         JSON.stringify(
           {
             server: 'test-server',
@@ -318,7 +324,7 @@ describe('mcpCommands', () => {
           },
           null,
           2
-        )
+        ) + '\n'
       );
     });
 
@@ -331,7 +337,7 @@ describe('mcpCommands', () => {
       );
 
       expect(result).toBe(false);
-      expect(mockConsole.error).toHaveBeenCalledWith(
+      expect(mockStderrWrite).toHaveBeenCalledWith(
         expect.stringContaining('Invalid JSON in --prompt-args')
       );
     });
@@ -347,8 +353,8 @@ describe('mcpCommands', () => {
       );
 
       expect(result).toBe(false);
-      expect(mockConsole.error).toHaveBeenCalledWith(
-        "Prompt 'nonexistent-prompt' not found in any MCP server"
+      expect(mockStderrWrite).toHaveBeenCalledWith(
+        "Prompt 'nonexistent-prompt' not found in any MCP server\n"
       );
     });
 
@@ -365,7 +371,7 @@ describe('mcpCommands', () => {
       );
 
       expect(result).toBe(false);
-      expect(mockConsole.error).toHaveBeenCalledWith(
+      expect(mockStderrWrite).toHaveBeenCalledWith(
         expect.stringContaining('Failed to execute prompt')
       );
     });
@@ -408,8 +414,8 @@ describe('mcpCommands', () => {
       const result = await handleInteractivePrompt([mockClientWrapper], false);
 
       expect(result).toBe(false);
-      expect(mockConsole.log).toHaveBeenCalledWith(
-        'No prompts available from any MCP server.'
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        'No prompts available from any MCP server.\n'
       );
     });
 
@@ -417,7 +423,7 @@ describe('mcpCommands', () => {
       const result = await handleInteractivePrompt([mockClientWrapper], true);
 
       expect(result).toBe(true);
-      expect(mockConsole.log).toHaveBeenCalledWith(
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
         expect.stringContaining('Interactive mode not available in JSON output')
       );
     });
@@ -434,7 +440,7 @@ describe('mcpCommands', () => {
       const result = await handleInteractivePrompt([mockClientWrapper], false);
 
       expect(result).toBe(true);
-      expect(mockConsole.log).toHaveBeenCalledWith(
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
         expect.stringContaining('Interactive mode requires a TTY terminal')
       );
     });

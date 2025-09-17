@@ -39,6 +39,7 @@ export function analyzeMessageForThinking(
     /\bthink\s+really\s+hard\b/.test(lowerMessage) ||
     /\bthink\s+super\s+hard\b/.test(lowerMessage) ||
     /\bthink\s+very\s+hard\b/.test(lowerMessage) ||
+    /\bthink\s+about\s+it\b/.test(lowerMessage) ||
     /\bultrathink\b/.test(lowerMessage)
   ) {
     level = 'high';
@@ -46,7 +47,6 @@ export function analyzeMessageForThinking(
   }
   // Medium thinking budget (10,000 tokens)
   else if (
-    /\bthink\s+about\s+it\b/.test(lowerMessage) ||
     /\bthink\s+a\s+lot\b/.test(lowerMessage) ||
     /\bthink\s+deeply\b/.test(lowerMessage) ||
     /\bthink\s+hard\b/.test(lowerMessage) ||

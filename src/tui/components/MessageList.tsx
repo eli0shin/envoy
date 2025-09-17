@@ -11,7 +11,11 @@ type MessageListProps = {
   key: string;
 };
 
-export function MessageList({ messages, queuedMessages, width }: MessageListProps) {
+export function MessageList({
+  messages,
+  queuedMessages,
+  width,
+}: MessageListProps) {
   const scrollBoxRef = useRef<ScrollBoxRenderable>(null);
 
   const scrollToBottom = () => {
@@ -240,19 +244,29 @@ export function MessageList({ messages, queuedMessages, width }: MessageListProp
   const queuedProcessed = queuedMessages.map((message) => ({
     message,
     messageIndex: -1, // Not part of main conversation
-    renderedParts: [<Message message={message} width={width} key={message.id} isQueued={true} />],
+    renderedParts: [
+      <Message
+        message={message}
+        width={width}
+        key={message.id}
+        isQueued={true}
+      />,
+    ],
   }));
 
   return (
     <scrollbox
       ref={scrollBoxRef}
+      verticalScrollbarOptions={{ visible: false }}
+      horizontalScrollbarOptions={{ visible: false }}
       style={{
         rootOptions: {
           flexGrow: 1,
         },
         contentOptions: {
           flexDirection: 'column',
-          padding: 1,
+          paddingLeft: 1,
+          paddingRight: 1,
         },
         scrollbarOptions: {
           showArrows: false,

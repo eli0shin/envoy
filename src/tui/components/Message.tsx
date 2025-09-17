@@ -1,8 +1,6 @@
 import { formatContent, formatBackground } from '../theme.js';
 import { getToolConfig } from '../toolFormatters/index.js';
 import { ErrorBoundary } from './ErrorBoundary.js';
-import { colors } from '../theme.js';
-import { StyledText, fg } from '@opentui/core';
 import type { CoreMessage } from 'ai';
 
 type ToolData = {
@@ -34,7 +32,7 @@ export function Message({
 
     return (
       <box
-        padding={0}
+        paddingBottom={1}
         paddingLeft={1}
         paddingRight={1}
         backgroundColor={formatBackground(message.role)}
@@ -53,6 +51,7 @@ export function Message({
       </box>
     );
   }
+
   const getDisplayContent = (message: CoreMessage): string => {
     let content: string;
 
@@ -68,10 +67,6 @@ export function Message({
           textParts.push(part.text);
         } else if (part?.type === 'redacted-reasoning') {
           textParts.push('[Reasoning redacted]');
-        } else if (part?.type === 'tool-call' && 'toolName' in part) {
-          textParts.push(`🔧 Calling ${part.toolName}`);
-        } else if (part?.type === 'tool-result' && 'toolName' in part) {
-          textParts.push(`✅ ${part.toolName} result`);
         }
       }
       content = textParts.join('\n');
@@ -148,50 +143,35 @@ export function Message({
 
   const wrappedContent = wrapText(displayContent, textWidth);
 
-  // Use custom formatting for queued messages
-  let styledContent: StyledText;
-  if (isQueued && message.role === 'user') {
-    // Custom styling for queued user messages - gray prefix and dimmed text
-    const lines = wrappedContent.split('\n');
-    if (lines.length === 1) {
-      styledContent = new StyledText([
-        fg(colors.muted)(`> `),
-        fg(colors.muted)(wrappedContent),
-      ]);
-    } else {
-      const chunks = [];
-      chunks.push(fg(colors.muted)(`> `));
-      chunks.push(fg(colors.muted)(lines[0]));
-      for (let i = 1; i < lines.length; i++) {
-        chunks.push(fg(colors.muted)(`\n  ${lines[i]}`));
-      }
-      styledContent = new StyledText(chunks);
-    }
-  } else {
-    styledContent = formatContent(message.role, contentType, wrappedContent);
-  }
-
+  // Use theme system for all formatting, including queued messages
+  const styledContent = formatContent(
+    message.role,
+    contentType,
+    wrappedContent,
+    isQueued
+  );
   const backgroundColor = formatBackground(message.role);
 
-  // Use reduced padding for tool messages to avoid extra spacing
-  const boxPadding = contentType === 'tool' ? 0 : 1;
+  const verticalPadding = message.role === 'user' ? 1 : 0;
 
   return (
-    <box
-      padding={boxPadding}
-      paddingLeft={1}
-      paddingRight={1}
-      backgroundColor={backgroundColor}
-      width={width - 4}
-    >
-      <text
-        style={{
-          width: textWidth,
-          flexWrap: 'wrap',
-        }}
+    <box paddingBottom={1} width={width - 4}>
+      <box
+        paddingTop={verticalPadding}
+        paddingBottom={verticalPadding}
+        paddingLeft={1}
+        paddingRight={1}
+        backgroundColor={backgroundColor}
+        width={width - 4}
       >
-        {styledContent}
-      </text>
+        <text
+          style={{
+            width: textWidth,
+          }}
+        >
+          {styledContent}
+        </text>
+      </box>
     </box>
   );
 }

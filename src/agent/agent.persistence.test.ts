@@ -4,17 +4,16 @@
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { runAgent } from './index.js';
-import { streamText } from 'ai';
+import { generateText } from 'ai';
 import type { RuntimeConfiguration } from '../config/types.js';
 import type { AgentSession } from '../agentSession.js';
 import type { CoreMessage } from 'ai';
 import type { ConversationPersistence } from '../persistence/ConversationPersistence.js';
-import { createMockAgentSession } from '../test/helpers/createMocks.js';
+import { createMockAgentSession, createMockGenerateTextResult } from '../test/helpers/createMocks.js';
 
 // Mock the AI SDK
 vi.mock('ai', () => ({
   generateText: vi.fn(),
-  streamText: vi.fn(),
   APICallError: { isInstance: vi.fn(() => false) },
   InvalidPromptError: { isInstance: vi.fn(() => false) },
   NoSuchProviderError: { isInstance: vi.fn(() => false) },
@@ -113,33 +112,16 @@ describe('runAgent conversation persistence integration', () => {
         mockConversationPersistence as unknown as ConversationPersistence,
     });
 
-    const mockStreamText = vi.mocked(streamText);
+    const mockGenerateText = vi.mocked(generateText);
 
-    // Create mock stream result that matches the format expected by runAgent
-    const mockStreamResult = {
-      fullStream: (async function* () {
-        yield { type: 'step-start' };
-        yield { type: 'text-delta', textDelta: 'Test' };
-        yield { type: 'text-delta', textDelta: ' response' };
-        yield { type: 'step-finish' };
-      })(),
-      response: Promise.resolve({
-        messages: [
-          { role: 'user', content: 'Test input' },
-          { role: 'assistant', content: 'Test response' },
-        ],
-      }),
-      finishReason: Promise.resolve('stop'),
-      usage: Promise.resolve({
-        totalTokens: 10,
-        promptTokens: 5,
-        completionTokens: 5,
-      }),
-      text: Promise.resolve('Test response'),
-      toolResults: Promise.resolve([]),
-    };
-
-    mockStreamText.mockReturnValue(mockStreamResult as never);
+    // Setup generateText mock with proper result
+    mockGenerateText.mockResolvedValue(createMockGenerateTextResult({
+      text: 'Test response',
+      messages: [
+        { role: 'user', content: 'Test input', id: 'user-msg' },
+        { role: 'assistant', content: 'Test response', id: 'assistant-msg' },
+      ],
+    }));
   });
 
   afterEach(() => {

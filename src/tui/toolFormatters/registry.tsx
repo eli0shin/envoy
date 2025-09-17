@@ -10,74 +10,76 @@ import type { ToolRegistry, ToolConfig } from './types.js';
 function formatToolName(toolName: string): string {
   return toolName
     .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 }
 
 export const toolRegistry: ToolRegistry = {
   // File operations - MCP tool names
-  'filesystem_edit_file': {
+  filesystem_edit_file: {
     displayName: 'Edit File',
-    component: EditToolMessage
+    component: EditToolMessage,
   },
-  'filesystem_read_text_file': {
+  filesystem_read_text_file: {
     displayName: 'Read File',
-    component: ReadToolMessage
+    component: ReadToolMessage,
   },
-  'filesystem_read_multiple_files': {
+  filesystem_read_multiple_files: {
     displayName: 'Read Files',
-    component: ReadMultipleFilesToolMessage
+    component: ReadMultipleFilesToolMessage,
   },
-  'filesystem_list_directory': {
+  filesystem_list_directory: {
     displayName: 'List Directory',
-    component: ListDirectoryToolMessage
+    component: ListDirectoryToolMessage,
   },
-  'filesystem_write_file': {
+  filesystem_write_file: {
     displayName: 'Write File',
-    component: WriteToolMessage
+    component: WriteToolMessage,
   },
 
   // Command execution
-  'bash': {
+  bash: {
     displayName: 'Run Command',
-    component: DefaultToolMessage  // Will be replaced with BashToolMessage
+    component: DefaultToolMessage, // Will be replaced with BashToolMessage
   },
-  'bash_output': {
+  bash_output: {
     displayName: 'Check Output',
-    component: DefaultToolMessage
+    component: DefaultToolMessage,
   },
 
   // Search operations
-  'grep': {
+  grep: {
     displayName: 'Search Files',
-    component: DefaultToolMessage
+    component: DefaultToolMessage,
   },
-  'glob': {
+  glob: {
     displayName: 'Find Files',
-    component: DefaultToolMessage
+    component: DefaultToolMessage,
   },
 
   // Task management
-  'todo_write': {
+  todo_write: {
     displayName: 'Update Todos',
-    component: DefaultToolMessage  // Will be replaced with TodoToolMessage
+    component: DefaultToolMessage, // Will be replaced with TodoToolMessage
   },
 
   // Web operations
-  'web_fetch': {
+  web_fetch: {
     displayName: 'Fetch URL',
-    component: DefaultToolMessage
+    component: DefaultToolMessage,
   },
-  'web_search': {
+  web_search: {
     displayName: 'Web Search',
-    component: DefaultToolMessage
-  }
+    component: DefaultToolMessage,
+  },
 };
 
 // Get tool configuration with fallback to default
 export function getToolConfig(toolName: string): ToolConfig {
-  return toolRegistry[toolName] || {
-    component: DefaultToolMessage,
-    displayName: formatToolName(toolName)
-  };
+  return (
+    toolRegistry[toolName] || {
+      component: DefaultToolMessage,
+      displayName: formatToolName(toolName),
+    }
+  );
 }

@@ -54,7 +54,10 @@ export function MultiLineInput({
   const availableTextWidth = terminalWidth - 6; // 3 for " > " prompt + 3 for padding/borders
 
   // Helper to calculate absolute cursor position in the full text
-  const getAbsoluteCursorPosition = (lineIndex: number, positionInLine: number): number => {
+  const getAbsoluteCursorPosition = (
+    lineIndex: number,
+    positionInLine: number
+  ): number => {
     let position = 0;
     for (let i = 0; i < lineIndex; i++) {
       position += (lines[i] || '').length + 1; // +1 for newline character
@@ -64,11 +67,17 @@ export function MultiLineInput({
   };
 
   // Helper to update cursor position and notify parent
-  const updateCursorPosition = (newCursorPosition: number, newEditingLine?: number) => {
+  const updateCursorPosition = (
+    newCursorPosition: number,
+    newEditingLine?: number
+  ) => {
     setCursorPosition(newCursorPosition);
     if (onCursorChange) {
       const lineToUse = newEditingLine ?? editingLine;
-      const absolutePosition = getAbsoluteCursorPosition(lineToUse, newCursorPosition);
+      const absolutePosition = getAbsoluteCursorPosition(
+        lineToUse,
+        newCursorPosition
+      );
       onCursorChange(absolutePosition);
     }
   };
@@ -84,7 +93,8 @@ export function MultiLineInput({
 
   // Handle external cursor position changes (e.g., from file autocomplete)
   useEffect(() => {
-    if (externalCursorPosition === undefined || externalCursorPosition < 0) return;
+    if (externalCursorPosition === undefined || externalCursorPosition < 0)
+      return;
 
     // When cursor position is set externally, update our internal tracking
     // Find which line and position the cursor should be at based on the full text position
@@ -93,7 +103,10 @@ export function MultiLineInput({
       const lineLength = (lines[i] || '').length;
       if (position + lineLength >= externalCursorPosition) {
         // Cursor is on this line
-        const posInLine = Math.min(externalCursorPosition - position, lineLength);
+        const posInLine = Math.min(
+          externalCursorPosition - position,
+          lineLength
+        );
         setEditingLine(i);
         setCursorPosition(posInLine);
         break;
@@ -176,7 +189,10 @@ export function MultiLineInput({
               const newEditingLine = editingLine - 1;
               setEditingLine(newEditingLine);
               const targetLine = lines[newEditingLine] || '';
-              updateCursorPosition(Math.min(cursorPosition, targetLine.length), newEditingLine);
+              updateCursorPosition(
+                Math.min(cursorPosition, targetLine.length),
+                newEditingLine
+              );
             }
           },
           'input'
@@ -190,7 +206,10 @@ export function MultiLineInput({
               const newEditingLine = editingLine + 1;
               setEditingLine(newEditingLine);
               const targetLine = lines[newEditingLine] || '';
-              updateCursorPosition(Math.min(cursorPosition, targetLine.length), newEditingLine);
+              updateCursorPosition(
+                Math.min(cursorPosition, targetLine.length),
+                newEditingLine
+              );
             }
           },
           'input'
@@ -361,7 +380,10 @@ export function MultiLineInput({
             pasteFromClipboard().then((clipboardText) => {
               if (clipboardText) {
                 // Calculate absolute position for insertion
-                const absolutePos = getAbsoluteCursorPosition(editingLine, cursorPosition);
+                const absolutePos = getAbsoluteCursorPosition(
+                  editingLine,
+                  cursorPosition
+                );
                 const beforePaste = value.slice(0, absolutePos);
                 const afterPaste = value.slice(absolutePos);
                 const newValue = beforePaste + clipboardText + afterPaste;
@@ -372,12 +394,18 @@ export function MultiLineInput({
                 const pastedLines = clipboardText.split('\n');
                 if (pastedLines.length === 1) {
                   // Single line paste - move cursor to end of pasted text
-                  updateCursorPosition(cursorPosition + clipboardText.length, editingLine);
+                  updateCursorPosition(
+                    cursorPosition + clipboardText.length,
+                    editingLine
+                  );
                 } else {
                   // Multi-line paste - move to end of last pasted line
                   const newEditingLine = editingLine + pastedLines.length - 1;
                   setEditingLine(newEditingLine);
-                  updateCursorPosition(pastedLines[pastedLines.length - 1].length, newEditingLine);
+                  updateCursorPosition(
+                    pastedLines[pastedLines.length - 1].length,
+                    newEditingLine
+                  );
                 }
 
                 onResize?.();

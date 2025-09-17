@@ -25,6 +25,43 @@ globalThis.console = {
   debug: vi.fn(),
 };
 
+// Mock process.stdout.write for JSON output tests
+process.stdout.write = vi.fn().mockImplementation(() => true) as typeof process.stdout.write;
+
+// Mock react-reconciler to avoid bun: protocol issues
+vi.mock('react-reconciler/constants', () => ({
+  __esModule: true,
+  default: {},
+}));
+
+// Mock ink to avoid React dependency issues
+vi.mock('ink', () => ({
+  render: vi.fn(),
+  Box: vi.fn(() => null),
+  Text: vi.fn(() => null),
+  useApp: vi.fn(() => ({ exit: vi.fn() })),
+  useStdin: vi.fn(() => ({ stdin: {}, setRawMode: vi.fn() })),
+}));
+
+// Mock all OpenTUI modules to avoid bun: protocol issues
+vi.mock('@opentui/core', () => ({
+  StyledText: vi.fn(),
+  fg: vi.fn(),
+  bg: vi.fn(),
+  bold: vi.fn(),
+  italic: vi.fn(),
+  useTerminalDimensions: vi.fn(),
+}));
+
+vi.mock('@opentui/react', () => ({
+  useKeyboard: vi.fn(),
+  render: vi.fn(),
+  Text: vi.fn(() => null),
+  Box: vi.fn(() => null),
+  useTerminalDimensions: vi.fn(),
+  useRenderer: vi.fn(),
+}));
+
 // Global logger mock for infrastructure tests
 // Tests that need to assert on logger calls should use manual mocking
 vi.mock('./src/logger.js', () => createMockLogger());
@@ -156,25 +193,10 @@ expect.extend({
   },
 });
 
-// Type definitions for custom matchers
-declare module 'vitest' {
-  type Assertion<T = unknown> = {
-    toContainToolCall(toolName: string): T;
-    toContainAssistantStep(text: string): T;
-    toContainAssistantResponse(text: string): T;
-    toHaveReasonableExecutionTime(maxMs?: number): T;
-  };
-  type AsymmetricMatchersContaining = {
-    toContainToolCall(toolName: string): unknown;
-    toContainAssistantStep(text: string): unknown;
-    toContainAssistantResponse(text: string): unknown;
-    toHaveReasonableExecutionTime(maxMs?: number): unknown;
-  };
-}
 
 // Declare global types for test utilities
 declare global {
-  const testUtils: {
+  var testUtils: {
     delay: (ms: number) => Promise<void>;
     delayedResolve: <T>(value: T, ms?: number) => Promise<T>;
     delayedReject: (error: unknown, ms?: number) => Promise<never>;

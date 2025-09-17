@@ -119,6 +119,7 @@ export type EnhancedMCPServerConfig = (
   | Omit<StdioMCPServerConfig, 'name'>
   | Omit<SSEMCPServerConfig, 'name'>
 ) & {
+  name: string;
   timeout?: number;
   initTimeout?: number;
   disabled?: boolean;

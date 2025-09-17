@@ -75,12 +75,12 @@ describe('analyzeMessageForThinking', () => {
       });
     });
 
-    it('should detect "think about it" for medium level', () => {
+    it('should detect "think about it" for high level', () => {
       expect(
         analyzeMessageForThinking('Please think about it carefully')
       ).toEqual({
-        level: 'medium',
-        budgetTokens: 10000,
+        level: 'high',
+        budgetTokens: 31999,
         enableInterleaved: false,
       });
     });

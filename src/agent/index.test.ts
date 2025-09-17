@@ -24,7 +24,6 @@ import { logger } from '../logger.js';
 
 vi.mock('ai', () => ({
   generateText: vi.fn(),
-  streamText: vi.fn(),
   APICallError: { isInstance: vi.fn(() => false) },
   InvalidPromptError: { isInstance: vi.fn(() => false) },
   NoSuchProviderError: { isInstance: vi.fn(() => false) },
@@ -184,6 +183,7 @@ vi.mock('../agentSession.js', () => ({
 
 // Import mocked modules
 import { generateText } from 'ai';
+import { createMockGenerateTextResult } from '../test/helpers/createMocks.js';
 import { openai } from '@ai-sdk/openai';
 import {
   loadMCPTools,
@@ -422,7 +422,7 @@ describe('agent', () => {
       expect(result.error).toContain('Unsupported provider: unsupported');
     });
 
-    it('should call streamText with correct parameters', async () => {
+    it('should call generateText with correct parameters', async () => {
       const userMessage = 'Test user message';
       const config = createTestConfig();
       config.agent.maxSteps = 5;
@@ -515,7 +515,7 @@ describe('agent', () => {
 
       // Should output JSON (assistant response removed as redundant)
       const jsonOutput = (
-        console.log as ReturnType<typeof vi.fn>
+        process.stdout.write as ReturnType<typeof vi.fn>
       ).mock.calls.find(
         (call: unknown[]) =>
           typeof call[0] === 'string' && call[0].includes('"success": true')
@@ -533,7 +533,7 @@ describe('agent', () => {
       });
     });
 
-    it('should handle streamText errors', async () => {
+    it('should handle generateText errors', async () => {
       mockGenerateText.mockImplementation(() => {
         throw new Error('AI generation failed');
       });
@@ -560,7 +560,7 @@ describe('agent', () => {
       await runAgentWithMockSession('Test message', config, false);
 
       const jsonOutput = (
-        console.log as ReturnType<typeof vi.fn>
+        process.stdout.write as ReturnType<typeof vi.fn>
       ).mock.calls.find(
         (call: unknown[]) =>
           typeof call[0] === 'string' && call[0].includes('"success": false')
@@ -606,7 +606,7 @@ describe('agent', () => {
     });
 
     it('should handle max steps reached without completion', async () => {
-      // In the AI SDK, streamText with maxSteps handles multiple steps within a single call
+      // In the AI SDK, generateText with maxSteps handles multiple steps within a single call
       mockGenerateText.mockResolvedValue({
         text: 'Step 2 thinking...',
         finishReason: 'length', // Changed to 'length' to indicate max steps reached
@@ -654,7 +654,7 @@ describe('agent', () => {
 
       // Should output JSON when max steps reached
       const jsonOutput = (
-        console.log as ReturnType<typeof vi.fn>
+        process.stdout.write as ReturnType<typeof vi.fn>
       ).mock.calls.find(
         (call: unknown[]) =>
           typeof call[0] === 'string' && call[0].includes('"success": true')
@@ -1028,7 +1028,7 @@ describe('agent', () => {
 
   describe('runAgent - max steps and JSON output edge cases', () => {
     it('should output JSON when max steps reached', async () => {
-      const consoleSpy = vi.spyOn(console, 'log');
+      const stdoutSpy = vi.spyOn(process.stdout, 'write');
 
       // Mock to simulate max steps scenario
       mockGenerateText.mockResolvedValue({
@@ -1052,7 +1052,7 @@ describe('agent', () => {
       );
 
       expect(result.success).toBe(true);
-      expect(consoleSpy).toHaveBeenCalledWith(
+      expect(stdoutSpy).toHaveBeenCalledWith(
         expect.stringContaining('"success": true')
       );
     });
