@@ -13,7 +13,7 @@ type MultiLineInputProps = {
   onSubmit: (value: string) => void;
   onResize?: () => void;
   onTabKey?: () => boolean; // Returns true if tab was handled
-  onArrowKey?: (direction: 'up' | 'down', isOnFirstLine: boolean) => boolean; // Returns true if arrow was handled
+  onArrowKey?: (direction: 'up' | 'down', shouldHandleHistory: boolean) => boolean; // Returns true if arrow was handled
   onCursorChange?: (position: number) => void; // Reports cursor position in full text
   externalCursorPosition?: number; // External cursor position to set
   placeholder?: string;
@@ -49,6 +49,10 @@ export function MultiLineInput({
   const shouldDisableTextInput = disabled || !!activePrefix; // Prevent typing during prefix sequences
   const { width: terminalWidth } = useTerminalDimensions();
   const lines = useMemo(() => (value ? value.split('\n') : ['']), [value]);
+
+  // Keep a ref to the current lines to avoid stale closures
+  const linesRef = useRef(lines);
+  linesRef.current = lines;
 
   // Calculate available width for text (terminal width minus prompt area and padding)
   const availableTextWidth = terminalWidth - 6; // 3 for " > " prompt + 3 for padding/borders
@@ -139,7 +143,8 @@ export function MultiLineInput({
 
     // Read the ACTUAL cursor position from the input element
     // This preserves cursor position when typing/deleting in the middle of text
-    const actualCursorPos = inputRef.current?.cursorPosition ?? newLineContent.length;
+    const actualCursorPos =
+      inputRef.current?.cursorPosition ?? newLineContent.length;
     updateCursorPosition(actualCursorPos);
 
     // Check if input exceeds available width
@@ -152,7 +157,8 @@ export function MultiLineInput({
         const remainingPart = newLineContent.slice(splitPoint).trim();
 
         // Insert the completed part at current position and remaining part on next line
-        const newLines = [...lines];
+        // Use linesRef.current to avoid stale closure when value prop changes
+        const newLines = [...linesRef.current];
         newLines[editingLine] = completedPart;
         newLines.splice(editingLine + 1, 0, remainingPart);
 
@@ -167,7 +173,8 @@ export function MultiLineInput({
     }
 
     // Normal input handling - no overflow
-    const newLines = [...lines];
+    // Use linesRef.current to avoid stale closure when value prop changes
+    const newLines = [...linesRef.current];
     newLines[editingLine] = newLineContent;
     onChange(newLines.join('\n'));
   };
@@ -185,7 +192,7 @@ export function MultiLineInput({
           key,
           'input.cursorUp',
           () => {
-            if (onArrowKey && onArrowKey('up', isOnFirstLine)) return; // let parent handle if provided
+            if (onArrowKey && onArrowKey('up', isOnFirstLine)) return; // let parent handle history when on first line
             if (editingLine > 0) {
               const newEditingLine = editingLine - 1;
               setEditingLine(newEditingLine);
@@ -202,7 +209,8 @@ export function MultiLineInput({
           key,
           'input.cursorDown',
           () => {
-            if (onArrowKey && onArrowKey('down', isOnFirstLine)) return; // let parent handle if provided
+            const isOnLastLine = editingLine === lines.length - 1;
+            if (onArrowKey && onArrowKey('down', isOnLastLine)) return; // let parent handle history when on last line
             if (editingLine < lines.length - 1) {
               const newEditingLine = editingLine + 1;
               setEditingLine(newEditingLine);

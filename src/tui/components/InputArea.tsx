@@ -64,10 +64,10 @@ export function InputArea({
   const showFileAutocomplete = filePattern !== null;
 
   const handleInputArrowKey = useCallback(
-    (direction: 'up' | 'down', isOnFirstLine: boolean): boolean => {
-      if (direction === 'up' && (historyIndex === -1 ? isOnFirstLine : true)) {
+    (direction: 'up' | 'down', shouldHandleHistory: boolean): boolean => {
+      if (direction === 'up' && (historyIndex === -1 ? shouldHandleHistory : true)) {
         // Check for queued messages first when on first line
-        if (historyIndex === -1 && isOnFirstLine && queuedMessages.length > 0) {
+        if (historyIndex === -1 && shouldHandleHistory && queuedMessages.length > 0) {
           const queuedContent = onQueuePop();
           if (queuedContent) {
             setValue(queuedContent);
@@ -87,7 +87,7 @@ export function InputArea({
           setHistoryIndex(newIndex);
           return true;
         }
-      } else if (direction === 'down' && historyIndex >= 0) {
+      } else if (direction === 'down' && historyIndex >= 0 && shouldHandleHistory) {
         const newIndex = historyIndex - 1;
         setHistoryIndex(newIndex);
 
