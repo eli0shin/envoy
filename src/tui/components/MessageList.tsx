@@ -265,11 +265,6 @@ export function MessageList({
         },
         contentOptions: {
           flexDirection: 'column',
-          paddingLeft: 1,
-          paddingRight: 1,
-        },
-        scrollbarOptions: {
-          showArrows: false,
         },
       }}
     >
