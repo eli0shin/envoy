@@ -89,7 +89,7 @@ export function MultiLineInput({
       // This must happen after the value is set
       inputRef.current.cursorPosition = cursorPosition;
     }
-  }, [cursorPosition, shouldDisableTextInput]);
+  }, [cursorPosition, shouldDisableTextInput, editingLine]); // Added editingLine to ensure effect runs when changing lines
 
   // Handle external cursor position changes (e.g., from file autocomplete)
   useEffect(() => {
@@ -137,9 +137,10 @@ export function MultiLineInput({
       return;
     }
 
-    // Update cursor position to match the new content length
-    const newCursorPos = newLineContent.length;
-    updateCursorPosition(newCursorPos);
+    // Read the ACTUAL cursor position from the input element
+    // This preserves cursor position when typing/deleting in the middle of text
+    const actualCursorPos = inputRef.current?.cursorPosition ?? newLineContent.length;
+    updateCursorPosition(actualCursorPos);
 
     // Check if input exceeds available width
     if (newLineContent.length > availableTextWidth) {

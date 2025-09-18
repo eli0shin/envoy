@@ -46,10 +46,6 @@ export function HelpModal() {
 
   return (
     <Modal width={contentWidth} height={contentHeight}>
-      <box height={1} paddingLeft={1}>
-        <text>{fg(colors.primary)('Available Commands:')}</text>
-      </box>
-
       <scrollbox
         focused={true}
         style={{
@@ -66,7 +62,10 @@ export function HelpModal() {
           },
         }}
       >
-        {commands.map((cmd, index) => (
+        <box height={1} paddingLeft={1}>
+          <text>{fg(colors.primary)('Available Commands:')}</text>
+        </box>
+        {commands.map((cmd) => (
           <box key={cmd.name} height={1}>
             <text>
               {' '}
@@ -83,7 +82,7 @@ export function HelpModal() {
           <text>{fg(colors.primary)('Keyboard Shortcuts:')}</text>
         </box>
 
-        {shortcuts.map((shortcut, index) => (
+        {shortcuts.map((shortcut) => (
           <box key={shortcut.action} height={1}>
             <text>
               {' '}
