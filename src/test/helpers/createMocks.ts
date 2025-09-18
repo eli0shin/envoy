@@ -477,7 +477,11 @@ export function createMockAISDK() {
 export function createMockGenerateTextResult(overrides?: {
   text?: string;
   finishReason?: string;
-  usage?: { totalTokens: number; promptTokens: number; completionTokens: number };
+  usage?: {
+    totalTokens: number;
+    promptTokens: number;
+    completionTokens: number;
+  };
   messages?: Array<{ role: string; content: string; id: string }>;
   toolResults?: Array<unknown>;
 }) {
@@ -491,7 +495,11 @@ export function createMockGenerateTextResult(overrides?: {
     },
     response: {
       messages: overrides?.messages || [
-        { role: 'assistant', content: overrides?.text || 'Test response', id: 'test-msg-id' },
+        {
+          role: 'assistant',
+          content: overrides?.text || 'Test response',
+          id: 'test-msg-id',
+        },
       ],
       id: 'test-id',
       timestamp: new Date(),
@@ -503,7 +511,11 @@ export function createMockGenerateTextResult(overrides?: {
     reasoningDetails: undefined,
     sources: undefined,
     responseMessages: overrides?.messages || [
-      { role: 'assistant', content: overrides?.text || 'Test response', id: 'test-msg-id' },
+      {
+        role: 'assistant',
+        content: overrides?.text || 'Test response',
+        id: 'test-msg-id',
+      },
     ],
     roundtrips: [],
     steps: [],

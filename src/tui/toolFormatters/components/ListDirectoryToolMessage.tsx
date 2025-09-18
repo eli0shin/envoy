@@ -1,5 +1,5 @@
 import { fg, bold } from '@opentui/core';
-import { error, info, filePath, lightGray } from '../../theme.js';
+import { error, success, filePath, lightGray } from '../../theme.js';
 import type { ToolMessageComponentProps } from '../types.js';
 import type { FilesystemListDirectoryArgs } from '../../toolTypes.js';
 
@@ -66,7 +66,7 @@ export function ListDirectoryToolMessage({
         {fg(filePath)(`(${path})`)}
       </text>
       {!isError && result ?
-        <text paddingLeft={2}>{fg(info)(`└ ${getCountMessage()}`)}</text>
+        <text paddingLeft={2}>{fg(success)(`└ ${getCountMessage()}`)}</text>
       : null}
       {isError ?
         <text paddingLeft={2}>{fg(error)(`${String(result)}`)}</text>

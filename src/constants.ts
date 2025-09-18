@@ -143,6 +143,7 @@ export const MCP_SERVERS: EnhancedMCPServerConfig[] = [
     args: ['-y', '@modelcontextprotocol/server-filesystem', process.cwd()],
     disabledTools: [
       'read_file',
+      'read_media_file',
       'list_allowed_directories',
       'get_file_info',
       'directory_tree',

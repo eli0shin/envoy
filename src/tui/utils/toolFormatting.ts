@@ -33,6 +33,16 @@ export function truncateValue(str: string, maxLength: number = 50): string {
  * @returns Formatted string with args on one line
  */
 export function formatToolArgs(args: unknown): string {
+  // Handle pre-stringified arguments (e.g., "[Object object]")
+  if (typeof args === 'string') {
+    // If it looks like a stringified object, try to indicate that
+    if (args === '[object Object]' || args === '[Object object]') {
+      return '{malformed object}';
+    }
+    // Otherwise return the string as-is
+    return args;
+  }
+
   if (!args || typeof args !== 'object') {
     return '';
   }
@@ -53,7 +63,21 @@ export function formatToolArgs(args: unknown): string {
         } else if (typeof value === 'number' || typeof value === 'boolean') {
           valueStr = String(value);
         } else if (Array.isArray(value)) {
-          valueStr = `[${value.map(item => item === null ? 'null' : item === undefined ? 'undefined' : String(item)).join(', ')}]`;
+          // Handle arrays with proper serialization of objects
+          valueStr = `[${value
+            .map((item) => {
+              if (item === null) return 'null';
+              if (item === undefined) return 'undefined';
+              if (typeof item === 'object') {
+                try {
+                  return JSON.stringify(item);
+                } catch {
+                  return '{object}';
+                }
+              }
+              return String(item);
+            })
+            .join(', ')}]`;
         } else if (typeof value === 'object') {
           try {
             const jsonStr = JSON.stringify(value);
@@ -113,6 +137,34 @@ export function extractResultText(result: unknown): string {
   }
 
   return '';
+}
+
+/**
+ * Format multiline content with consistent indentation
+ * Adds a prefix to the first line and proper spacing to subsequent lines
+ * @param content - The content to format (may contain newlines)
+ * @param prefix - The prefix for the first line (e.g., "└ ")
+ * @returns Formatted content with proper indentation for all lines
+ */
+export function formatMultilineResult(
+  content: string,
+  prefix: string = '└ '
+): string {
+  if (!content) return '';
+
+  const lines = content.split('\n');
+
+  // The prefix is 2 characters wide ("└ "), so subsequent lines need 2 spaces
+  const indent = '  ';
+
+  return lines
+    .map((line, index) => {
+      if (index === 0) {
+        return prefix + line;
+      }
+      return indent + line;
+    })
+    .join('\n');
 }
 
 export type ToolCallState = 'pending' | 'success' | 'error';

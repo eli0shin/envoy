@@ -65,7 +65,7 @@ describe('CLI Tests', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     process.exit = vi.fn() as any;
 
     // Set up the mock wrapper reference for tests using centralized constructor
@@ -488,7 +488,9 @@ describe('CLI Tests', () => {
 
       await main();
 
-      expect(mockStderrWrite).toHaveBeenCalledWith('Fatal error: Fatal error\n');
+      expect(mockStderrWrite).toHaveBeenCalledWith(
+        'Fatal error: Fatal error\n'
+      );
       expect(process.exit).toHaveBeenCalledWith(1);
     });
 
@@ -552,32 +554,34 @@ describe('CLI Tests', () => {
       const originalExit = process.exit;
       process.exit = mockExit;
 
-      
       // Simulate uncaught exception
       const error = new Error('Test uncaught exception');
       process.emit('uncaughtException', error);
 
-      expect(mockStderrWrite).toHaveBeenCalledWith('Uncaught exception: Test uncaught exception\n');
+      expect(mockStderrWrite).toHaveBeenCalledWith(
+        'Uncaught exception: Test uncaught exception\n'
+      );
       expect(mockExit).toHaveBeenCalledWith(1);
 
       process.exit = originalExit;
-          });
+    });
 
     it('should handle unhandled rejections', () => {
       const mockExit = vi.fn() as never;
       const originalExit = process.exit;
       process.exit = mockExit;
 
-      
       // Simulate unhandled rejection
       const reason = 'Test unhandled rejection';
       process.emit('unhandledRejection', reason, Promise.resolve());
 
-      expect(mockStderrWrite).toHaveBeenCalledWith('Unhandled rejection: Test unhandled rejection\n');
+      expect(mockStderrWrite).toHaveBeenCalledWith(
+        'Unhandled rejection: Test unhandled rejection\n'
+      );
       expect(mockExit).toHaveBeenCalledWith(1);
 
       process.exit = originalExit;
-          });
+    });
   });
 
   describe('MCP Prompts and Resources CLI', () => {
@@ -675,10 +679,14 @@ describe('CLI Tests', () => {
         await main();
 
         // Verify correct prompt listing output format
-        expect(mockStdoutWrite).toHaveBeenCalledWith('\nAvailable Prompts (2):\n\n');
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          '\nAvailable Prompts (2):\n\n'
+        );
 
         // Verify first prompt details
-        expect(mockStdoutWrite).toHaveBeenCalledWith('test-server:test-prompt\n');
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          'test-server:test-prompt\n'
+        );
         expect(mockStdoutWrite).toHaveBeenCalledWith(
           '  Description: A test prompt for demonstration\n'
         );
@@ -691,7 +699,9 @@ describe('CLI Tests', () => {
         );
 
         // Verify second prompt details
-        expect(mockStdoutWrite).toHaveBeenCalledWith('test-server:another-prompt\n');
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          'test-server:another-prompt\n'
+        );
         expect(mockStdoutWrite).toHaveBeenCalledWith(
           '  Description: Another example prompt\n'
         );
@@ -1096,7 +1106,9 @@ describe('CLI Tests', () => {
         expect(mockStdoutWrite).toHaveBeenCalledWith(
           'Description: Generated prompt result\n\n'
         );
-        expect(mockStdoutWrite).toHaveBeenCalledWith('[user] Execute this task\n');
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          '[user] Execute this task\n'
+        );
         expect(process.exit).toHaveBeenCalledWith(0);
       });
 
@@ -1417,7 +1429,9 @@ describe('CLI Tests', () => {
           'prompt2',
           {}
         );
-        expect(mockStdoutWrite).toHaveBeenCalledWith('[user] Result from server 2\n');
+        expect(mockStdoutWrite).toHaveBeenCalledWith(
+          '[user] Result from server 2\n'
+        );
         expect(process.exit).toHaveBeenCalledWith(0);
       });
 
@@ -1856,7 +1870,9 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(mockStderrWrite).toHaveBeenCalledWith('Message cannot be empty\n');
+        expect(mockStderrWrite).toHaveBeenCalledWith(
+          'Message cannot be empty\n'
+        );
         expect(process.exit).toHaveBeenCalledWith(1);
       });
 
@@ -2158,7 +2174,9 @@ describe('CLI Tests', () => {
 
         await main();
 
-        expect(mockStderrWrite).toHaveBeenCalledWith('Message cannot be empty\n');
+        expect(mockStderrWrite).toHaveBeenCalledWith(
+          'Message cannot be empty\n'
+        );
         expect(process.exit).toHaveBeenCalledWith(1);
       });
 

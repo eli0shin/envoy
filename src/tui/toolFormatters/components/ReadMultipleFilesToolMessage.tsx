@@ -1,5 +1,11 @@
 import { fg, bold } from '@opentui/core';
-import { error, info, filePath as filePathColor, lightGray } from '../../theme.js';
+import {
+  error,
+  success,
+  filePath as filePathColor,
+  lightGray,
+} from '../../theme.js';
+import { formatMultilineResult } from '../../utils/toolFormatting.js';
 import type { ToolMessageComponentProps } from '../types.js';
 import type {
   FilesystemReadMultipleFilesArgs,
@@ -73,16 +79,18 @@ export function ReadMultipleFilesToolMessage({
       {!isError && fileLineCounts && fileLineCounts.size > 0 ?
         Array.from(fileLineCounts.entries()).map(([fileName, lineCount]) => (
           <text key={fileName} paddingLeft={2}>
-            {fg(info)(`└ Read ${lineCount} lines from ${fileName}`)}
+            {fg(success)(`└ Read ${lineCount} lines from ${fileName}`)}
           </text>
         ))
       : null}
       {isError ?
-        <text paddingLeft={2}>{fg(error)(`└ ${String(result)}`)}</text>
+        <text paddingLeft={2}>
+          {fg(error)(formatMultilineResult(String(result), '└ '))}
+        </text>
       : null}
       {!isError && result && (!fileLineCounts || fileLineCounts.size === 0) ?
         <text paddingLeft={2}>
-          {fg(info)(`└ Read ${paths?.length || 0} files`)}
+          {fg(success)(`└ Read ${paths?.length || 0} files`)}
         </text>
       : null}
     </box>

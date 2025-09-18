@@ -1,5 +1,10 @@
 import { fg, bold } from '@opentui/core';
-import { error, info, filePath as filePathColor, lightGray } from '../../theme.js';
+import {
+  error,
+  success,
+  filePath as filePathColor,
+  lightGray,
+} from '../../theme.js';
 import type { ToolMessageComponentProps } from '../types.js';
 
 export function ReadToolMessage({
@@ -25,7 +30,7 @@ export function ReadToolMessage({
       </text>
       {!isError && result ?
         <text paddingLeft={2}>
-          {fg(info)(`└ Read ${lineCount} lines from ${filePath}`)}
+          {fg(success)(`└ Read ${lineCount} lines from ${filePath}`)}
         </text>
       : null}
       {isError ?

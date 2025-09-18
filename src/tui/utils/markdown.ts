@@ -187,7 +187,8 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
       // For nested lists (listDepth > 0), we don't add initial newline as parent handles it
       if (listDepth === 0 && chunks.length > 0) {
         const lastChunk = chunks[chunks.length - 1];
-        const needsNewline = !lastChunk || !lastChunk.text || !lastChunk.text.endsWith('\n');
+        const needsNewline =
+          !lastChunk || !lastChunk.text || !lastChunk.text.endsWith('\n');
         if (needsNewline) {
           chunks.push(fg(colors.text)('\n'));
         }

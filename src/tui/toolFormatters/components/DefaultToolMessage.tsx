@@ -2,6 +2,7 @@ import {
   formatToolName,
   formatToolArgs,
   truncateValue,
+  formatMultilineResult,
 } from '../../utils/toolFormatting.js';
 import { fg, bold } from '@opentui/core';
 import { error, info, filePath, lightGray } from '../../theme.js';
@@ -17,7 +18,6 @@ export function DefaultToolMessage({
 }: ToolMessageComponentProps) {
   const formattedArgs = formatToolArgs(args);
   const toolDisplayName = displayName || formatToolName(toolName);
-  const titleText = `${toolDisplayName}${formattedArgs ? fg(filePath)(`(${formattedArgs})`) : ''}`;
 
   // Extract the actual result string from { result: string } structure
   const resultText =
@@ -29,10 +29,15 @@ export function DefaultToolMessage({
 
   return (
     <box flexDirection="column" width={width - 4}>
-      <text>{bold(fg(lightGray)(titleText))}</text>
+      <text>
+        {bold(fg(lightGray)(toolDisplayName))}
+        {formattedArgs ? fg(filePath)(`(${formattedArgs})`) : ''}
+      </text>
       {resultText ?
         <text paddingLeft={2}>
-          {fg(isError ? error : info)(`└ ${truncateValue(resultText)}`)}
+          {fg(isError ? error : info)(
+            formatMultilineResult(truncateValue(resultText), '└ ')
+          )}
         </text>
       : null}
     </box>

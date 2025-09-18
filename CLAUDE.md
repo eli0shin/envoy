@@ -6,37 +6,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Development
 
-- `npm run build` - Compile TypeScript to JavaScript in dist/
+- `bun run build` - Compile TypeScript to JavaScript in dist/
 - `npx .` - Run the built CLI from dist/
-- `npm run clean` - Remove dist/ directory
-- `npm run type` - Run tsc type checking
+- `bun run clean` - Remove dist/ directory
+- `bun run type` - Run tsc type checking
 
 ### Testing
 
-- `npm test` - Run all tests with Vitest
-- `npm run test:coverage` - Run tests with coverage report
+- `bun run test` - Run all tests with Vitest
+- `bun run test:coverage` - Run tests with coverage report
 
 ### Interactive Testing
 
-- `npm run test:interactive` - Run interactive CLI tests with real TTY support
+- `bun run test:interactive` - Run interactive CLI tests with real TTY support
 
 **Testing Interactive CLI Functionality**: To test the interactive mode of this CLI, use the dedicated interactive testing framework. Create test files with the pattern `*.interactive.test.ts` in the `interactive/` directory. These tests use `node-pty` to provide real TTY emulation, enabling full testing of OpenTUI-based interactive UI components.
 
 ### Code Quality
 
-- `npm run format` - Format code with Prettier
-- `npm run format:check` - Check code formatting
-- `npm run lint` - Run ESLint to check code quality
-
-### CLI Usage
-
-After building with `npm run build`:
-
-- `npx . "message"` - Run the agent with a message
-- `npx . --stdin` - Read input from stdin
-- `npx . --log-level DEBUG` - Set log level (DEBUG, INFO, WARN, ERROR, SILENT)
-- `npx . --log-progress all` - Set progress output (none, assistant, tool, all)
-- `npx . --json` - Output structured JSON
+- `bun run format` - Format code with Prettier
+- `bun run format:check` - Check code formatting
+- `bun run lint` - Run ESLint to check code quality
 
 ### Testing Strategy
 

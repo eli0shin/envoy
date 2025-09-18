@@ -4,6 +4,11 @@ import { ReadToolMessage } from './components/ReadToolMessage.js';
 import { ReadMultipleFilesToolMessage } from './components/ReadMultipleFilesToolMessage.js';
 import { WriteToolMessage } from './components/WriteToolMessage.js';
 import { ListDirectoryToolMessage } from './components/ListDirectoryToolMessage.js';
+import { BashToolMessage } from './components/BashToolMessage.js';
+import { SearchFilesToolMessage } from './components/SearchFilesToolMessage.js';
+import { WebSearchToolMessage } from './components/WebSearchToolMessage.js';
+import { CreateDirectoryToolMessage } from './components/CreateDirectoryToolMessage.js';
+import { MoveFileToolMessage } from './components/MoveFileToolMessage.js';
 import type { ToolRegistry, ToolConfig } from './types.js';
 
 // Helper to convert snake_case to Title Case
@@ -32,45 +37,33 @@ export const toolRegistry: ToolRegistry = {
     displayName: 'List Directory',
     component: ListDirectoryToolMessage,
   },
+  filesystem_list_directory_with_sizes: {
+    displayName: 'List Directory',
+    component: ListDirectoryToolMessage,
+  },
   filesystem_write_file: {
     displayName: 'Write File',
     component: WriteToolMessage,
   },
-
-  // Command execution
-  bash: {
-    displayName: 'Run Command',
-    component: DefaultToolMessage, // Will be replaced with BashToolMessage
+  filesystem_create_directory: {
+    displayName: 'Create Directory',
+    component: CreateDirectoryToolMessage,
   },
-  bash_output: {
-    displayName: 'Check Output',
-    component: DefaultToolMessage,
+  filesystem_move_file: {
+    displayName: 'Move File',
+    component: MoveFileToolMessage,
   },
-
-  // Search operations
-  grep: {
+  filesystem_search_files: {
     displayName: 'Search Files',
-    component: DefaultToolMessage,
+    component: SearchFilesToolMessage,
   },
-  glob: {
-    displayName: 'Find Files',
-    component: DefaultToolMessage,
+  shell_run_command: {
+    displayName: 'Bash',
+    component: BashToolMessage,
   },
-
-  // Task management
-  todo_write: {
-    displayName: 'Update Todos',
-    component: DefaultToolMessage, // Will be replaced with TodoToolMessage
-  },
-
-  // Web operations
-  web_fetch: {
-    displayName: 'Fetch URL',
-    component: DefaultToolMessage,
-  },
-  web_search: {
+  'brave-search_brave_web_search': {
     displayName: 'Web Search',
-    component: DefaultToolMessage,
+    component: WebSearchToolMessage,
   },
 };
 

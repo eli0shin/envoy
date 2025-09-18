@@ -101,7 +101,7 @@ export const contentFormatters = {
   'assistant-reasoning': (content: string): StyledText => {
     const parsed = parseMarkdown(content);
     // Apply italic styling to reasoning content with darker color
-    const italicChunks = parsed.chunks.map(chunk => {
+    const italicChunks = parsed.chunks.map((chunk) => {
       // Preserve any existing styling but add italic and use reasoning color
       return italic(fg(colors.reasoning)(chunk.text));
     });

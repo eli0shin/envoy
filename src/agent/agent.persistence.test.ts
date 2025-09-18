@@ -9,7 +9,10 @@ import type { RuntimeConfiguration } from '../config/types.js';
 import type { AgentSession } from '../agentSession.js';
 import type { CoreMessage } from 'ai';
 import type { ConversationPersistence } from '../persistence/ConversationPersistence.js';
-import { createMockAgentSession, createMockGenerateTextResult } from '../test/helpers/createMocks.js';
+import {
+  createMockAgentSession,
+  createMockGenerateTextResult,
+} from '../test/helpers/createMocks.js';
 
 // Mock the AI SDK
 vi.mock('ai', () => ({
@@ -115,13 +118,15 @@ describe('runAgent conversation persistence integration', () => {
     const mockGenerateText = vi.mocked(generateText);
 
     // Setup generateText mock with proper result
-    mockGenerateText.mockResolvedValue(createMockGenerateTextResult({
-      text: 'Test response',
-      messages: [
-        { role: 'user', content: 'Test input', id: 'user-msg' },
-        { role: 'assistant', content: 'Test response', id: 'assistant-msg' },
-      ],
-    }));
+    mockGenerateText.mockResolvedValue(
+      createMockGenerateTextResult({
+        text: 'Test response',
+        messages: [
+          { role: 'user', content: 'Test input', id: 'user-msg' },
+          { role: 'assistant', content: 'Test response', id: 'assistant-msg' },
+        ],
+      })
+    );
   });
 
   afterEach(() => {

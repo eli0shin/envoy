@@ -7,6 +7,7 @@ import {
   formatToolCall,
   renderToolCall,
   renderToolCallWithErrorMarkers,
+  formatMultilineResult,
 } from './toolFormatting.js';
 
 describe('toolFormatting', () => {
@@ -88,7 +89,7 @@ describe('toolFormatting', () => {
     it('should handle arrays with objects', () => {
       const args = { items: [{ name: 'test' }, 'string', 42] };
       const result = formatToolArgs(args);
-      expect(result).toContain('items: [[object Object], string, 42]');
+      expect(result).toContain('items: [{"name":"test"}, string, 42]');
     });
 
     it('should handle numbers and booleans', () => {
@@ -98,7 +99,7 @@ describe('toolFormatting', () => {
     });
 
     it('should handle non-serializable objects gracefully', () => {
-      const circular: any = { name: 'test' };
+      const circular: { name: string; self?: unknown } = { name: 'test' };
       circular.self = circular; // Create circular reference
       const args = { data: circular };
       const result = formatToolArgs(args);
@@ -208,6 +209,35 @@ describe('toolFormatting', () => {
       expect(result).toBe(
         '**Filesystem Read File** (path: missing.txt)\n└ Error: File not found'
       );
+    });
+  });
+
+  describe('formatMultilineResult', () => {
+    it('should format single line content with prefix', () => {
+      const result = formatMultilineResult('Single line content', '└ ');
+      expect(result).toBe('└ Single line content');
+    });
+
+    it('should format multiline content with proper indentation', () => {
+      const content = 'First line\nSecond line\nThird line';
+      const result = formatMultilineResult(content, '└ ');
+      expect(result).toBe('└ First line\n  Second line\n  Third line');
+    });
+
+    it('should handle empty content', () => {
+      const result = formatMultilineResult('', '└ ');
+      expect(result).toBe('');
+    });
+
+    it('should use default prefix if not provided', () => {
+      const result = formatMultilineResult('Test content');
+      expect(result).toBe('└ Test content');
+    });
+
+    it('should handle custom prefix', () => {
+      const content = 'Line 1\nLine 2';
+      const result = formatMultilineResult(content, '> ');
+      expect(result).toBe('> Line 1\n  Line 2');
     });
   });
 

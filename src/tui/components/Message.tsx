@@ -36,7 +36,7 @@ export function Message({
         paddingLeft={1}
         paddingRight={1}
         backgroundColor={formatBackground(message.role)}
-        width={width - 4}
+        width={width - 2}
       >
         <ErrorBoundary>
           <ToolComponent
@@ -155,14 +155,14 @@ export function Message({
   const verticalPadding = message.role === 'user' ? 1 : 0;
 
   return (
-    <box paddingBottom={1} width={width - 4}>
+    <box paddingBottom={1} width={width - 2}>
       <box
         paddingTop={verticalPadding}
         paddingBottom={verticalPadding}
         paddingLeft={1}
         paddingRight={1}
         backgroundColor={backgroundColor}
-        width={width - 4}
+        width={width - 2}
       >
         <text
           style={{

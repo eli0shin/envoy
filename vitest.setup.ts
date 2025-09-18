@@ -26,7 +26,9 @@ globalThis.console = {
 };
 
 // Mock process.stdout.write for JSON output tests
-process.stdout.write = vi.fn().mockImplementation(() => true) as typeof process.stdout.write;
+process.stdout.write = vi
+  .fn()
+  .mockImplementation(() => true) as typeof process.stdout.write;
 
 // Mock react-reconciler to avoid bun: protocol issues
 vi.mock('react-reconciler/constants', () => ({
@@ -192,7 +194,6 @@ expect.extend({
     }
   },
 });
-
 
 // Declare global types for test utilities
 declare global {

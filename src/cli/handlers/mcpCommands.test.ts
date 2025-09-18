@@ -126,7 +126,9 @@ describe('mcpCommands', () => {
       expect(mockStdoutWrite).toHaveBeenCalledWith(
         '\nAvailable Prompts (2):\n\n'
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith('test-server:analyze-code\n');
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        'test-server:analyze-code\n'
+      );
       expect(mockStdoutWrite).toHaveBeenCalledWith(
         '  Description: Analyze code for issues\n'
       );
@@ -177,7 +179,9 @@ describe('mcpCommands', () => {
       expect(mockStdoutWrite).toHaveBeenCalledWith(
         '\nAvailable Prompts (3):\n\n'
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith('test-server-2:test-prompt\n');
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        'test-server-2:test-prompt\n'
+      );
     });
   });
 
@@ -295,7 +299,9 @@ describe('mcpCommands', () => {
       expect(mockStdoutWrite).toHaveBeenCalledWith(
         'Description: Analysis complete\n\n'
       );
-      expect(mockStdoutWrite).toHaveBeenCalledWith('[user] Analyze this code\n');
+      expect(mockStdoutWrite).toHaveBeenCalledWith(
+        '[user] Analyze this code\n'
+      );
       expect(mockStdoutWrite).toHaveBeenCalledWith(
         '[assistant] Code looks good\n'
       );

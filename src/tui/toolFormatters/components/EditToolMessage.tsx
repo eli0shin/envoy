@@ -1,13 +1,14 @@
 import { fg, bg, bold } from '@opentui/core';
 import {
   error,
-  info,
+  success,
   filePath as filePathColor,
   diffAddition,
   diffDeletion,
   backgrounds,
   lightGray,
 } from '../../theme.js';
+import { formatMultilineResult } from '../../utils/toolFormatting.js';
 import type { ToolMessageComponentProps } from '../types.js';
 import type { FilesystemEditFileArgs } from '../../toolTypes.js';
 
@@ -158,7 +159,7 @@ export function EditToolMessage({
       <box flexDirection="column">
         {displayPath && (additions > 0 || deletions > 0) ?
           <text paddingLeft={2}>
-            {fg(info)(
+            {fg(success)(
               `└ Updated ${displayPath} with ${additions} additions and ${deletions} deletions`
             )}
           </text>
@@ -237,7 +238,9 @@ export function EditToolMessage({
       </text>
       {!actualError ? renderDiff() : null}
       {actualError ?
-        <text paddingLeft={2}>{fg(error)(`└ ${cleanErrorMessage}`)}</text>
+        <text paddingLeft={2}>
+          {fg(error)(formatMultilineResult(cleanErrorMessage, '└ '))}
+        </text>
       : null}
     </box>
   );

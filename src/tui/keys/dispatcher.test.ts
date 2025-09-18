@@ -105,7 +105,6 @@ describe('KeyDispatcher with prefix', () => {
     expect(getActivePrefix()).toBeNull();
   });
 
-
   it('cancels prefix on malformed event (no name) without dispatching', () => {
     const calls: TUIKeyEvent[] = [];
     keyEventBus.register({

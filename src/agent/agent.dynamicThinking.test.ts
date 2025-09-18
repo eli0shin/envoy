@@ -3,7 +3,10 @@ import { LanguageModel, CoreMessage } from 'ai';
 import { generateText } from 'ai';
 import { RuntimeConfiguration } from '../config/types.js';
 import { createThinkingProviderOptions, runAgent } from './index.js';
-import { createMockAgentSession, createMockGenerateTextResult } from '../test/helpers/createMocks.js';
+import {
+  createMockAgentSession,
+  createMockGenerateTextResult,
+} from '../test/helpers/createMocks.js';
 
 // Mock the AI SDK
 vi.mock('ai', () => ({
