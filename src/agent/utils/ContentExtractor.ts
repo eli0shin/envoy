@@ -35,31 +35,27 @@ export class ContentExtractor {
    * Checks provider.toString() first, then model ID patterns
    */
   static getProviderType(model: LanguageModel): string {
+    // Check if model is a string (model ID) or object with modelId
     try {
-      // Check model constructor or provider property
-      if (model?.provider?.toString) {
-        const providerStr = model.provider.toString();
-        if (providerStr.includes('anthropic')) return 'anthropic';
-        if (providerStr.includes('openai')) return 'openai';
-        if (providerStr.includes('google')) return 'google';
-      }
-    } catch {
-      // If toString throws, continue to model ID check
-    }
+      let modelId: string | undefined;
 
-    // Check model ID patterns
-    try {
-      if (model?.modelId) {
-        if (model.modelId.includes('claude')) return 'anthropic';
+      if (typeof model === 'string') {
+        modelId = model;
+      } else if (model && typeof model === 'object' && 'modelId' in model) {
+        modelId = (model as { modelId: string }).modelId;
+      }
+
+      if (modelId) {
+        if (modelId.includes('claude')) return 'anthropic';
         if (
-          model.modelId.includes('gpt') ||
-          model.modelId.includes('o1') ||
-          model.modelId.includes('o3') ||
-          model.modelId.includes('o4')
+          modelId.includes('gpt') ||
+          modelId.includes('o1') ||
+          modelId.includes('o3') ||
+          modelId.includes('o4')
         ) {
           return 'openai';
         }
-        if (model.modelId.includes('gemini')) return 'google';
+        if (modelId.includes('gemini')) return 'google';
       }
     } catch {
       // If model ID access throws, fall back to default

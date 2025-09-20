@@ -112,6 +112,7 @@ describe('mcpServers', () => {
     it('should convert stdio server to legacy format', () => {
       const servers: Record<string, EnhancedMCPServerConfig> = {
         filesystem: {
+          name: 'filesystem',
           type: 'stdio',
           command: 'npx',
           args: ['-y', '@modelcontextprotocol/server-filesystem'],
@@ -145,6 +146,7 @@ describe('mcpServers', () => {
     it('should convert sse server to legacy format', () => {
       const servers: Record<string, EnhancedMCPServerConfig> = {
         remote: {
+          name: 'remote',
           type: 'sse',
           url: 'https://example.com/mcp',
           headers: { Authorization: 'Bearer token' },
@@ -172,11 +174,13 @@ describe('mcpServers', () => {
     it('should skip disabled servers', () => {
       const servers: Record<string, EnhancedMCPServerConfig> = {
         enabled: {
+          name: 'enabled',
           type: 'stdio',
           command: 'npx',
           description: 'Enabled server',
         },
         disabled: {
+          name: 'disabled',
           type: 'stdio',
           command: 'npx',
           description: 'Disabled server',
@@ -197,12 +201,14 @@ describe('mcpServers', () => {
     it('should handle mixed server types', () => {
       const servers: Record<string, EnhancedMCPServerConfig> = {
         stdio_server: {
+          name: 'stdio_server',
           type: 'stdio',
           command: 'npm',
           args: ['run', 'server'],
           description: 'Stdio server',
         },
         sse_server: {
+          name: 'sse_server',
           type: 'sse',
           url: 'https://api.example.com',
           description: 'SSE server',
@@ -228,6 +234,7 @@ describe('mcpServers', () => {
     it('should handle servers with minimal configuration', () => {
       const servers: Record<string, EnhancedMCPServerConfig> = {
         minimal: {
+          name: 'minimal',
           type: 'stdio',
           command: 'echo',
         },
@@ -257,6 +264,7 @@ describe('mcpServers', () => {
       const config: Configuration = {
         mcpServers: {
           filesystem: {
+            name: 'filesystem',
             type: 'stdio',
             command: 'npx',
             args: ['-y', '@modelcontextprotocol/server-filesystem'],
@@ -287,6 +295,7 @@ describe('mcpServers', () => {
       const config: RuntimeConfiguration = {
         mcpServers: {
           filesystem: {
+            name: 'filesystem',
             type: 'stdio',
             command: 'npx',
           },
@@ -346,6 +355,7 @@ describe('mcpServers', () => {
         json: false,
         mcpServers: {
           test: {
+            name: 'test',
             type: 'stdio',
             command: 'test',
           },
@@ -388,6 +398,7 @@ describe('mcpServers', () => {
         stdin: true,
         mcpServers: {
           test: {
+            name: 'test',
             type: 'stdio',
             command: 'test',
           },

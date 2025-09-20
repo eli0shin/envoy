@@ -293,7 +293,9 @@ describe('createAnthropicAuthFetch', () => {
       const [, options] = mockFetch.mock.calls[0];
       const headers = new Headers(options.headers);
       expect(headers.get('authorization')).toBe('Bearer oauth-access-token');
-      expect(headers.get('anthropic-beta')).toBe('oauth-2025-04-20');
+      expect(headers.get('Anthropic-Beta')).toBe(
+        'claude-code-20250219,oauth-2025-04-20,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14'
+      );
       expect(headers.get('x-api-key')).toBeNull();
     });
 
@@ -347,8 +349,10 @@ describe('createAnthropicAuthFetch', () => {
 
       const [, options] = mockFetch.mock.calls[0];
       const headers = new Headers(options.headers);
+      expect(headers.get('authorization')).toBe('Bearer oauth-token');
+      // OAuth should merge the original anthropic-beta header with OAuth headers
       expect(headers.get('anthropic-beta')).toBe(
-        'existing-feature-2024-01-01,oauth-2025-04-20'
+        'existing-feature-2024-01-01, claude-code-20250219,oauth-2025-04-20,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14'
       );
     });
   });

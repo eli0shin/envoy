@@ -5,7 +5,7 @@
 import { promises as fs } from 'fs';
 import { join } from 'path';
 import { ensureDirectory } from '../shared/fileOperations.js';
-import type { CoreMessage } from 'ai';
+import type { ModelMessage } from 'ai';
 
 import {
   logger,
@@ -22,7 +22,7 @@ type ConversationEntry = {
   messageIndex: number;
   messageType: 'conversation' | 'session-meta';
   sessionId: string;
-  message: CoreMessage;
+  message: ModelMessage;
 };
 
 /**
@@ -91,7 +91,7 @@ export class ConversationPersistence {
    * Persist an array of complete messages to the conversation file
    * Handles all errors internally and never throws
    */
-  async persistMessages(messages: CoreMessage[]): Promise<void> {
+  async persistMessages(messages: ModelMessage[]): Promise<void> {
     try {
       if (messages.length === 0) {
         return;
@@ -168,7 +168,7 @@ export class ConversationPersistence {
   /**
    * Load conversation history from the conversation file
    */
-  async loadConversation(sessionId?: string): Promise<CoreMessage[]> {
+  async loadConversation(sessionId?: string): Promise<ModelMessage[]> {
     const targetSessionId = sessionId || this.sessionId;
     const conversationFile = getProjectConversationFile(
       this.projectIdentifier,
@@ -231,9 +231,9 @@ export class ConversationPersistence {
   private parseConversationFile(
     fileContent: string,
     sessionId: string
-  ): CoreMessage[] {
+  ): ModelMessage[] {
     const lines = fileContent.trim().split('\n');
-    const messages: CoreMessage[] = [];
+    const messages: ModelMessage[] = [];
 
     for (const line of lines) {
       if (!line.trim()) continue;
@@ -467,7 +467,7 @@ export class ConversationPersistence {
   /**
    * Check if a message is complete and ready for persistence
    */
-  static isMessageComplete(message: CoreMessage): boolean {
+  static isMessageComplete(message: ModelMessage): boolean {
     switch (message.role) {
       case 'user':
       case 'assistant':
@@ -560,7 +560,7 @@ export class ConversationPersistence {
    * Sanitize message content for persistence
    * Remove any sensitive data or large objects that shouldn't be persisted
    */
-  private sanitizeMessage(message: CoreMessage): CoreMessage {
+  private sanitizeMessage(message: ModelMessage): ModelMessage {
     // For now, just return the message as-is
     // In the future, we might want to:
     // - Remove or truncate very large tool results

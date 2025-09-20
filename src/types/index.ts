@@ -3,9 +3,9 @@
  * Defines interfaces for MCP server configurations and tool wrappers
  */
 
-import type { z } from 'zod';
+import { z } from 'zod/v3';
 import type { ChildProcess } from 'child_process';
-import type { CoreMessage } from 'ai';
+import type { ModelMessage } from 'ai';
 
 /**
  * Base MCP server configuration
@@ -51,7 +51,7 @@ export type MCPServerConfig = StdioMCPServerConfig | SSEMCPServerConfig;
  */
 export type WrappedTool = {
   description?: string;
-  parameters: z.ZodType<unknown>;
+  inputSchema: z.ZodType<unknown>;
   execute: (args: unknown) => Promise<{ result: string }>;
   originalExecute: (args: unknown) => Promise<{ result: string }>;
   serverName: string;
@@ -189,7 +189,7 @@ export type AgentResult = {
   error?: string;
   toolCallsCount: number;
   executionTime: number;
-  responseMessages?: CoreMessage[]; // Final AI SDK response messages with IDs, tool calls, etc.
+  responseMessages?: ModelMessage[]; // Final AI SDK response messages with IDs, tool calls, etc.
 };
 
 /**
@@ -318,7 +318,7 @@ export type AuthenticationInfo = {
 export type ExtendedCoreMessage = {
   role: 'user' | 'assistant' | 'system' | 'tool';
   content: string;
-  providerMetadata?: {
+  providerOptions?: {
     anthropic?: {
       cacheControl?: { type: 'ephemeral' };
     };

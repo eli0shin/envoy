@@ -19,7 +19,7 @@ import type { KeybindingsConfig } from '../keys/index.js';
 import type { TUIKeybindings } from '../../config/types.js';
 import { KeysProvider } from '../keys/prefixContext.js';
 import { setKeySettings } from '../keys/settings.js';
-import type { CoreMessage } from 'ai';
+import type { ModelMessage } from 'ai';
 import type { RuntimeConfiguration } from '../../config/types.js';
 import type { AgentSession } from '../../agentSession.js';
 import { ProcessManager } from '../../mcp/processManager.js';
@@ -38,11 +38,11 @@ type ExitConfirmationState = {
 };
 
 export function TUIApp({ config, session }: TUIAppProps) {
-  const [messages, setMessages] = useState<(CoreMessage & { id: string })[]>(
+  const [messages, setMessages] = useState<(ModelMessage & { id: string })[]>(
     []
   );
   const [queuedMessages, setQueuedMessages] = useState<
-    (CoreMessage & { id: string })[]
+    (ModelMessage & { id: string })[]
   >([]);
   const [status, setStatus] = useState<Status>('READY');
   const [resizeKey, setResizeKey] = useState(0);
@@ -55,7 +55,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
   const renderer = useRenderer();
 
   const getUserMessageHistory = useCallback(
-    (messages: (CoreMessage & { id: string })[]): string[] => {
+    (messages: (ModelMessage & { id: string })[]): string[] => {
       return messages
         .filter((message) => message.role === 'user')
         .map((message) => {
@@ -171,7 +171,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
     (commandInput: string) => {
       // Add command invocation to message history
       const commandMessage = commandRegistry.formatCommandMessage(commandInput);
-      const commandMessageWithId: CoreMessage & { id: string } = {
+      const commandMessageWithId: ModelMessage & { id: string } = {
         ...commandMessage,
         id: `command-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       };
@@ -243,7 +243,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
       });
     } catch (error) {
       // Add error message
-      const errorMessage: CoreMessage & { id: string } = {
+      const errorMessage: ModelMessage & { id: string } = {
         role: 'assistant',
         content: `Error: ${error instanceof Error ? error.message : String(error)}`,
         id: `error-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
@@ -268,7 +268,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
       setOriginalInput('');
 
       // Add user message with our own generated id
-      const userMessage: CoreMessage & { id: string } = {
+      const userMessage: ModelMessage & { id: string } = {
         role: 'user',
         content,
         id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
@@ -303,7 +303,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
         });
       } catch (error) {
         // Add error message
-        const errorMessage: CoreMessage & { id: string } = {
+        const errorMessage: ModelMessage & { id: string } = {
           role: 'assistant',
           content: `Error: ${error instanceof Error ? error.message : String(error)}`,
           id: `error-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,

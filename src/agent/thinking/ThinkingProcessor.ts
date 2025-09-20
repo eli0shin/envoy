@@ -33,10 +33,7 @@ export class ThinkingProcessor {
     if (!analysis || analysis.level === 'none') {
       return {
         providerOptions: {},
-        headers:
-          analysis?.enableInterleaved && providerType === 'anthropic' ?
-            { 'anthropic-beta': 'interleaved-thinking-2025-05-14' }
-          : {},
+        headers: {},
       };
     }
 
@@ -54,10 +51,7 @@ export class ThinkingProcessor {
               },
             },
           },
-          headers:
-            analysis.enableInterleaved ?
-              { 'anthropic-beta': 'interleaved-thinking-2025-05-14' }
-            : {},
+          headers: {},
         };
 
       case 'openai': {

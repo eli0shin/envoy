@@ -30,6 +30,7 @@ describe('merging', () => {
       const config1: Configuration = {
         mcpServers: {
           server1: {
+            name: 'server1',
             type: 'stdio',
             command: 'cmd1',
           },
@@ -39,6 +40,7 @@ describe('merging', () => {
       const config2: Configuration = {
         mcpServers: {
           server2: {
+            name: 'server2',
             type: 'sse',
             url: 'http://example.com',
           },
@@ -48,10 +50,12 @@ describe('merging', () => {
       const result = mergeConfigurations([config1, config2]);
       expect(result.mcpServers).toEqual({
         server1: {
+          name: 'server1',
           type: 'stdio',
           command: 'cmd1',
         },
         server2: {
+          name: 'server2',
           type: 'sse',
           url: 'http://example.com',
         },
@@ -174,7 +178,7 @@ describe('merging', () => {
     it('should merge complex nested configurations', () => {
       const config1: Configuration = {
         mcpServers: {
-          server1: { type: 'stdio', command: 'cmd1' },
+          server1: { name: 'server1', type: 'stdio', command: 'cmd1' },
         },
         providers: {
           default: 'openai',
@@ -191,7 +195,7 @@ describe('merging', () => {
 
       const config2: Configuration = {
         mcpServers: {
-          server2: { type: 'sse', url: 'http://example.com' },
+          server2: { name: 'server2', type: 'sse', url: 'http://example.com' },
         },
         providers: {
           default: 'anthropic',
@@ -213,8 +217,8 @@ describe('merging', () => {
       const result = mergeConfigurations([config1, config2]);
       expect(result).toEqual({
         mcpServers: {
-          server1: { type: 'stdio', command: 'cmd1' },
-          server2: { type: 'sse', url: 'http://example.com' },
+          server1: { name: 'server1', type: 'stdio', command: 'cmd1' },
+          server2: { name: 'server2', type: 'sse', url: 'http://example.com' },
         },
         providers: {
           default: 'anthropic',
@@ -277,6 +281,7 @@ describe('merging', () => {
       const config1: Configuration = {
         mcpServers: {
           server1: {
+            name: 'server1',
             type: 'stdio',
             command: 'old-command',
           },
@@ -286,6 +291,7 @@ describe('merging', () => {
       const config2: Configuration = {
         mcpServers: {
           server1: {
+            name: 'server1',
             type: 'stdio',
             command: 'new-command',
             args: ['--verbose'],
@@ -296,6 +302,7 @@ describe('merging', () => {
       const result = mergeConfigurations([config1, config2]);
       expect(result.mcpServers).toEqual({
         server1: {
+          name: 'server1',
           type: 'stdio',
           command: 'new-command',
           args: ['--verbose'],

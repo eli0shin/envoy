@@ -36,6 +36,7 @@ describe('DisabledTools Regression Tests', () => {
       },
       mcpServers: {
         'brave-search': {
+          name: 'brave-search',
           type: 'stdio',
           command: 'docker',
           args: [
@@ -52,6 +53,7 @@ describe('DisabledTools Regression Tests', () => {
           disabledTools: ['brave_local_search'], // This was being dropped!
         },
         fetch: {
+          name: 'fetch',
           type: 'stdio',
           command: 'uvx',
           args: ['mcp-server-fetch'],
@@ -81,6 +83,7 @@ describe('DisabledTools Regression Tests', () => {
     const userConfig: Configuration = {
       mcpServers: {
         'test-server': {
+          name: 'test-server',
           type: 'stdio',
           command: 'test',
           args: ['arg1'],
@@ -110,6 +113,7 @@ describe('DisabledTools Regression Tests', () => {
     const userConfig: Configuration = {
       mcpServers: {
         'sse-server': {
+          name: 'sse-server',
           type: 'sse',
           url: 'https://example.com/mcp',
           headers: { Authorization: 'Bearer token' },
@@ -134,6 +138,7 @@ describe('DisabledTools Regression Tests', () => {
     const userConfig: Configuration = {
       mcpServers: {
         'minimal-server': {
+          name: 'minimal-server',
           type: 'stdio',
           command: 'minimal',
           // No enhanced fields defined

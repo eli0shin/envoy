@@ -3,7 +3,7 @@
  * Creates tools for prompt and resource access from MCP servers
  */
 
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import type {
   GetPromptResult,
   ReadResourceResult,
@@ -63,7 +63,7 @@ export function createPromptTools(
   // List prompts tool
   tools.push({
     description: `List available prompts from ${serverName}`,
-    parameters: z.object({}) as z.ZodType<unknown>,
+    inputSchema: z.object({}) as z.ZodType<unknown>,
     execute: async () => {
       return { result: JSON.stringify(prompts, null, 2) };
     },
@@ -75,7 +75,7 @@ export function createPromptTools(
   // Get/execute prompt tool
   tools.push({
     description: `Get and execute a prompt from ${serverName}`,
-    parameters: z.object({
+    inputSchema: z.object({
       name: z.string().describe('Name of the prompt to execute'),
       arguments: z
         .record(z.any())
@@ -128,7 +128,7 @@ export function createResourceTools(
   // List resources tool
   tools.push({
     description: `List available resources from ${serverName}`,
-    parameters: z.object({}) as z.ZodType<unknown>,
+    inputSchema: z.object({}) as z.ZodType<unknown>,
     execute: async () => {
       return { result: JSON.stringify(resources, null, 2) };
     },
@@ -142,7 +142,7 @@ export function createResourceTools(
   // Read resource tool
   tools.push({
     description: `Read content from a resource in ${serverName}`,
-    parameters: z.object({
+    inputSchema: z.object({
       uri: z.string().describe('URI of the resource to read'),
     }),
     execute: async (args: unknown) => {

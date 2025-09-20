@@ -6,7 +6,7 @@ import { useModalState } from './ModalProvider.js';
 import { colors } from '../theme.js';
 import { commandRegistry } from '../commands/registry.js';
 import { parseFilePattern } from '../utils/inputParser.js';
-import type { CoreMessage } from 'ai';
+import type { ModelMessage } from 'ai';
 
 type InputAreaProps = {
   onSubmit: (message: string) => void;
@@ -17,7 +17,7 @@ type InputAreaProps = {
   setHistoryIndex: (index: number) => void;
   originalInput: string;
   setOriginalInput: (input: string) => void;
-  queuedMessages: (CoreMessage & { id: string })[];
+  queuedMessages: (ModelMessage & { id: string })[];
   onQueuePop: () => string | null;
 };
 

@@ -19,7 +19,7 @@ describe('Tool Filtering', () => {
   describe('isToolDisabled', () => {
     const mockTool: WrappedTool = {
       description: 'Test tool',
-      parameters: {} as WrappedTool['parameters'],
+      inputSchema: {} as WrappedTool['inputSchema'],
       execute: vi.fn(),
       originalExecute: vi.fn(),
       serverName: 'test-server',

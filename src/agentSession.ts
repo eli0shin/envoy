@@ -3,7 +3,7 @@
  * Handles expensive setup operations that can be cached for reuse
  */
 
-import { LanguageModel } from 'ai';
+import { LanguageModelV2 } from '@ai-sdk/provider';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
 import { createOpenRouter } from '@openrouter/ai-sdk-provider';
@@ -31,7 +31,7 @@ import { ConversationPersistence } from './persistence/ConversationPersistence.j
  * Agent session containing all pre-initialized setup state
  */
 export type AgentSession = {
-  model: LanguageModel;
+  model: LanguageModelV2;
   tools: Record<string, WrappedTool>;
   systemPrompt: string | string[];
   mcpClients: MCPClientWrapper[];
@@ -44,7 +44,7 @@ export type AgentSession = {
  */
 async function createModelProvider(
   config: RuntimeConfiguration
-): Promise<{ model: LanguageModel; authInfo: AuthenticationInfo }> {
+): Promise<{ model: LanguageModelV2; authInfo: AuthenticationInfo }> {
   const defaultProvider = config.providers.default;
   const providerConfig =
     config.providers[defaultProvider as keyof typeof config.providers];

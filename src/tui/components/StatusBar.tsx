@@ -1,7 +1,7 @@
 import { fg } from '@opentui/core';
 import { statusColors, colors } from '../theme.js';
 import type { AgentSession } from '../../agentSession.js';
-import type { CoreMessage } from 'ai';
+import type { ModelMessage } from 'ai';
 
 type Status = 'READY' | 'PROCESSING';
 
@@ -9,7 +9,7 @@ type StatusBarProps = {
   status: Status;
   session: AgentSession;
   exitConfirmation?: boolean;
-  queuedMessages?: (CoreMessage & { id: string })[];
+  queuedMessages?: (ModelMessage & { id: string })[];
 };
 
 export function StatusBar({

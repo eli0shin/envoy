@@ -1,12 +1,12 @@
 import { useRef, useEffect } from 'react';
 import { Message } from './Message.js';
-import type { CoreMessage } from 'ai';
+import type { ModelMessage } from 'ai';
 import type { ScrollBoxRenderable } from '@opentui/core';
 import { useKeys, parseKeys } from '../keys/index.js';
 
 type MessageListProps = {
-  messages: (CoreMessage & { id: string })[];
-  queuedMessages: (CoreMessage & { id: string })[];
+  messages: (ModelMessage & { id: string })[];
+  queuedMessages: (ModelMessage & { id: string })[];
   width: number;
   key: string;
 };
@@ -90,9 +90,9 @@ export function MessageList({
   );
 
   const renderMessage = (
-    message: CoreMessage & { id: string },
+    message: ModelMessage & { id: string },
     messageIndex: number,
-    allMessages: (CoreMessage & { id: string })[],
+    allMessages: (ModelMessage & { id: string })[],
     consumedMessageIndices: Set<number>
   ) => {
     // Handle content based on type - can be string or array of parts
@@ -114,9 +114,6 @@ export function MessageList({
         displayContent = part.text;
       } else if (part?.type === 'reasoning' && 'text' in part) {
         displayContent = part.text;
-        contentType = 'reasoning';
-      } else if (part?.type === 'redacted-reasoning') {
-        displayContent = '[Reasoning redacted]';
         contentType = 'reasoning';
       } else if (
         part?.type === 'tool-call' &&
@@ -156,7 +153,7 @@ export function MessageList({
 
         const toolData = {
           toolName: part.toolName,
-          args: part.args,
+          args: part.input,
           result:
             matchingResult ?
               'result' in matchingResult ?
@@ -166,13 +163,13 @@ export function MessageList({
           isError:
             matchingResult ?
               'isError' in matchingResult ?
-                matchingResult.isError
+                Boolean(matchingResult.isError)
               : false
             : undefined,
         };
 
         // Create message with tool data for custom component rendering
-        const partMessage: CoreMessage & { toolData?: typeof toolData } = {
+        const partMessage: ModelMessage & { toolData?: typeof toolData } = {
           role: 'assistant',
           content: '', // Empty since component will render
           toolData,
@@ -197,7 +194,7 @@ export function MessageList({
       }
 
       if (displayContent) {
-        const partMessage: CoreMessage = {
+        const partMessage: ModelMessage = {
           role: 'assistant',
           content: displayContent,
         };

@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { ZodType, ZodTypeDef } from 'zod';
+import { ZodType, ZodTypeDef } from 'zod/v3';
 import { createMCPClientWrapperFromData } from './clientWrapperFactory.js';
 import type {
   MCPClientWrapper,
@@ -37,7 +37,7 @@ function createMockTool(name: string, serverName = 'test-server'): WrappedTool {
     toolName: name,
     serverName,
     description: `Test tool ${name}`,
-    parameters: {} as ZodType<unknown, ZodTypeDef, unknown>,
+    inputSchema: {} as ZodType<unknown, ZodTypeDef, unknown>,
     execute: vi.fn(),
     originalExecute: vi.fn(),
   };

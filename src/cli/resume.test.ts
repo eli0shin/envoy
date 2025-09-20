@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { promises as fs } from 'fs';
 import { ConversationPersistence } from '../persistence/ConversationPersistence.js';
-import type { CoreMessage } from 'ai';
+import type { ModelMessage } from 'ai';
 
 describe('CLI Resume Functionality - Real Code Tests', () => {
   let mockFs: typeof fs;
@@ -243,7 +243,7 @@ describe('CLI Resume Functionality - Real Code Tests', () => {
 
   describe('Message completion validation', () => {
     it('should correctly identify complete user messages', () => {
-      const userMessage: CoreMessage = {
+      const userMessage: ModelMessage = {
         role: 'user',
         content: 'Any user message is complete',
       };
@@ -252,7 +252,7 @@ describe('CLI Resume Functionality - Real Code Tests', () => {
     });
 
     it('should correctly identify complete assistant messages', () => {
-      const assistantMessage: CoreMessage = {
+      const assistantMessage: ModelMessage = {
         role: 'assistant',
         content: 'Regular assistant response',
       };
@@ -268,7 +268,7 @@ describe('CLI Resume Functionality - Real Code Tests', () => {
         content: 'Final thought',
         thinking: true,
         isThinkingComplete: true,
-      } as CoreMessage;
+      } as ModelMessage;
 
       expect(ConversationPersistence.isMessageComplete(completeThinking)).toBe(
         true

@@ -3,7 +3,7 @@
  * Ensures configuration files follow the correct structure
  */
 
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 /**
  * Provider configuration schema

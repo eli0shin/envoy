@@ -16,8 +16,8 @@ import type {
 } from '@openrouter/ai-sdk-provider';
 import type { AnthropicProvider } from '@ai-sdk/anthropic';
 import type { OpenAIProvider } from '@ai-sdk/openai';
-import { MockLanguageModelV1 } from 'ai/test';
-import { z } from 'zod';
+import { MockLanguageModelV2 } from 'ai/test';
+import { z } from 'zod/v3';
 import type { MCPClientWrapper, WrappedTool } from './types/index.js';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
@@ -202,17 +202,16 @@ describe('agentSession', () => {
 
   describe('initializeAgentSession', () => {
     it('should initialize with OpenAI provider', async () => {
-      const mockModel = new MockLanguageModelV1({
+      const mockModel = new MockLanguageModelV2({
         modelId: 'gpt-4',
         provider: 'openai',
-        defaultObjectGenerationMode: 'json',
         doGenerate: vi.fn(),
         doStream: vi.fn(),
       });
       const mockTools: Record<string, WrappedTool> = {
         testTool: {
           description: 'Test tool',
-          parameters: {
+          inputSchema: {
             parse: vi.fn(),
             safeParse: vi.fn(),
             _def: { typeName: 'ZodObject' },
@@ -255,14 +254,20 @@ describe('agentSession', () => {
         imageModel: vi.fn().mockReturnValue(mockModel),
         transcription: vi.fn().mockReturnValue(mockModel),
         speech: vi.fn().mockReturnValue(mockModel),
-        tools: { webSearchPreview: vi.fn() },
+        tools: {
+          webSearchPreview: vi.fn(),
+          codeInterpreter: vi.fn(),
+          fileSearch: vi.fn(),
+          imageGeneration: vi.fn(),
+          webSearch: vi.fn()
+        },
         betaChat: vi.fn().mockReturnValue(mockModel),
         betaChatCompletions: vi.fn().mockReturnValue(mockModel),
         betaCompletions: vi.fn().mockReturnValue(mockModel),
         betaEmbeddings: vi.fn().mockReturnValue(mockModel),
         betaFiles: vi.fn().mockReturnValue(mockModel),
       });
-      vi.mocked(createOpenAI).mockReturnValue(mockProvider as OpenAIProvider);
+      vi.mocked(createOpenAI).mockReturnValue(mockProvider as unknown as ReturnType<typeof createOpenAI>);
       vi.mocked(buildSystemPrompt).mockReturnValue('System prompt');
       vi.mocked(getMCPServersFromConfig).mockReturnValue([]);
       vi.mocked(loadSystemPromptContent).mockResolvedValue(
@@ -305,10 +310,9 @@ describe('agentSession', () => {
     });
 
     it('should initialize with OpenRouter provider', async () => {
-      const mockModel = new MockLanguageModelV1({
+      const mockModel = new MockLanguageModelV2({
         modelId: 'google/gemini-2.0-flash-exp',
         provider: 'openrouter',
-        defaultObjectGenerationMode: 'json',
         doGenerate: vi.fn(),
         doStream: vi.fn(),
       });
@@ -351,7 +355,7 @@ describe('agentSession', () => {
       const mockTools: Record<string, WrappedTool> = {
         testTool: {
           description: 'Test tool',
-          parameters: {
+          inputSchema: {
             parse: vi.fn(),
             safeParse: vi.fn(),
             _def: { typeName: 'ZodObject' },
@@ -404,11 +408,10 @@ describe('agentSession', () => {
 
     it('should initialize with Anthropic provider', async () => {
       const mockFetch = createMockFetch();
-      const mockModel = new MockLanguageModelV1({
+      const mockModel = new MockLanguageModelV2({
         provider: 'anthropic',
         modelId: 'claude-3-sonnet-20240229',
-        supportsUrl: vi.fn().mockReturnValue(true),
-        defaultObjectGenerationMode: 'json',
+        supportedUrls: { '*': [/.*/] },
         doGenerate: vi.fn(),
         doStream: vi.fn(),
       });
@@ -440,6 +443,7 @@ describe('agentSession', () => {
             supportsParallelCalls: false,
             doEmbed: vi.fn(),
           }),
+          imageModel: vi.fn().mockReturnValue(mockModel),
           tools: {
             bash_20241022: vi.fn(),
             bash_20250124: vi.fn(),
@@ -449,11 +453,11 @@ describe('agentSession', () => {
             computer_20250124: vi.fn(),
           },
         }
-      ) as AnthropicProvider;
+      ) as unknown as AnthropicProvider;
       const mockTools: Record<string, WrappedTool> = {
         testTool: {
           description: 'Test tool',
-          parameters: {
+          inputSchema: {
             parse: vi.fn(),
             safeParse: vi.fn(),
             _def: { typeName: 'ZodObject' },
@@ -521,11 +525,10 @@ describe('agentSession', () => {
 
     it('should not pass API key when OAuth credentials exist', async () => {
       const mockFetch = createMockFetch();
-      const mockModel = new MockLanguageModelV1({
+      const mockModel = new MockLanguageModelV2({
         provider: 'anthropic',
         modelId: 'claude-3-sonnet-20240229',
-        supportsUrl: vi.fn().mockReturnValue(true),
-        defaultObjectGenerationMode: 'json',
+        supportedUrls: { '*': [/.*/] },
         doGenerate: vi.fn(),
         doStream: vi.fn(),
       });
@@ -557,6 +560,7 @@ describe('agentSession', () => {
             supportsParallelCalls: false,
             doEmbed: vi.fn(),
           }),
+          imageModel: vi.fn().mockReturnValue(mockModel),
           tools: {
             bash_20241022: vi.fn(),
             bash_20250124: vi.fn(),
@@ -566,11 +570,11 @@ describe('agentSession', () => {
             computer_20250124: vi.fn(),
           },
         }
-      ) as AnthropicProvider;
+      ) as unknown as AnthropicProvider;
       const mockTools: Record<string, WrappedTool> = {
         testTool: {
           description: 'Test tool',
-          parameters: {
+          inputSchema: {
             parse: vi.fn(),
             safeParse: vi.fn(),
             _def: { typeName: 'ZodObject' },
@@ -653,12 +657,15 @@ describe('agentSession', () => {
           embedding: vi.fn().mockReturnValue({ name: 'gemini' }),
           textEmbedding: vi.fn().mockReturnValue({ name: 'gemini' }),
           textEmbeddingModel: vi.fn().mockReturnValue({ name: 'gemini' }),
+          image: vi.fn().mockReturnValue({ name: 'gemini' }),
+          imageModel: vi.fn().mockReturnValue({ name: 'gemini' }),
+          tools: {},
         }
       );
       const mockTools: Record<string, WrappedTool> = {
         testTool: {
           description: 'Test tool',
-          parameters: {
+          inputSchema: {
             parse: vi.fn(),
             safeParse: vi.fn(),
             _def: { typeName: 'ZodObject' },
@@ -686,7 +693,7 @@ describe('agentSession', () => {
       ];
 
       vi.mocked(createGoogleAuthConfig).mockReturnValue(mockAuthConfig);
-      vi.mocked(createGoogleGenerativeAI).mockReturnValue(mockProvider);
+      vi.mocked(createGoogleGenerativeAI).mockReturnValue(mockProvider as unknown as ReturnType<typeof createGoogleGenerativeAI>);
       vi.mocked(buildSystemPrompt).mockReturnValue('System prompt');
       vi.mocked(getMCPServersFromConfig).mockReturnValue([]);
       vi.mocked(loadSystemPromptContent).mockResolvedValue(
@@ -765,7 +772,13 @@ describe('agentSession', () => {
           imageModel: vi.fn().mockReturnValue({ name: 'o4-mini' }),
           transcription: vi.fn().mockReturnValue({ name: 'o4-mini' }),
           speech: vi.fn().mockReturnValue({ name: 'o4-mini' }),
-          tools: { webSearchPreview: vi.fn() },
+          tools: {
+          webSearchPreview: vi.fn(),
+          codeInterpreter: vi.fn(),
+          fileSearch: vi.fn(),
+          imageGeneration: vi.fn(),
+          webSearch: vi.fn()
+        },
           betaChat: vi.fn().mockReturnValue({ name: 'o4-mini' }),
           betaChatCompletions: vi.fn().mockReturnValue({ name: 'o4-mini' }),
           betaCompletions: vi.fn().mockReturnValue({ name: 'o4-mini' }),
@@ -773,7 +786,7 @@ describe('agentSession', () => {
           betaFiles: vi.fn().mockReturnValue({ name: 'o4-mini' }),
         }
       );
-      vi.mocked(createOpenAI).mockReturnValue(mockProvider);
+      vi.mocked(createOpenAI).mockReturnValue(mockProvider as unknown as ReturnType<typeof createOpenAI>);
       vi.mocked(buildSystemPrompt).mockReturnValue('System prompt');
       vi.mocked(getMCPServersFromConfig).mockReturnValue([]);
       vi.mocked(loadSystemPromptContent).mockResolvedValue(
@@ -823,10 +836,16 @@ describe('agentSession', () => {
           imageModel: vi.fn().mockReturnValue({ name: 'gpt-4' }),
           transcription: vi.fn().mockReturnValue({ name: 'gpt-4' }),
           speech: vi.fn().mockReturnValue({ name: 'gpt-4' }),
-          tools: { webSearchPreview: vi.fn() },
+          tools: {
+          webSearchPreview: vi.fn(),
+          codeInterpreter: vi.fn(),
+          fileSearch: vi.fn(),
+          imageGeneration: vi.fn(),
+          webSearch: vi.fn()
+        },
         }
       );
-      vi.mocked(createOpenAI).mockReturnValue(mockProvider);
+      vi.mocked(createOpenAI).mockReturnValue(mockProvider as unknown as ReturnType<typeof createOpenAI>);
       vi.mocked(buildSystemPrompt).mockReturnValue('System prompt');
       vi.mocked(getMCPServersFromConfig).mockReturnValue([]);
       vi.mocked(loadSystemPromptContent).mockResolvedValue('Custom prompt');
@@ -896,7 +915,7 @@ describe('agentSession', () => {
       const mockTools: Record<string, WrappedTool> = {
         testTool: {
           description: 'Test tool',
-          parameters: {
+          inputSchema: {
             parse: vi.fn(),
             safeParse: vi.fn(),
             _def: { typeName: 'ZodObject' },
@@ -927,10 +946,16 @@ describe('agentSession', () => {
           imageModel: vi.fn().mockReturnValue({ name: 'gpt-4' }),
           transcription: vi.fn().mockReturnValue({ name: 'gpt-4' }),
           speech: vi.fn().mockReturnValue({ name: 'gpt-4' }),
-          tools: { webSearchPreview: vi.fn() },
+          tools: {
+          webSearchPreview: vi.fn(),
+          codeInterpreter: vi.fn(),
+          fileSearch: vi.fn(),
+          imageGeneration: vi.fn(),
+          webSearch: vi.fn()
+        },
         }
       );
-      vi.mocked(createOpenAI).mockReturnValue(mockProvider);
+      vi.mocked(createOpenAI).mockReturnValue(mockProvider as unknown as ReturnType<typeof createOpenAI>);
       vi.mocked(buildSystemPrompt).mockReturnValue('System prompt');
       vi.mocked(getMCPServersFromConfig).mockReturnValue(mockMCPServers);
       vi.mocked(loadSystemPromptContent).mockResolvedValue(
@@ -986,10 +1011,16 @@ describe('agentSession', () => {
           imageModel: vi.fn().mockReturnValue({ name: 'gpt-4' }),
           transcription: vi.fn().mockReturnValue({ name: 'gpt-4' }),
           speech: vi.fn().mockReturnValue({ name: 'gpt-4' }),
-          tools: { webSearchPreview: vi.fn() },
+          tools: {
+          webSearchPreview: vi.fn(),
+          codeInterpreter: vi.fn(),
+          fileSearch: vi.fn(),
+          imageGeneration: vi.fn(),
+          webSearch: vi.fn()
+        },
         }
       );
-      vi.mocked(createOpenAI).mockReturnValue(mockProvider);
+      vi.mocked(createOpenAI).mockReturnValue(mockProvider as unknown as ReturnType<typeof createOpenAI>);
       vi.mocked(buildSystemPrompt).mockReturnValue('System prompt');
       vi.mocked(getMCPServersFromConfig).mockReturnValue([]);
       vi.mocked(loadSystemPromptContent).mockResolvedValue(
@@ -1139,7 +1170,7 @@ describe('agentSession', () => {
         },
       });
 
-      vi.mocked(createOpenAI).mockReturnValue(mockProvider);
+      vi.mocked(createOpenAI).mockReturnValue(mockProvider as unknown as ReturnType<typeof createOpenAI>);
       vi.mocked(buildSystemPrompt).mockReturnValue('System prompt');
       vi.mocked(getMCPServersFromConfig).mockReturnValue([]);
       vi.mocked(loadSystemPromptContent).mockResolvedValue(
@@ -1209,7 +1240,7 @@ describe('agentSession', () => {
         },
       });
 
-      vi.mocked(createOpenAI).mockReturnValue(mockProvider);
+      vi.mocked(createOpenAI).mockReturnValue(mockProvider as unknown as ReturnType<typeof createOpenAI>);
       vi.mocked(buildSystemPrompt).mockReturnValue('System prompt');
       vi.mocked(getMCPServersFromConfig).mockReturnValue([]);
       vi.mocked(loadSystemPromptContent).mockResolvedValue(
@@ -1274,7 +1305,7 @@ describe('agentSession', () => {
         },
       });
 
-      vi.mocked(createOpenAI).mockReturnValue(mockProvider);
+      vi.mocked(createOpenAI).mockReturnValue(mockProvider as unknown as ReturnType<typeof createOpenAI>);
       vi.mocked(buildSystemPrompt).mockReturnValue('System prompt');
       vi.mocked(getMCPServersFromConfig).mockReturnValue([]);
       vi.mocked(loadSystemPromptContent).mockResolvedValue(

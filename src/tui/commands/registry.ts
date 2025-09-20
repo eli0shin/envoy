@@ -1,4 +1,4 @@
-import type { CoreMessage } from 'ai';
+import type { ModelMessage } from 'ai';
 
 export type Command = {
   name: string;
@@ -65,7 +65,7 @@ export class CommandRegistry {
     };
   }
 
-  formatCommandMessage(commandInput: string): CoreMessage {
+  formatCommandMessage(commandInput: string): ModelMessage {
     return {
       role: 'user',
       content: `<user-command>${commandInput}</user-command><system-hint>Note: This is a command executed by the user. Do not respond to this command.</system-hint>`,

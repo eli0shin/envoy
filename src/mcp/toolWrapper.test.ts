@@ -13,7 +13,7 @@ import {
   beforeAll,
   afterAll,
 } from 'vitest';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { convertMCPSchemaToZod, createWrappedTool } from './toolWrapper.js';
 import type { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import { createMockClient } from '../test/helpers/createMocks.js';
@@ -206,7 +206,7 @@ describe('Tool Wrapper Module', () => {
       expect(result.description).toBe('A test tool');
       expect(result.execute).toBeInstanceOf(Function);
       expect(result.originalExecute).toBeInstanceOf(Function);
-      expect(result.parameters).toBeDefined();
+      expect(result.inputSchema).toBeDefined();
     });
 
     it('should use default description when tool description is missing', () => {
@@ -245,8 +245,8 @@ describe('Tool Wrapper Module', () => {
         'test-server'
       );
 
-      expect(result.parameters).toBeDefined();
-      expect(() => result.parameters.parse({})).not.toThrow();
+      expect(result.inputSchema).toBeDefined();
+      expect(() => result.inputSchema.parse({})).not.toThrow();
     });
 
     it('should execute tool successfully with valid arguments', async () => {

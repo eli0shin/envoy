@@ -4,7 +4,7 @@
  */
 
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import {
   executePrompt,
   readResourceContent,
@@ -165,7 +165,7 @@ describe('Capability Tool Factories', () => {
         'List available prompts from test-server'
       );
       expect(listTool?.serverName).toBe('test-server');
-      expect(listTool?.parameters).toBeInstanceOf(z.ZodObject);
+      expect(listTool?.inputSchema).toBeInstanceOf(z.ZodObject);
 
       // Check get_prompt tool
       const getTool = tools.find((t) => t.toolName === 'get_prompt');
@@ -174,7 +174,7 @@ describe('Capability Tool Factories', () => {
         'Get and execute a prompt from test-server'
       );
       expect(getTool?.serverName).toBe('test-server');
-      expect(getTool?.parameters).toBeInstanceOf(z.ZodObject);
+      expect(getTool?.inputSchema).toBeInstanceOf(z.ZodObject);
     });
 
     it('should execute list_prompts tool correctly', async () => {
@@ -306,7 +306,7 @@ describe('Capability Tool Factories', () => {
         'List available resources from test-server'
       );
       expect(listTool?.serverName).toBe('test-server');
-      expect(listTool?.parameters).toBeInstanceOf(z.ZodObject);
+      expect(listTool?.inputSchema).toBeInstanceOf(z.ZodObject);
 
       // Check read_resource tool
       const readTool = tools.find((t) => t.toolName === 'read_resource');
@@ -315,7 +315,7 @@ describe('Capability Tool Factories', () => {
         'Read content from a resource in test-server'
       );
       expect(readTool?.serverName).toBe('test-server');
-      expect(readTool?.parameters).toBeInstanceOf(z.ZodObject);
+      expect(readTool?.inputSchema).toBeInstanceOf(z.ZodObject);
     });
 
     it('should execute list_resources tool correctly', async () => {

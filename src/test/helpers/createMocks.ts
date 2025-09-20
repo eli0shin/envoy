@@ -6,7 +6,7 @@
 
 import { vi } from 'vitest';
 import type { ChildProcess } from 'child_process';
-import type { LanguageModel } from 'ai';
+import type { LanguageModelV2 } from '@ai-sdk/provider';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import type { SSEClientTransport } from '@modelcontextprotocol/sdk/client/sse.js';
@@ -290,12 +290,12 @@ export function createMockAgentSession(
   return {
     model: {
       modelId: 'claude-sonnet-4-20250514',
-      specificationVersion: 'v1',
+      specificationVersion: 'v2' as const,
       provider: 'anthropic',
-      defaultObjectGenerationMode: 'json',
+      supportedUrls: {},
       doGenerate: vi.fn(),
       doStream: vi.fn(),
-    } as LanguageModel,
+    } as LanguageModelV2,
     tools: {},
     systemPrompt: 'Test system prompt',
     mcpClients: [],
@@ -459,6 +459,7 @@ export function createMockAISDK() {
   return {
     generateText: vi.fn(),
     streamText: vi.fn(),
+    stepCountIs: vi.fn(),
     APICallError: { isInstance: vi.fn(() => false) },
     InvalidPromptError: { isInstance: vi.fn(() => false) },
     NoSuchProviderError: { isInstance: vi.fn(() => false) },
@@ -474,42 +475,116 @@ export function createMockAISDK() {
  * Creates a mock generate text result
  * Used for AI SDK mock centralization
  */
-export function createMockGenerateTextResult(overrides?: {
+import type { GenerateTextResult, ToolSet } from 'ai';
+
+export function createMockGenerateTextResult<
+  T extends ToolSet = ToolSet,
+>(overrides?: {
   text?: string;
   finishReason?: string;
-  usage?: {
-    totalTokens: number;
-    promptTokens: number;
-    completionTokens: number;
+  usage?:
+    | {
+        totalTokens: number;
+        promptTokens: number;
+        completionTokens: number;
+      }
+    | {
+        totalTokens: number;
+        inputTokens: number;
+        outputTokens: number;
+      };
+  messages?: Array<
+    | { role: 'assistant'; content: string }
+    | { role: 'user'; content: string }
+    | { role: 'system'; content: string }
+    | {
+        role: 'tool';
+        content: Array<{
+          type: 'tool-result';
+          toolCallId: string;
+          toolName: string;
+          output: unknown;
+        }>;
+      }
+  >;
+  toolResults?: Array<{
+    type: 'tool-result';
+    toolCallId: string;
+    toolName: string;
+    input: unknown;
+    output: unknown;
+    dynamic: true;
+  }>;
+}): GenerateTextResult<T, unknown> {
+  // Normalize the usage format
+  const usageData = overrides?.usage || {
+    totalTokens: 100,
+    inputTokens: 50,
+    outputTokens: 50,
   };
-  messages?: Array<{ role: string; content: string; id: string }>;
-  toolResults?: Array<unknown>;
-}) {
+
+  const inputTokens =
+    'inputTokens' in usageData ? usageData.inputTokens
+    : 'promptTokens' in usageData ? usageData.promptTokens
+    : 50;
+  const outputTokens =
+    'outputTokens' in usageData ? usageData.outputTokens
+    : 'completionTokens' in usageData ? usageData.completionTokens
+    : 50;
+
+  const usage = {
+    inputTokens,
+    outputTokens,
+    totalTokens: usageData.totalTokens,
+  };
+
   return {
     text: overrides?.text || 'Test response',
-    finishReason: overrides?.finishReason || 'stop',
-    usage: overrides?.usage || {
-      totalTokens: 100,
-      promptTokens: 50,
-      completionTokens: 50,
-    },
+    finishReason: (overrides?.finishReason || 'stop') as
+      | 'stop'
+      | 'length'
+      | 'content-filter'
+      | 'tool-calls'
+      | 'error'
+      | 'other'
+      | 'unknown',
+    usage,
+    totalUsage: usage,
     response: {
-      messages: overrides?.messages || [
+      messages: overrides?.messages
+        ?.filter((msg) => msg.role === 'assistant' || msg.role === 'tool')
+        .map((msg) => ({
+          role: msg.role,
+          content: msg.content,
+          providerOptions: undefined,
+        })) || [
         {
-          role: 'assistant',
+          role: 'assistant' as const,
           content: overrides?.text || 'Test response',
-          id: 'test-msg-id',
+          providerOptions: undefined,
         },
       ],
       id: 'test-id',
       timestamp: new Date(),
       modelId: 'test-model',
     },
-    toolResults: overrides?.toolResults || [],
-    reasoning: undefined,
+    content: [
+      { type: 'text' as const, text: overrides?.text || 'Test response' },
+    ],
+    reasoning: [],
+    reasoningText: undefined,
     files: [],
-    reasoningDetails: undefined,
-    sources: undefined,
+    sources: [],
+    toolCalls: [],
+    staticToolCalls: [],
+    dynamicToolCalls: [],
+    toolResults: overrides?.toolResults || [],
+    staticToolResults: [],
+    dynamicToolResults: overrides?.toolResults || [],
+    warnings: undefined,
+    request: {},
+    providerMetadata: undefined,
+    // Legacy properties for compatibility
     responseMessages: overrides?.messages || [
       {
         role: 'assistant',
@@ -519,14 +594,11 @@ export function createMockGenerateTextResult(overrides?: {
     ],
     roundtrips: [],
     steps: [],
-    request: {},
-    warnings: undefined,
     logprobs: undefined,
     experimental_providerMetadata: undefined,
     experimental_output: undefined,
-    toolCalls: [],
-    providerMetadata: undefined,
-  };
+    providerOptions: undefined,
+  } as GenerateTextResult<T, unknown>;
 }
 
 /**

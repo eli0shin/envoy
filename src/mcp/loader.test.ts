@@ -3,7 +3,7 @@
  */
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import {
   loadMCPTools,
   convertToolsForAISDK,
@@ -476,7 +476,7 @@ describe('mcpLoader', () => {
     it('should convert wrapped tools to AI SDK format', () => {
       const wrappedTool: WrappedTool = {
         description: 'Test tool',
-        parameters: z.object({ input: z.string() }),
+        inputSchema: z.object({ input: z.string() }),
         execute: vi.fn(),
         originalExecute: vi.fn(),
         serverName: 'test-server',
@@ -2135,7 +2135,7 @@ describe('mcpLoader', () => {
         description: 'Write content to a file',
         execute: vi.fn(),
         originalExecute: vi.fn(),
-        parameters: z.object({}),
+        inputSchema: z.object({}),
       };
 
       const mockServerConfig: MCPServerConfig = {

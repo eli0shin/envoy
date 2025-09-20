@@ -3,7 +3,7 @@
  * Provides tool wrapping functionality with logging, validation, and error handling
  */
 
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import type { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import type { WrappedTool } from '../types/index.js';
@@ -75,7 +75,7 @@ export function createWrappedTool(
   serverName: string
 ): WrappedTool {
   // Convert MCP tool schema to AI SDK CoreTool format for validation
-  const parameters =
+  const inputSchema =
     tool.inputSchema ?
       convertMCPSchemaToZod(tool.inputSchema as Record<string, unknown>)
     : z.object({});
@@ -93,7 +93,7 @@ export function createWrappedTool(
       // Validate arguments using Zod
       let validatedArgs: Record<string, unknown>;
       try {
-        validatedArgs = parameters.parse(args || {}) as Record<string, unknown>;
+        validatedArgs = inputSchema.parse(args || {}) as Record<string, unknown>;
       } catch (validationError) {
         const errorMsg = `Invalid arguments for tool ${tool.name}: ${validationError instanceof Error ? validationError.message : 'Validation failed'}`;
 
@@ -186,7 +186,7 @@ export function createWrappedTool(
 
   const wrappedTool: WrappedTool = {
     description: tool.description || `Tool ${tool.name} from ${serverName}`,
-    parameters,
+    inputSchema,
     execute,
     originalExecute: execute,
     serverName,

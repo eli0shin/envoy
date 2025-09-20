@@ -103,7 +103,7 @@ export const contentFormatters = {
     // Apply italic styling to reasoning content with darker color
     const italicChunks = parsed.chunks.map((chunk) => {
       // Preserve any existing styling but add italic and use reasoning color
-      return italic(fg(colors.reasoning)(chunk.text));
+      return italic(fg(colors.reasoningText)(chunk.text));
     });
     return new StyledText(italicChunks);
   },

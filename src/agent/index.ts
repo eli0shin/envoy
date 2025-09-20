@@ -5,14 +5,14 @@
 
 import {
   generateText,
-  CoreMessage,
+  ModelMessage,
   APICallError,
   InvalidPromptError,
   NoSuchProviderError,
-  InvalidToolArgumentsError,
+  InvalidArgumentError,
   NoSuchToolError,
-  ToolExecutionError,
   LanguageModel,
+  stepCountIs,
 } from 'ai';
 import { GENERATION_TIMEOUT_MS, MAX_GENERATION_RETRIES } from '../constants.js';
 import { AgentResult } from '../types/index.js';
@@ -38,7 +38,7 @@ export function createThinkingProviderOptions(
  * Logs messages from AI SDK response based on message type
  */
 function logResponseMessages(
-  messages: CoreMessage[],
+  messages: ModelMessage[],
   config: RuntimeConfiguration
 ): void {
   if (config.json) return;
@@ -51,7 +51,7 @@ function logResponseMessages(
         } else if (contentItem.type === 'text') {
           logger.logAssistantStep(contentItem.text);
         } else if (contentItem.type === 'tool-call') {
-          logger.logToolCallProgress(contentItem.toolName, contentItem.args);
+          logger.logToolCallProgress(contentItem.toolName, contentItem.input);
         }
       }
     }
@@ -63,18 +63,18 @@ function logResponseMessages(
  * Uses AI SDK naturally - no custom streaming or message transformation
  */
 export async function runAgent(
-  messagesOrUserMessage: CoreMessage[] | string,
+  messagesOrUserMessage: ModelMessage[] | string,
   config: RuntimeConfiguration,
   session: AgentSession,
   isInteractive: boolean = false,
-  onMessageUpdate?: (message: CoreMessage) => void
-): Promise<AgentResult & { messages?: CoreMessage[] }> {
+  onMessageUpdate?: (message: ModelMessage) => void
+): Promise<AgentResult & { messages?: ModelMessage[] }> {
   const startTime = Date.now();
   let hasToolErrors = false;
   let toolErrorMessage = '';
 
   // Handle both single message and conversation history
-  const messages: CoreMessage[] =
+  const messages: ModelMessage[] =
     Array.isArray(messagesOrUserMessage) ?
       [...messagesOrUserMessage]
     : [{ role: 'user', content: messagesOrUserMessage }];
@@ -126,12 +126,12 @@ export async function runAgent(
           system: systemConfig,
           messages: transformedMessages,
           tools,
-          maxSteps: 1, // Single step per call to get step-by-step updates
+          stopWhen: stepCountIs(1),
           maxRetries: MAX_GENERATION_RETRIES,
           abortSignal: AbortSignal.timeout(GENERATION_TIMEOUT_MS),
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           providerOptions: providerOptions as any,
-          headers: Object.keys(headers).length > 0 ? headers : undefined,
+          headers,
         });
 
         // Extract results from generateText response
@@ -239,9 +239,8 @@ export async function runAgent(
 
         // Tool errors - continue with error recovery
         if (
-          InvalidToolArgumentsError.isInstance(error) ||
-          NoSuchToolError.isInstance(error) ||
-          ToolExecutionError.isInstance(error)
+          InvalidArgumentError.isInstance(error) ||
+          NoSuchToolError.isInstance(error)
         ) {
           hasToolErrors = true;
           toolErrorMessage = errorMessage;
@@ -253,7 +252,8 @@ export async function runAgent(
           logger.warn('Step encountered tool error', {
             stepNumber: currentStep,
             errorMessage,
-            errorType: error.constructor.name,
+            errorType:
+              error instanceof Error ? error.constructor.name : 'Unknown',
           });
         } else {
           throw error;
@@ -317,6 +317,7 @@ export async function runAgent(
       error: errorMessage,
       toolCallsCount,
       executionTime,
+      messages,
       responseMessages: [], // No response messages when error occurs
     };
   }

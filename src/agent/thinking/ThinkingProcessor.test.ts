@@ -79,9 +79,7 @@ describe('ThinkingProcessor Module', () => {
 
         expect(result).toEqual({
           providerOptions: {},
-          headers: {
-            'anthropic-beta': 'interleaved-thinking-2025-05-14',
-          },
+          headers: {},
         });
       });
 
@@ -171,9 +169,7 @@ describe('ThinkingProcessor Module', () => {
               },
             },
           },
-          headers: {
-            'anthropic-beta': 'interleaved-thinking-2025-05-14',
-          },
+          headers: {},
         });
       });
     });

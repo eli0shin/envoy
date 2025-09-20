@@ -150,226 +150,101 @@ describe('ContentExtractor Module', () => {
     beforeEach(() => {
       mockModel = {
         modelId: 'test-model',
-        provider: {
-          toString: vi.fn(),
-        },
       } as unknown as LanguageModel;
-    });
-
-    describe('provider detection via provider.toString()', () => {
-      it('should detect anthropic provider from provider string', () => {
-        vi.mocked(mockModel.provider.toString).mockReturnValue(
-          'anthropic-provider'
-        );
-        const result = ContentExtractor.getProviderType(mockModel);
-        expect(result).toBe('anthropic');
-      });
-
-      it('should detect openai provider from provider string', () => {
-        vi.mocked(mockModel.provider.toString).mockReturnValue(
-          'openai-provider'
-        );
-        const result = ContentExtractor.getProviderType(mockModel);
-        expect(result).toBe('openai');
-      });
-
-      it('should detect google provider from provider string', () => {
-        vi.mocked(mockModel.provider.toString).mockReturnValue(
-          'google-provider'
-        );
-        const result = ContentExtractor.getProviderType(mockModel);
-        expect(result).toBe('google');
-      });
-
-      it('should handle provider string with partial matches', () => {
-        vi.mocked(mockModel.provider.toString).mockReturnValue(
-          'some-anthropic-service'
-        );
-        const result = ContentExtractor.getProviderType(mockModel);
-        expect(result).toBe('anthropic');
-      });
-
-      it('should be case sensitive for provider detection', () => {
-        vi.mocked(mockModel.provider.toString).mockReturnValue('ANTHROPIC');
-        const result = ContentExtractor.getProviderType(mockModel);
-        expect(result).toBe('anthropic'); // Should default to anthropic when no match
-      });
     });
 
     describe('provider detection via modelId patterns', () => {
       it('should detect anthropic from claude model ID', () => {
         const modelWithClaudeId = {
-          ...mockModel,
           modelId: 'claude-3-sonnet',
         } as LanguageModel;
-        vi.mocked(modelWithClaudeId.provider.toString).mockReturnValue(
-          'unknown-provider'
-        );
         const result = ContentExtractor.getProviderType(modelWithClaudeId);
         expect(result).toBe('anthropic');
       });
 
       it('should detect openai from gpt model ID', () => {
         const modelWithGptId = {
-          ...mockModel,
           modelId: 'gpt-4',
         } as LanguageModel;
-        vi.mocked(modelWithGptId.provider.toString).mockReturnValue(
-          'unknown-provider'
-        );
         const result = ContentExtractor.getProviderType(modelWithGptId);
         expect(result).toBe('openai');
       });
 
       it('should detect openai from o1 model ID', () => {
         const modelWithO1Id = {
-          ...mockModel,
           modelId: 'o1-preview',
         } as LanguageModel;
-        vi.mocked(modelWithO1Id.provider.toString).mockReturnValue(
-          'unknown-provider'
-        );
         const result = ContentExtractor.getProviderType(modelWithO1Id);
         expect(result).toBe('openai');
       });
 
       it('should detect openai from o3 model ID', () => {
         const modelWithO3Id = {
-          ...mockModel,
           modelId: 'o3-reasoning',
         } as LanguageModel;
-        vi.mocked(modelWithO3Id.provider.toString).mockReturnValue(
-          'unknown-provider'
-        );
         const result = ContentExtractor.getProviderType(modelWithO3Id);
         expect(result).toBe('openai');
       });
 
       it('should detect openai from o4 model ID', () => {
         const modelWithO4Id = {
-          ...mockModel,
           modelId: 'o4-turbo',
         } as LanguageModel;
-        vi.mocked(modelWithO4Id.provider.toString).mockReturnValue(
-          'unknown-provider'
-        );
         const result = ContentExtractor.getProviderType(modelWithO4Id);
         expect(result).toBe('openai');
       });
 
       it('should detect google from gemini model ID', () => {
         const modelWithGeminiId = {
-          ...mockModel,
           modelId: 'gemini-pro',
         } as LanguageModel;
-        vi.mocked(modelWithGeminiId.provider.toString).mockReturnValue(
-          'unknown-provider'
-        );
         const result = ContentExtractor.getProviderType(modelWithGeminiId);
         expect(result).toBe('google');
       });
 
       it('should handle model ID with partial matches', () => {
         const modelWithPartialId = {
-          ...mockModel,
           modelId: 'my-claude-model',
         } as LanguageModel;
-        vi.mocked(modelWithPartialId.provider.toString).mockReturnValue(
-          'unknown-provider'
-        );
         const result = ContentExtractor.getProviderType(modelWithPartialId);
         expect(result).toBe('anthropic');
       });
 
       it('should be case sensitive for model ID detection', () => {
         const modelWithUpperId = {
-          ...mockModel,
           modelId: 'CLAUDE-3',
         } as LanguageModel;
-        vi.mocked(modelWithUpperId.provider.toString).mockReturnValue(
-          'unknown-provider'
-        );
         const result = ContentExtractor.getProviderType(modelWithUpperId);
         expect(result).toBe('anthropic'); // Should default to anthropic when no match
       });
     });
 
     describe('fallback behavior', () => {
-      it('should default to anthropic when no provider or model ID matches', () => {
+      it('should default to anthropic when model ID does not match any pattern', () => {
         const modelWithUnknownId = {
-          ...mockModel,
           modelId: 'unknown-model',
-        } as unknown as LanguageModel;
-        vi.mocked(modelWithUnknownId.provider.toString).mockReturnValue(
-          'unknown-provider'
-        );
+        } as LanguageModel;
         const result = ContentExtractor.getProviderType(modelWithUnknownId);
         expect(result).toBe('anthropic');
       });
 
-      it('should handle missing provider property', () => {
-        const modelWithoutProvider = {
-          modelId: 'test-model',
-        } as unknown as LanguageModel;
-        const result = ContentExtractor.getProviderType(modelWithoutProvider);
-        expect(result).toBe('anthropic');
-      });
-
       it('should handle missing modelId property', () => {
-        const modelWithoutId = {
-          provider: {
-            toString: vi.fn().mockReturnValue('unknown-provider'),
-          },
-        } as unknown as LanguageModel;
+        const modelWithoutId = {} as LanguageModel;
         const result = ContentExtractor.getProviderType(modelWithoutId);
         expect(result).toBe('anthropic');
       });
 
-      it('should handle provider without toString method', () => {
-        const modelWithInvalidProvider = {
-          modelId: 'test-model',
-          provider: {},
-        } as unknown as LanguageModel;
-        const result = ContentExtractor.getProviderType(
-          modelWithInvalidProvider
-        );
+      it('should handle string model input', () => {
+        const result = ContentExtractor.getProviderType('claude-3-sonnet' as unknown as LanguageModel);
         expect(result).toBe('anthropic');
       });
 
-      it('should handle provider toString throwing error', () => {
-        vi.mocked(mockModel.provider.toString).mockImplementation(() => {
-          throw new Error('toString failed');
-        });
-        const result = ContentExtractor.getProviderType(mockModel);
-        expect(result).toBe('anthropic');
-      });
-    });
-
-    describe('provider precedence', () => {
-      it('should prefer provider string over model ID', () => {
-        const modelWithClaudeId = {
-          ...mockModel,
-          modelId: 'claude-3-sonnet',
-        } as LanguageModel;
-        vi.mocked(modelWithClaudeId.provider.toString).mockReturnValue(
-          'openai-provider'
-        );
-        const result = ContentExtractor.getProviderType(modelWithClaudeId);
-        expect(result).toBe('openai');
-      });
-
-      it('should fall back to model ID when provider string is not recognized', () => {
-        const modelWithGptId = {
-          ...mockModel,
-          modelId: 'gpt-4',
-        } as LanguageModel;
-        vi.mocked(modelWithGptId.provider.toString).mockReturnValue(
-          'unknown-provider'
-        );
-        const result = ContentExtractor.getProviderType(modelWithGptId);
+      it('should handle string model input with openai pattern', () => {
+        const result = ContentExtractor.getProviderType('gpt-4' as unknown as LanguageModel);
         expect(result).toBe('openai');
       });
     });
+
 
     describe('edge cases', () => {
       it('should handle null model', () => {

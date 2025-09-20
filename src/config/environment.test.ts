@@ -129,6 +129,7 @@ describe('environment', () => {
       const config: Configuration = {
         mcpServers: {
           testServer: {
+            name: 'testServer',
             type: 'stdio',
             command: 'npm',
             args: ['run', '${TEST_ARG}'],

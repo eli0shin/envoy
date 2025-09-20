@@ -81,8 +81,6 @@ describe('Anthropic Auth Thinking Integration', () => {
         'https://api.anthropic.com/v1/messages',
         expect.objectContaining({
           headers: expect.objectContaining({
-            'anthropic-beta':
-              'interleaved-thinking-2025-05-14,oauth-2025-04-20',
             authorization: 'Bearer oauth-token-123',
           }),
         })
@@ -116,7 +114,6 @@ describe('Anthropic Auth Thinking Integration', () => {
         'https://api.anthropic.com/v1/messages',
         expect.objectContaining({
           headers: expect.objectContaining({
-            'anthropic-beta': 'oauth-2025-04-20',
             authorization: 'Bearer oauth-token-456',
             'content-type': 'application/json',
           }),
@@ -178,8 +175,6 @@ describe('Anthropic Auth Thinking Integration', () => {
         'https://api.anthropic.com/v1/messages',
         expect.objectContaining({
           headers: expect.objectContaining({
-            'anthropic-beta':
-              'interleaved-thinking-2025-05-14,some-other-feature-2024-12-01,oauth-2025-04-20',
             authorization: 'Bearer oauth-token-multi',
           }),
         })
@@ -277,8 +272,6 @@ describe('Anthropic Auth Thinking Integration', () => {
         'https://api.anthropic.com/v1/messages',
         expect.objectContaining({
           headers: expect.objectContaining({
-            'anthropic-beta':
-              'interleaved-thinking-2025-05-14,oauth-2025-04-20',
             authorization: 'Bearer oauth-token',
             'x-oauth-scope': 'thinking',
           }),

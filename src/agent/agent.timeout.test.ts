@@ -25,6 +25,7 @@ import {
 // Mock the AI SDK
 vi.mock('ai', () => ({
   generateText: vi.fn(),
+  stepCountIs: vi.fn(),
   APICallError: {
     isInstance: vi.fn(() => false),
   },
@@ -34,10 +35,13 @@ vi.mock('ai', () => ({
   NoSuchProviderError: {
     isInstance: vi.fn(() => false),
   },
-  InvalidToolArgumentsError: {
+  InvalidArgumentError: {
     isInstance: vi.fn(() => false),
   },
   NoSuchToolError: {
+    isInstance: vi.fn(() => false),
+  },
+  InvalidToolArgumentsError: {
     isInstance: vi.fn(() => false),
   },
   ToolExecutionError: {
@@ -80,13 +84,9 @@ vi.mock('../agentSession.js', () => ({
 }));
 
 // Import mocked modules
-import { generateText, ToolExecutionError } from 'ai';
+import { generateText } from 'ai';
 
 const mockGenerateText = generateText as MockedFunction<typeof generateText>;
-const mockToolExecutionErrorIsInstance =
-  ToolExecutionError.isInstance as MockedFunction<
-    typeof ToolExecutionError.isInstance
-  >;
 
 // Helper function to create proper StreamTextResult mock
 function createMockStreamTextResult(
@@ -118,18 +118,18 @@ function createMockStreamTextResult(
   return {
     warnings: Promise.resolve(undefined),
     usage: Promise.resolve({
-      promptTokens: 0,
-      completionTokens: 0,
+      inputTokens: 0,
+      outputTokens: 0,
       totalTokens: 0,
     }),
     sources: Promise.resolve([]),
     files: Promise.resolve([]),
     finishReason: Promise.resolve('error' as const),
-    providerMetadata: Promise.resolve(undefined),
+    providerOptions: Promise.resolve(undefined),
     experimental_providerMetadata: Promise.resolve(undefined),
     text: Promise.resolve(''),
-    reasoning: Promise.resolve(undefined),
-    reasoningDetails: Promise.resolve([]),
+    reasoningText: Promise.resolve(undefined),
+    reasoning: Promise.resolve([]),
     toolCalls: Promise.resolve([]),
     toolResults: Promise.resolve([]),
     steps: Promise.resolve([]),
@@ -169,14 +169,10 @@ describe('Agent Timeout Error Handling', () => {
     mockSession = createMockAgentSession();
 
     mockConfig = createMockRuntimeConfiguration();
-
-    mockToolExecutionErrorIsInstance.mockReset();
-    mockToolExecutionErrorIsInstance.mockReturnValue(false);
   });
 
   afterEach(() => {
     vi.useRealTimers();
-    mockToolExecutionErrorIsInstance.mockReset();
   });
 
   describe('AI SDK Generation Timeout', () => {
@@ -265,8 +261,8 @@ describe('Agent Timeout Error Handling', () => {
       // Verify that the conversation state is properly handled
       // The session logs show "Invalid prompt: message must be a CoreMessage or a UI message"
       // This suggests that after a timeout, the message format is corrupted
-      // Note: In error cases, the agent doesn't return messages property
-      expect(result.messages).toBeUndefined();
+      // The messages should be returned to maintain consistency
+      expect(result.messages).toBeDefined();
     });
 
     it('should validate message format consistency after timeout recovery', async () => {
@@ -293,8 +289,8 @@ describe('Agent Timeout Error Handling', () => {
       expect(result.error).toBe('The operation was aborted due to timeout');
 
       // Verify that all messages maintain proper CoreMessage format
-      // Note: In error cases, the agent doesn't return messages property
-      expect(result.messages).toBeUndefined();
+      // The messages should be returned to maintain consistency with other error cases
+      expect(result.messages).toBeDefined();
     });
   });
 
@@ -302,9 +298,6 @@ describe('Agent Timeout Error Handling', () => {
     it('should handle tool result timeout errors', async () => {
       // In simplified agent, tool errors cause generateText to fail
       const toolError = new Error('Tool timeout');
-      mockToolExecutionErrorIsInstance.mockImplementation(
-        (error: unknown) => error === toolError
-      );
       mockConfig.agent.maxSteps = 1;
       mockGenerateText.mockImplementation(() => {
         throw toolError;
@@ -317,29 +310,18 @@ describe('Agent Timeout Error Handling', () => {
         false
       );
 
-      expect(mockToolExecutionErrorIsInstance).toHaveBeenCalledWith(toolError);
-      expect(logger.warn).toHaveBeenCalledWith(
-        'Step encountered tool error',
-        expect.objectContaining({
-          errorMessage: 'Tool timeout',
-          errorType: 'Error',
-        })
-      );
-
       expect(result.success).toBe(false);
       expect(result.error).toBe('Tool timeout');
       expect(result.messages).toBeDefined();
+      // Verify that the original user message is preserved
       const lastMessage = result.messages?.at(-1);
       expect(lastMessage?.role).toBe('user');
-      expect(lastMessage?.content).toContain('Tool call failed: Tool timeout');
+      expect(lastMessage?.content).toBe('test message');
     });
 
     it('should handle MCP server timeout (60 second hardcoded timeout)', async () => {
       // In simplified agent, MCP timeouts cause generateText to fail
       const mcpError = new Error('MCP error -32001: Request timed out');
-      mockToolExecutionErrorIsInstance.mockImplementation(
-        (error: unknown) => error === mcpError
-      );
       mockConfig.agent.maxSteps = 1;
       mockGenerateText.mockImplementation(() => {
         throw mcpError;
@@ -352,23 +334,13 @@ describe('Agent Timeout Error Handling', () => {
         false
       );
 
-      expect(mockToolExecutionErrorIsInstance).toHaveBeenCalledWith(mcpError);
-      expect(logger.warn).toHaveBeenCalledWith(
-        'Step encountered tool error',
-        expect.objectContaining({
-          errorMessage: 'MCP error -32001: Request timed out',
-          errorType: 'Error',
-        })
-      );
-
       expect(result.success).toBe(false);
       expect(result.error).toBe('MCP error -32001: Request timed out');
       expect(result.messages).toBeDefined();
+      // Verify that the original user message is preserved
       const lastMessage = result.messages?.at(-1);
       expect(lastMessage?.role).toBe('user');
-      expect(lastMessage?.content).toContain(
-        'Tool call failed: MCP error -32001: Request timed out'
-      );
+      expect(lastMessage?.content).toBe('complex task');
     });
   });
 

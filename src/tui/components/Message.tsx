@@ -1,7 +1,7 @@
 import { formatContent, formatBackground } from '../theme.js';
 import { getToolConfig } from '../toolFormatters/index.js';
 import { ErrorBoundary } from './ErrorBoundary.js';
-import type { CoreMessage } from 'ai';
+import type { ModelMessage } from 'ai';
 
 type ToolData = {
   toolName: string;
@@ -11,7 +11,7 @@ type ToolData = {
 };
 
 type MessageProps = {
-  message: CoreMessage & { toolData?: ToolData };
+  message: ModelMessage & { toolData?: ToolData };
   contentType?: 'normal' | 'reasoning' | 'tool';
   width: number;
   key: string;
@@ -51,7 +51,7 @@ export function Message({
     );
   }
 
-  const getDisplayContent = (message: CoreMessage): string => {
+  const getDisplayContent = (message: ModelMessage): string => {
     let content: string;
 
     if (typeof message.content === 'string') {
@@ -60,12 +60,12 @@ export function Message({
       // Extract text from array of content parts
       const textParts: string[] = [];
       for (const part of message.content) {
-        if (part?.type === 'text' && 'text' in part) {
+        if (!part || typeof part !== 'object' || !('type' in part)) continue;
+
+        if (part.type === 'text' && 'text' in part) {
           textParts.push(part.text);
-        } else if (part?.type === 'reasoning' && 'text' in part) {
+        } else if (part.type === 'reasoning' && 'text' in part) {
           textParts.push(part.text);
-        } else if (part?.type === 'redacted-reasoning') {
-          textParts.push('[Reasoning redacted]');
         }
       }
       content = textParts.join('\n');

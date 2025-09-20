@@ -4,14 +4,13 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import {
-  LanguageModel,
   APICallError,
   InvalidPromptError,
   NoSuchProviderError,
-  InvalidToolArgumentsError,
+  InvalidArgumentError,
   NoSuchToolError,
-  ToolExecutionError,
 } from 'ai';
+import type { LanguageModelV2 } from '@ai-sdk/provider';
 import { runAgent, formatExecutionSummary } from './index.js';
 import {
   initializeAgentSession,
@@ -24,12 +23,14 @@ import { logger } from '../logger.js';
 
 vi.mock('ai', () => ({
   generateText: vi.fn(),
+  stepCountIs: vi.fn(),
   APICallError: { isInstance: vi.fn(() => false) },
   InvalidPromptError: { isInstance: vi.fn(() => false) },
   NoSuchProviderError: { isInstance: vi.fn(() => false) },
   InvalidToolArgumentsError: { isInstance: vi.fn(() => false) },
   NoSuchToolError: { isInstance: vi.fn(() => false) },
   ToolExecutionError: { isInstance: vi.fn(() => false) },
+  InvalidArgumentError: { isInstance: vi.fn(() => false) },
 }));
 
 vi.mock('@ai-sdk/openai', () => ({
@@ -208,7 +209,14 @@ const mockCleanupAgentSession = cleanupAgentSession as ReturnType<typeof vi.fn>;
 // Helper function to create a mock agent session
 function createMockAgentSession(): AgentSession {
   return {
-    model: { modelId: 'mock-model' } as LanguageModel,
+    model: {
+      specificationVersion: 'v2' as const,
+      provider: 'mock',
+      modelId: 'mock-model',
+      supportedUrls: {},
+      doGenerate: vi.fn(),
+      doStream: vi.fn(),
+    } as LanguageModelV2,
     tools: {},
     systemPrompt: 'Test system prompt',
     mcpClients: [],
@@ -268,7 +276,10 @@ describe('agent', () => {
     mockConvertToolsForAISDK.mockReturnValue({});
 
     mockOpenAI.mockReturnValue(
-      () => ({ modelId: 'mock-model' }) as LanguageModel
+      () =>
+        ({
+          modelId: 'mock-model',
+        }) as LanguageModelV2
     );
 
     mockGenerateText.mockResolvedValue({
@@ -326,7 +337,7 @@ describe('agent', () => {
           'test-tool',
           {
             description: 'Test tool',
-            parameters: {},
+            inputSchema: {},
             execute: vi.fn(),
             originalExecute: vi.fn(),
             serverName: 'test-server',
@@ -341,7 +352,7 @@ describe('agent', () => {
         tools: {
           'test-tool': {
             description: 'Test tool',
-            parameters: {},
+            inputSchema: {},
             execute: vi.fn(),
             originalExecute: vi.fn(),
             serverName: 'test-server',
@@ -388,7 +399,14 @@ describe('agent', () => {
       // Create a session with custom model to simulate proper initialization
       const sessionWithCustomModel = {
         ...createMockAgentSession(),
-        model: { modelId: 'mock-openai-model' } as LanguageModel,
+        model: {
+          specificationVersion: 'v2' as const,
+          provider: 'openai',
+          modelId: 'mock-openai-model',
+          supportedUrls: {},
+          doGenerate: vi.fn(),
+          doStream: vi.fn(),
+        } as LanguageModelV2,
       };
 
       mockInitializeAgentSession.mockResolvedValue(sessionWithCustomModel);
@@ -440,9 +458,11 @@ describe('agent', () => {
             },
           ]),
           tools: {},
-          maxSteps: 1, // Now uses 1 step per call for step-by-step updates
-          maxRetries: expect.any(Number),
+          stopWhen: undefined, // stepCountIs(1) mock returns undefined
+          maxRetries: 3, // MAX_GENERATION_RETRIES constant
           abortSignal: expect.any(AbortSignal),
+          providerOptions: {}, // Empty object for default case
+          headers: {}, // Empty object for default case
         })
       );
     });
@@ -898,9 +918,6 @@ describe('agent', () => {
     it('should handle tool execution errors with error recovery', async () => {
       const toolError = new Error('Tool execution failed');
 
-      // Mock the error checking
-      vi.mocked(ToolExecutionError.isInstance).mockReturnValue(true);
-
       mockGenerateText.mockImplementation(() => {
         throw toolError;
       });
@@ -919,7 +936,7 @@ describe('agent', () => {
     it('should handle InvalidToolArgumentsError with error recovery', async () => {
       const invalidArgsError = new Error('Invalid tool arguments');
 
-      vi.mocked(InvalidToolArgumentsError.isInstance).mockReturnValue(true);
+      vi.mocked(InvalidArgumentError.isInstance).mockReturnValue(true);
 
       mockGenerateText.mockImplementation(() => {
         throw invalidArgsError;

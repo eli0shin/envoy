@@ -7,7 +7,7 @@ export const colors = {
   // Text colors
   primary: '#4fc1ff', // Header title, user messages
   processing: '#DCDCAA', // Processing status
-  reasoning: '#6B6B6B', // Reasoning/thinking content (darker gray)
+  reasoningText: '#6B6B6B', // Reasoning/thinking content (darker gray)
   success: '#89d185', // Ready status, assistant messages
   warning: '#FFD700', // Warning messages, exit confirmation
   muted: '#858585', // Session info display
@@ -54,7 +54,7 @@ export const roleColors = {
 // Content type color mappings
 export const contentTypeColors = {
   normal: colors.lightGray,
-  reasoning: colors.reasoning,
+  reasoningText: colors.reasoningText,
   tool: colors.accent,
 } as const;
 
@@ -62,7 +62,7 @@ export const contentTypeColors = {
 export const {
   primary,
   processing,
-  reasoning,
+  reasoningText,
   success,
   warning,
   muted,

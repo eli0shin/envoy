@@ -13,7 +13,7 @@ import { getSessionId } from './logger.js';
 /**
  * Default system prompt that defines the assistant's persona and operating guidelines
  */
-export const DEFAULT_SYSTEM_PROMPT = `You are a capable AI agent with access to various tools through the Model Context Protocol (MCP).
+export const DEFAULT_SYSTEM_PROMPT = `You are Envoy, a capable CLI AI agent with access to various tool.
 Your goal is to complete a task specified by the user.
 The task may be complex and require significant effort and thinking to complete.
 Your responsibility is to complete the task without requiring intervention from the user.

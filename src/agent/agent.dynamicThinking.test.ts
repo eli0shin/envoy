@@ -1,5 +1,5 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { LanguageModel, CoreMessage } from 'ai';
+import { LanguageModel, ModelMessage } from 'ai';
 import { generateText } from 'ai';
 import { RuntimeConfiguration } from '../config/types.js';
 import { createThinkingProviderOptions, runAgent } from './index.js';
@@ -11,12 +11,14 @@ import {
 // Mock the AI SDK
 vi.mock('ai', () => ({
   generateText: vi.fn(),
+  stepCountIs: vi.fn(),
   APICallError: { isInstance: vi.fn(() => false) },
   InvalidPromptError: { isInstance: vi.fn(() => false) },
   NoSuchProviderError: { isInstance: vi.fn(() => false) },
   InvalidToolArgumentsError: { isInstance: vi.fn(() => false) },
   NoSuchToolError: { isInstance: vi.fn(() => false) },
   ToolExecutionError: { isInstance: vi.fn(() => false) },
+  InvalidArgumentError: { isInstance: vi.fn(() => false) },
 }));
 
 describe('Agent Dynamic Thinking Integration', () => {
@@ -124,9 +126,7 @@ describe('Agent Dynamic Thinking Integration', () => {
 
       expect(result).toEqual({
         providerOptions: {},
-        headers: {
-          'anthropic-beta': 'interleaved-thinking-2025-05-14',
-        },
+        headers: {},
       });
     });
 
@@ -146,9 +146,7 @@ describe('Agent Dynamic Thinking Integration', () => {
             },
           },
         },
-        headers: {
-          'anthropic-beta': 'interleaved-thinking-2025-05-14',
-        },
+        headers: {},
       });
     });
 
@@ -297,7 +295,7 @@ describe('Agent Dynamic Thinking Integration', () => {
       expect(vi.mocked(generateText)).toHaveBeenCalledWith(
         expect.objectContaining({
           providerOptions: {},
-          headers: undefined,
+          headers: {},
         })
       );
     });
@@ -322,7 +320,7 @@ describe('Agent Dynamic Thinking Integration', () => {
               },
             },
           },
-          headers: undefined,
+          headers: {},
         })
       );
     });
@@ -340,9 +338,6 @@ describe('Agent Dynamic Thinking Integration', () => {
       expect(vi.mocked(generateText)).toHaveBeenCalledWith(
         expect.objectContaining({
           providerOptions: {},
-          headers: {
-            'anthropic-beta': 'interleaved-thinking-2025-05-14',
-          },
         })
       );
     });
@@ -356,7 +351,7 @@ describe('Agent Dynamic Thinking Integration', () => {
       } as RuntimeConfiguration;
 
       // Simulate a conversation with multiple user messages
-      const conversationMessages: CoreMessage[] = [
+      const conversationMessages: ModelMessage[] = [
         { role: 'user', content: 'Hello there' },
         { role: 'assistant', content: 'Hi! How can I help?' },
         { role: 'user', content: 'Think harder about this complex problem' }, // This should trigger high thinking
@@ -375,7 +370,7 @@ describe('Agent Dynamic Thinking Integration', () => {
               },
             },
           },
-          headers: undefined,
+          headers: {},
         })
       );
     });

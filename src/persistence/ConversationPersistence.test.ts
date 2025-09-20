@@ -5,7 +5,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { promises as fs } from 'fs';
 import { ConversationPersistence } from './ConversationPersistence.js';
-import type { CoreMessage } from 'ai';
+import type { ModelMessage } from 'ai';
 
 import { ensureDirectory } from '../shared/fileOperations.js';
 
@@ -111,7 +111,7 @@ describe('ConversationPersistence', () => {
     });
 
     it('should persist complete user messages', async () => {
-      const messages: CoreMessage[] = [
+      const messages: ModelMessage[] = [
         {
           role: 'user',
           content: 'Hello, help me implement a feature',
@@ -131,7 +131,7 @@ describe('ConversationPersistence', () => {
     });
 
     it('should persist complete assistant messages', async () => {
-      const messages: CoreMessage[] = [
+      const messages: ModelMessage[] = [
         {
           role: 'assistant',
           content: 'I can help you implement that feature.',
@@ -148,7 +148,7 @@ describe('ConversationPersistence', () => {
     });
 
     it('should filter out incomplete tool messages', async () => {
-      const messages: CoreMessage[] = [
+      const messages: ModelMessage[] = [
         {
           role: 'tool',
           content: [], // Empty content array - incomplete tool message
@@ -171,7 +171,7 @@ describe('ConversationPersistence', () => {
       const error = new Error('ENOSPC: no space left on device');
       vi.mocked(ensureDirectory).mockRejectedValue(error);
 
-      const messages: CoreMessage[] = [
+      const messages: ModelMessage[] = [
         {
           role: 'user',
           content: 'Test message',
@@ -190,7 +190,7 @@ describe('ConversationPersistence', () => {
     });
 
     it('should create correct JSONL format', async () => {
-      const messages: CoreMessage[] = [
+      const messages: ModelMessage[] = [
         {
           role: 'user',
           content: 'Test message',
@@ -216,10 +216,10 @@ describe('ConversationPersistence', () => {
     });
 
     it('should increment message index for incremental message arrays', async () => {
-      const firstMessages: CoreMessage[] = [
+      const firstMessages: ModelMessage[] = [
         { role: 'user', content: 'First message' },
       ];
-      const secondMessages: CoreMessage[] = [
+      const secondMessages: ModelMessage[] = [
         { role: 'user', content: 'First message' },
         { role: 'assistant', content: 'Second message' },
       ];
@@ -242,15 +242,15 @@ describe('ConversationPersistence', () => {
     });
 
     it('should avoid duplicate persistence when called with overlapping message arrays', async () => {
-      const userMessage: CoreMessage = {
+      const userMessage: ModelMessage = {
         role: 'user',
         content: 'User message',
       };
-      const assistantMessage: CoreMessage = {
+      const assistantMessage: ModelMessage = {
         role: 'assistant',
         content: 'Assistant response',
       };
-      const newUserMessage: CoreMessage = {
+      const newUserMessage: ModelMessage = {
         role: 'user',
         content: 'Second user message',
       };
@@ -542,7 +542,7 @@ describe('ConversationPersistence', () => {
 
   describe('isMessageComplete', () => {
     it('should return true for user messages', () => {
-      const message: CoreMessage = {
+      const message: ModelMessage = {
         role: 'user',
         content: 'Any user message is complete',
       };
@@ -551,7 +551,7 @@ describe('ConversationPersistence', () => {
     });
 
     it('should return true for assistant messages without thinking', () => {
-      const message: CoreMessage = {
+      const message: ModelMessage = {
         role: 'assistant',
         content: 'Regular assistant response',
       };
@@ -563,7 +563,7 @@ describe('ConversationPersistence', () => {
       const message = {
         role: 'unknown',
         content: 'Unknown message type',
-      } as unknown as CoreMessage;
+      } as unknown as ModelMessage;
 
       expect(ConversationPersistence.isMessageComplete(message)).toBe(false);
     });

@@ -62,15 +62,12 @@ export function createAnthropicAuthFetch(options: AuthOptions): FetchFunction {
           if (oauthToken) {
             headers.authorization = `Bearer ${oauthToken}`;
 
-            // Handle anthropic-beta header with comma-separated values
-            const existingBeta = headers['anthropic-beta'];
-            const oauthBeta = 'oauth-2025-04-20';
-            if (existingBeta && existingBeta !== oauthBeta) {
-              // Append OAuth beta to existing beta headers
-              headers['anthropic-beta'] = `${existingBeta},${oauthBeta}`;
-            } else {
-              headers['anthropic-beta'] = oauthBeta;
-            }
+            // Add required headers unconditionally
+            headers['Anthropic-Beta'] =
+              'claude-code-20250219,oauth-2025-04-20,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14';
+            headers['Anthropic-Dangerous-Direct-Browser-Access'] = 'true';
+            headers['User-Agent'] = 'claude-cli/1.0.119 (external, cli)';
+            headers['X-App'] = 'cli';
 
             // Remove x-api-key when using OAuth
             delete headers['x-api-key'];
@@ -175,3 +172,22 @@ export function createAnthropicAuthFetch(options: AuthOptions): FetchFunction {
     });
   };
 }
+
+// REAL headers that we want on the request
+// {
+//     "Anthropic-Beta": [
+//       "claude-code-20250219,oauth-2025-04-20,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14"
+//     ],
+//     "Anthropic-Dangerous-Direct-Browser-Access": [
+//       "true"
+//     ],
+//     "Anthropic-Version": [
+//       "2023-06-01"
+//     ],
+//     "User-Agent": [
+//       "claude-cli/1.0.119 (external, cli)"
+//     ],
+//     "X-App": [
+//       "cli"
+//     ],
+//   }

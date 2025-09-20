@@ -11,6 +11,7 @@ import {
   MCPClientWrapper,
   ServerInitResult,
 } from '../types/index.js';
+import { z } from 'zod';
 import type { RuntimeConfiguration } from '../config/types.js';
 import { logger } from '../logger.js';
 import { isToolDisabled } from './toolFiltering.js';
@@ -174,13 +175,14 @@ export async function loadMCPTools(
  */
 export function convertToolsForAISDK(
   tools: Map<string, WrappedTool>
-): Record<string, WrappedTool> {
-  const aiSDKTools: Record<string, WrappedTool> = {};
+): Record<string, any> {
+  const aiSDKTools: Record<string, any> = {};
 
   for (const [toolKey, tool] of Array.from(tools.entries())) {
     aiSDKTools[toolKey] = {
       description: tool.description,
-      parameters: tool.parameters,
+      inputSchema: tool.inputSchema,
+      parameters: tool.inputSchema, // AI SDK expects parameters property
       execute: tool.execute,
       originalExecute: tool.originalExecute,
       serverName: tool.serverName,

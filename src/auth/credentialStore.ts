@@ -3,7 +3,7 @@
  * Handles persistent storage of authentication credentials
  */
 
-import { z } from 'zod';
+import { z } from 'zod/v3';
 import { promises as fs } from 'fs';
 import * as os from 'os';
 import {

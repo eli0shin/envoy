@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { generateText } from 'ai';
-import { MockLanguageModelV1 } from 'ai/test';
+import { MockLanguageModelV2 } from 'ai/test';
 import { runAgent } from './index.js';
 import type { AgentSession } from '../agentSession.js';
 import type { RuntimeConfiguration } from '../config/types.js';
@@ -17,12 +17,14 @@ import {
 // Mock the AI SDK
 vi.mock('ai', () => ({
   generateText: vi.fn(),
+  stepCountIs: vi.fn(),
   APICallError: { isInstance: vi.fn(() => false) },
   InvalidPromptError: { isInstance: vi.fn(() => false) },
   NoSuchProviderError: { isInstance: vi.fn(() => false) },
   InvalidToolArgumentsError: { isInstance: vi.fn(() => false) },
   NoSuchToolError: { isInstance: vi.fn(() => false) },
   ToolExecutionError: { isInstance: vi.fn(() => false) },
+  InvalidArgumentError: { isInstance: vi.fn(() => false) },
 }));
 
 // Mock constants to ensure we have control over thinking configuration
@@ -204,10 +206,9 @@ describe('Agent Thinking Integration', () => {
 
       // Import and call runAgent to trigger streamText
       const mockSession: AgentSession = createMockAgentSession({
-        model: new MockLanguageModelV1({
+        model: new MockLanguageModelV2({
           provider: 'anthropic',
           modelId: 'claude-sonnet-4-20250514',
-          defaultObjectGenerationMode: 'json',
           doGenerate: vi.fn(),
           doStream: vi.fn(),
         }),
@@ -229,12 +230,9 @@ describe('Agent Thinking Integration', () => {
         mockSession
       );
 
-      // Verify streamText was called with thinking headers
+      // Verify streamText was called with thinking options
       expect(mockGenerateText).toHaveBeenCalledWith(
         expect.objectContaining({
-          headers: {
-            'anthropic-beta': 'interleaved-thinking-2025-05-14',
-          },
           providerOptions: expect.objectContaining({
             anthropic: {
               thinking: {

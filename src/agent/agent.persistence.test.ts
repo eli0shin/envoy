@@ -7,7 +7,7 @@ import { runAgent } from './index.js';
 import { generateText } from 'ai';
 import type { RuntimeConfiguration } from '../config/types.js';
 import type { AgentSession } from '../agentSession.js';
-import type { CoreMessage } from 'ai';
+import type { ModelMessage } from 'ai';
 import type { ConversationPersistence } from '../persistence/ConversationPersistence.js';
 import {
   createMockAgentSession,
@@ -17,12 +17,14 @@ import {
 // Mock the AI SDK
 vi.mock('ai', () => ({
   generateText: vi.fn(),
+  stepCountIs: vi.fn(),
   APICallError: { isInstance: vi.fn(() => false) },
   InvalidPromptError: { isInstance: vi.fn(() => false) },
   NoSuchProviderError: { isInstance: vi.fn(() => false) },
   InvalidToolArgumentsError: { isInstance: vi.fn(() => false) },
   NoSuchToolError: { isInstance: vi.fn(() => false) },
   ToolExecutionError: { isInstance: vi.fn(() => false) },
+  InvalidArgumentError: { isInstance: vi.fn(() => false) },
 }));
 
 // Use same structure as createMockLogger() but with test-specific overrides (avoids hoisting issues)
@@ -122,8 +124,8 @@ describe('runAgent conversation persistence integration', () => {
       createMockGenerateTextResult({
         text: 'Test response',
         messages: [
-          { role: 'user', content: 'Test input', id: 'user-msg' },
-          { role: 'assistant', content: 'Test response', id: 'assistant-msg' },
+          { role: 'user', content: 'Test input' },
+          { role: 'assistant', content: 'Test response' },
         ],
       })
     );
@@ -167,7 +169,7 @@ describe('runAgent conversation persistence integration', () => {
     });
 
     it('should persist messages from conversation history', async () => {
-      const conversationHistory: CoreMessage[] = [
+      const conversationHistory: ModelMessage[] = [
         { role: 'user', content: 'First message' },
         { role: 'assistant', content: 'First response' },
         { role: 'user', content: 'Second message' },

@@ -4,7 +4,7 @@ import {
 } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { completable } from '@modelcontextprotocol/sdk/server/completable.js';
-import { z } from 'zod';
+import { z } from 'zod/v3';
 
 // Create an MCP server
 const server = new McpServer({

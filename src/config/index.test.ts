@@ -202,16 +202,19 @@ describe('Configuration Helpers', () => {
     const config = {
       mcpServers: {
         filesystem: {
+          name: 'filesystem',
           type: 'stdio' as const,
           command: 'npx',
           args: ['-y', '@modelcontextprotocol/server-filesystem', '.'],
         },
         remote: {
+          name: 'remote',
           type: 'sse' as const,
           url: 'https://example.com/mcp',
           headers: { Authorization: 'Bearer token' },
         },
         disabled: {
+          name: 'disabled',
           type: 'stdio' as const,
           command: 'echo',
           disabled: true,
