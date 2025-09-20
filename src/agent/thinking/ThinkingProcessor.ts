@@ -3,7 +3,7 @@
  * Handles provider-specific thinking configuration and options
  */
 
-import type { LanguageModel } from 'ai';
+import type { LanguageModelV2 } from '@ai-sdk/provider';
 import { THINKING_CONFIG } from '../../constants.js';
 import { analyzeMessageForThinking } from '../../thinking/dynamicThinkingAnalyzer.js';
 import { ContentExtractor } from '../utils/ContentExtractor.js';
@@ -18,7 +18,7 @@ export class ThinkingProcessor {
    * Create provider options for thinking based on model and message analysis
    */
   static createThinkingProviderOptions(
-    model: LanguageModel,
+    model: LanguageModelV2,
     message?: string
   ): ThinkingProviderResult {
     const providerType = ContentExtractor.getProviderType(model);

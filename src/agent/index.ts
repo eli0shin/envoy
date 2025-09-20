@@ -11,9 +11,9 @@ import {
   NoSuchProviderError,
   InvalidArgumentError,
   NoSuchToolError,
-  LanguageModel,
   stepCountIs,
 } from 'ai';
+import type { LanguageModelV2 } from '@ai-sdk/provider';
 import { GENERATION_TIMEOUT_MS, MAX_GENERATION_RETRIES } from '../constants.js';
 import { AgentResult } from '../types/index.js';
 
@@ -28,7 +28,7 @@ import {
 } from './thinking/ThinkingProcessor.js';
 
 export function createThinkingProviderOptions(
-  model: LanguageModel,
+  model: LanguageModelV2,
   message?: string
 ): ThinkingProviderResult {
   return ThinkingProcessor.createThinkingProviderOptions(model, message);

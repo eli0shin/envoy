@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ThinkingProcessor } from './ThinkingProcessor.js';
-import type { LanguageModel } from 'ai';
+import type { LanguageModelV2 } from '@ai-sdk/provider';
 
 // Mock only the constants to control max budgets in tests
 vi.mock('../../constants.js', () => ({
@@ -20,10 +20,10 @@ vi.mock('../../constants.js', () => ({
 }));
 
 describe('ThinkingProcessor Module', () => {
-  let anthropicModel: LanguageModel;
-  let openaiModel: LanguageModel;
-  let googleModel: LanguageModel;
-  let unknownModel: LanguageModel;
+  let anthropicModel: LanguageModelV2;
+  let openaiModel: LanguageModelV2;
+  let googleModel: LanguageModelV2;
+  let unknownModel: LanguageModelV2;
 
   beforeEach(() => {
     anthropicModel = {
@@ -31,28 +31,28 @@ describe('ThinkingProcessor Module', () => {
       provider: {
         toString: vi.fn().mockReturnValue('anthropic'),
       },
-    } as unknown as LanguageModel;
+    } as unknown as LanguageModelV2;
 
     openaiModel = {
       modelId: 'gpt-4o',
       provider: {
         toString: vi.fn().mockReturnValue('openai'),
       },
-    } as unknown as LanguageModel;
+    } as unknown as LanguageModelV2;
 
     googleModel = {
       modelId: 'gemini-1.5-pro',
       provider: {
         toString: vi.fn().mockReturnValue('google'),
       },
-    } as unknown as LanguageModel;
+    } as unknown as LanguageModelV2;
 
     unknownModel = {
       modelId: 'unknown-model',
       provider: {
         toString: vi.fn().mockReturnValue('unknown-provider'),
       },
-    } as unknown as LanguageModel;
+    } as unknown as LanguageModelV2;
 
     vi.clearAllMocks();
   });
@@ -306,7 +306,7 @@ describe('ThinkingProcessor Module', () => {
 
       it('should handle null model gracefully (defaults to anthropic)', () => {
         const result = ThinkingProcessor.createThinkingProviderOptions(
-          null as unknown as LanguageModel,
+          null as unknown as LanguageModelV2,
           'think about this'
         );
 

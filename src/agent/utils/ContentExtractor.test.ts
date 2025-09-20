@@ -5,7 +5,7 @@
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { ContentExtractor } from './ContentExtractor.js';
-import type { LanguageModel } from 'ai';
+import type { LanguageModelV2 } from '@ai-sdk/provider';
 
 describe('ContentExtractor Module', () => {
   describe('extractTextContent', () => {
@@ -145,19 +145,19 @@ describe('ContentExtractor Module', () => {
   });
 
   describe('getProviderType', () => {
-    let mockModel: LanguageModel;
+    let mockModel: LanguageModelV2;
 
     beforeEach(() => {
       mockModel = {
         modelId: 'test-model',
-      } as unknown as LanguageModel;
+      } as unknown as LanguageModelV2;
     });
 
     describe('provider detection via modelId patterns', () => {
       it('should detect anthropic from claude model ID', () => {
         const modelWithClaudeId = {
           modelId: 'claude-3-sonnet',
-        } as LanguageModel;
+        } as LanguageModelV2;
         const result = ContentExtractor.getProviderType(modelWithClaudeId);
         expect(result).toBe('anthropic');
       });
@@ -165,7 +165,7 @@ describe('ContentExtractor Module', () => {
       it('should detect openai from gpt model ID', () => {
         const modelWithGptId = {
           modelId: 'gpt-4',
-        } as LanguageModel;
+        } as LanguageModelV2;
         const result = ContentExtractor.getProviderType(modelWithGptId);
         expect(result).toBe('openai');
       });
@@ -173,7 +173,7 @@ describe('ContentExtractor Module', () => {
       it('should detect openai from o1 model ID', () => {
         const modelWithO1Id = {
           modelId: 'o1-preview',
-        } as LanguageModel;
+        } as LanguageModelV2;
         const result = ContentExtractor.getProviderType(modelWithO1Id);
         expect(result).toBe('openai');
       });
@@ -181,7 +181,7 @@ describe('ContentExtractor Module', () => {
       it('should detect openai from o3 model ID', () => {
         const modelWithO3Id = {
           modelId: 'o3-reasoning',
-        } as LanguageModel;
+        } as LanguageModelV2;
         const result = ContentExtractor.getProviderType(modelWithO3Id);
         expect(result).toBe('openai');
       });
@@ -189,7 +189,7 @@ describe('ContentExtractor Module', () => {
       it('should detect openai from o4 model ID', () => {
         const modelWithO4Id = {
           modelId: 'o4-turbo',
-        } as LanguageModel;
+        } as LanguageModelV2;
         const result = ContentExtractor.getProviderType(modelWithO4Id);
         expect(result).toBe('openai');
       });
@@ -197,7 +197,7 @@ describe('ContentExtractor Module', () => {
       it('should detect google from gemini model ID', () => {
         const modelWithGeminiId = {
           modelId: 'gemini-pro',
-        } as LanguageModel;
+        } as LanguageModelV2;
         const result = ContentExtractor.getProviderType(modelWithGeminiId);
         expect(result).toBe('google');
       });
@@ -205,7 +205,7 @@ describe('ContentExtractor Module', () => {
       it('should handle model ID with partial matches', () => {
         const modelWithPartialId = {
           modelId: 'my-claude-model',
-        } as LanguageModel;
+        } as LanguageModelV2;
         const result = ContentExtractor.getProviderType(modelWithPartialId);
         expect(result).toBe('anthropic');
       });
@@ -213,7 +213,7 @@ describe('ContentExtractor Module', () => {
       it('should be case sensitive for model ID detection', () => {
         const modelWithUpperId = {
           modelId: 'CLAUDE-3',
-        } as LanguageModel;
+        } as LanguageModelV2;
         const result = ContentExtractor.getProviderType(modelWithUpperId);
         expect(result).toBe('anthropic'); // Should default to anthropic when no match
       });
@@ -223,24 +223,24 @@ describe('ContentExtractor Module', () => {
       it('should default to anthropic when model ID does not match any pattern', () => {
         const modelWithUnknownId = {
           modelId: 'unknown-model',
-        } as LanguageModel;
+        } as LanguageModelV2;
         const result = ContentExtractor.getProviderType(modelWithUnknownId);
         expect(result).toBe('anthropic');
       });
 
       it('should handle missing modelId property', () => {
-        const modelWithoutId = {} as LanguageModel;
+        const modelWithoutId = {} as LanguageModelV2;
         const result = ContentExtractor.getProviderType(modelWithoutId);
         expect(result).toBe('anthropic');
       });
 
       it('should handle string model input', () => {
-        const result = ContentExtractor.getProviderType('claude-3-sonnet' as unknown as LanguageModel);
+        const result = ContentExtractor.getProviderType('claude-3-sonnet' as unknown as LanguageModelV2);
         expect(result).toBe('anthropic');
       });
 
       it('should handle string model input with openai pattern', () => {
-        const result = ContentExtractor.getProviderType('gpt-4' as unknown as LanguageModel);
+        const result = ContentExtractor.getProviderType('gpt-4' as unknown as LanguageModelV2);
         expect(result).toBe('openai');
       });
     });
@@ -249,20 +249,20 @@ describe('ContentExtractor Module', () => {
     describe('edge cases', () => {
       it('should handle null model', () => {
         const result = ContentExtractor.getProviderType(
-          null as unknown as LanguageModel
+          null as unknown as LanguageModelV2
         );
         expect(result).toBe('anthropic');
       });
 
       it('should handle undefined model', () => {
         const result = ContentExtractor.getProviderType(
-          undefined as unknown as LanguageModel
+          undefined as unknown as LanguageModelV2
         );
         expect(result).toBe('anthropic');
       });
 
       it('should handle empty model object', () => {
-        const result = ContentExtractor.getProviderType({} as LanguageModel);
+        const result = ContentExtractor.getProviderType({} as LanguageModelV2);
         expect(result).toBe('anthropic');
       });
 
@@ -272,7 +272,7 @@ describe('ContentExtractor Module', () => {
           provider: {
             toString: vi.fn().mockReturnValue('unknown'),
           },
-        } as unknown as LanguageModel;
+        } as unknown as LanguageModelV2;
         const result = ContentExtractor.getProviderType(model);
         expect(result).toBe('anthropic');
       });
@@ -283,7 +283,7 @@ describe('ContentExtractor Module', () => {
           provider: {
             toString: vi.fn().mockReturnValue('unknown'),
           },
-        } as unknown as LanguageModel;
+        } as unknown as LanguageModelV2;
         const result = ContentExtractor.getProviderType(model);
         expect(result).toBe('anthropic');
       });

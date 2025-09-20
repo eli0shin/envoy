@@ -3,7 +3,7 @@
  * Utilities for extracting text content and detecting provider types
  */
 
-import type { LanguageModel } from 'ai';
+import type { LanguageModelV2 } from '@ai-sdk/provider';
 
 export class ContentExtractor {
   /**
@@ -34,7 +34,7 @@ export class ContentExtractor {
    * Determine provider type from model
    * Checks provider.toString() first, then model ID patterns
    */
-  static getProviderType(model: LanguageModel): string {
+  static getProviderType(model: LanguageModelV2): string {
     // Check if model is a string (model ID) or object with modelId
     try {
       let modelId: string | undefined;

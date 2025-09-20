@@ -1,5 +1,6 @@
 import { describe, expect, it, vi, beforeEach } from 'vitest';
-import { LanguageModel, ModelMessage } from 'ai';
+import { ModelMessage } from 'ai';
+import type { LanguageModelV2 } from '@ai-sdk/provider';
 import { generateText } from 'ai';
 import { RuntimeConfiguration } from '../config/types.js';
 import { createThinkingProviderOptions, runAgent } from './index.js';
@@ -28,7 +29,7 @@ describe('Agent Dynamic Thinking Integration', () => {
     });
 
     it('should return no thinking options for messages without keywords', () => {
-      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModel;
+      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModelV2;
       const result = createThinkingProviderOptions(model, 'Hello world');
 
       expect(result).toEqual({
@@ -38,7 +39,7 @@ describe('Agent Dynamic Thinking Integration', () => {
     });
 
     it('should enable low thinking for "think" keyword', () => {
-      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModel;
+      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModelV2;
       const result = createThinkingProviderOptions(
         model,
         'Please think about this problem'
@@ -58,7 +59,7 @@ describe('Agent Dynamic Thinking Integration', () => {
     });
 
     it('should enable medium thinking for "megathink" keyword', () => {
-      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModel;
+      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModelV2;
       const result = createThinkingProviderOptions(
         model,
         'Megathink about this complex problem'
@@ -78,7 +79,7 @@ describe('Agent Dynamic Thinking Integration', () => {
     });
 
     it('should enable high thinking for "think harder" keyword', () => {
-      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModel;
+      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModelV2;
       const result = createThinkingProviderOptions(
         model,
         'Think harder about this'
@@ -98,7 +99,7 @@ describe('Agent Dynamic Thinking Integration', () => {
     });
 
     it('should enable high thinking for "ultrathink" keyword', () => {
-      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModel;
+      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModelV2;
       const result = createThinkingProviderOptions(
         model,
         'Ultrathink this problem'
@@ -118,7 +119,7 @@ describe('Agent Dynamic Thinking Integration', () => {
     });
 
     it('should enable interleaved header for "step by step" without thinking', () => {
-      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModel;
+      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModelV2;
       const result = createThinkingProviderOptions(
         model,
         'Solve this step by step'
@@ -131,7 +132,7 @@ describe('Agent Dynamic Thinking Integration', () => {
     });
 
     it('should enable both thinking and interleaved for combined keywords', () => {
-      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModel;
+      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModelV2;
       const result = createThinkingProviderOptions(
         model,
         'Megathink step by step'
@@ -151,7 +152,7 @@ describe('Agent Dynamic Thinking Integration', () => {
     });
 
     it('should respect budget caps for Anthropic', () => {
-      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModel;
+      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModelV2;
       // Using think harder which requests 32k tokens, but should be capped at 24576
       const result = createThinkingProviderOptions(
         model,
@@ -169,7 +170,7 @@ describe('Agent Dynamic Thinking Integration', () => {
 
     describe('OpenAI provider', () => {
       it('should map thinking levels to reasoning efforts', () => {
-        const model = { modelId: 'gpt-4' } as LanguageModel;
+        const model = { modelId: 'gpt-4' } as LanguageModelV2;
 
         const lowResult = createThinkingProviderOptions(
           model,
@@ -206,7 +207,7 @@ describe('Agent Dynamic Thinking Integration', () => {
       });
 
       it('should not set interleaved headers for OpenAI', () => {
-        const model = { modelId: 'gpt-4' } as LanguageModel;
+        const model = { modelId: 'gpt-4' } as LanguageModelV2;
         const result = createThinkingProviderOptions(
           model,
           'think step by step'
@@ -223,7 +224,7 @@ describe('Agent Dynamic Thinking Integration', () => {
 
     describe('Google provider', () => {
       it('should map thinking levels to budgets', () => {
-        const model = { modelId: 'gemini-pro' } as LanguageModel;
+        const model = { modelId: 'gemini-pro' } as LanguageModelV2;
 
         const lowResult = createThinkingProviderOptions(
           model,
@@ -260,7 +261,7 @@ describe('Agent Dynamic Thinking Integration', () => {
       });
 
       it('should not set interleaved headers for Google', () => {
-        const model = { modelId: 'gemini-pro' } as LanguageModel;
+        const model = { modelId: 'gemini-pro' } as LanguageModelV2;
         const result = createThinkingProviderOptions(
           model,
           'think step by step'
