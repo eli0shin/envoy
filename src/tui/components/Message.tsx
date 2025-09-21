@@ -6,7 +6,8 @@ import type { ModelMessage } from 'ai';
 type ToolData = {
   toolName: string;
   args: unknown;
-  result?: unknown;
+  output?: unknown;
+  error?: unknown;
   isError?: boolean;
 };
 
@@ -26,7 +27,7 @@ export function Message({
 }: MessageProps) {
   // Handle tool messages with custom components
   if (contentType === 'tool' && message.toolData) {
-    const { toolName, args, result, isError } = message.toolData;
+    const { toolName, args, output, error, isError } = message.toolData;
     const config = getToolConfig(toolName);
     const ToolComponent = config.component;
 
@@ -42,7 +43,8 @@ export function Message({
             toolName={toolName}
             displayName={config.displayName}
             args={args}
-            result={result}
+            output={output}
+            error={error}
             isError={isError}
             width={width}
           />

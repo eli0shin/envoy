@@ -121,7 +121,7 @@ export function MessageList({
         'toolCallId' in part
       ) {
         // Look ahead to subsequent messages for matching tool result
-        let matchingResult = null;
+        let matchingResult: unknown = null;
         let matchingResultMessageIndex = -1;
 
         for (
@@ -137,11 +137,13 @@ export function MessageList({
             Array.isArray(resultMessage.content)
           ) {
             for (const resultPart of resultMessage.content) {
-              if (
-                resultPart?.type === 'tool-result' &&
+              const isMatchingPart =
+                (resultPart?.type === 'tool-result' ||
+                  resultPart?.type === 'tool-error') &&
                 'toolCallId' in resultPart &&
-                resultPart.toolCallId === part.toolCallId
-              ) {
+                resultPart.toolCallId === part.toolCallId;
+
+              if (isMatchingPart) {
                 matchingResult = resultPart;
                 matchingResultMessageIndex = resultMessageIndex;
                 break;
@@ -151,21 +153,36 @@ export function MessageList({
           }
         }
 
+        let outputPayload: unknown = undefined;
+        let errorPayload: unknown = undefined;
+        let isError = false;
+
+        if (matchingResult && typeof matchingResult === 'object') {
+          const resultObject = matchingResult as Record<string, unknown>;
+          const partType = typeof resultObject.type === 'string' ? resultObject.type : undefined;
+
+          if ('isError' in resultObject) {
+            isError = Boolean(resultObject.isError);
+          }
+
+          if (partType === 'tool-error') {
+            isError = true;
+            errorPayload = 'error' in resultObject ? resultObject.error : resultObject;
+          } else {
+            outputPayload = 'output' in resultObject ? resultObject.output : resultObject;
+          }
+
+          if (!errorPayload && 'error' in resultObject) {
+            errorPayload = resultObject.error;
+          }
+        }
+
         const toolData = {
           toolName: part.toolName,
           args: part.input,
-          result:
-            matchingResult ?
-              'result' in matchingResult ?
-                matchingResult.result
-              : undefined
-            : undefined,
-          isError:
-            matchingResult ?
-              'isError' in matchingResult ?
-                Boolean(matchingResult.isError)
-              : false
-            : undefined,
+          output: outputPayload,
+          error: errorPayload,
+          isError: matchingResult ? isError : undefined,
         };
 
         // Create message with tool data for custom component rendering

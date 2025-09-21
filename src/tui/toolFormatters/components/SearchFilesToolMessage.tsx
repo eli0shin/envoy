@@ -1,11 +1,13 @@
 import { fg, bold } from '@opentui/core';
 import { error, success, filePath as filePathColor, lightGray } from '../../theme.js';
+import { extractResultText } from '../../utils/toolFormatting.js';
 import type { ToolMessageComponentProps } from '../types.js';
 import type { FilesystemSearchFilesArgs } from '../../toolTypes.js';
 
 export function SearchFilesToolMessage({
   args,
-  result,
+  output,
+  error: errorPayload,
   isError,
 }: ToolMessageComponentProps) {
   // Extract path and pattern from args
@@ -14,18 +16,15 @@ export function SearchFilesToolMessage({
   const pattern = typedArgs?.pattern || '';
 
   // Count the number of results
+  const successText = extractResultText(output);
+  const errorText = extractResultText(errorPayload ?? (isError ? output : undefined));
+
   const getResultCount = () => {
-    if (
-      !result ||
-      isError ||
-      typeof result !== 'object' ||
-      result === null ||
-      !('result' in result)
-    ) {
+    if (!successText || isError) {
       return 0;
     }
 
-    const resultText = (result as { result: string }).result;
+    const resultText = successText;
     const lines = resultText.split('\n').filter((line) => line.trim());
     return lines.length;
   };
@@ -38,13 +37,13 @@ export function SearchFilesToolMessage({
         {bold(fg(lightGray)('Search Files'))}
         {fg(filePathColor)(`(${path} ${pattern})`)}
       </text>
-      {!isError && result ?
+      {!isError && successText ?
         <text paddingLeft={2}>
           {fg(success)(`└ Found ${resultCount} results`)}
         </text>
       : null}
-      {isError ?
-        <text paddingLeft={2}>{fg(error)(`${String(result)}`)}</text>
+      {isError && errorText ?
+        <text paddingLeft={2}>{fg(error)(errorText)}</text>
       : null}
     </box>
   );

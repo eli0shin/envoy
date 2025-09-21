@@ -5,31 +5,28 @@ import {
   filePath as filePathColor,
   lightGray,
 } from '../../theme.js';
-import { formatMultilineResult } from '../../utils/toolFormatting.js';
+import {
+  formatMultilineResult,
+  extractResultText,
+} from '../../utils/toolFormatting.js';
 import type { ToolMessageComponentProps } from '../types.js';
-import type {
-  FilesystemReadMultipleFilesArgs,
-  FilesystemReadMultipleFilesResult,
-} from '../../toolTypes.js';
+import type { FilesystemReadMultipleFilesArgs } from '../../toolTypes.js';
 
 export function ReadMultipleFilesToolMessage({
   args,
-  result,
+  output,
+  error: errorPayload,
   isError,
 }: ToolMessageComponentProps) {
   // Extract the paths argument
   const { paths } = args as FilesystemReadMultipleFilesArgs;
 
+  const successText = extractResultText(output);
+  const errorText = extractResultText(errorPayload ?? (isError ? output : undefined));
+
   // Parse the result to extract individual file contents
-  const parseResult = (result: unknown): Map<string, number> | null => {
-    if (!result || isError) return null;
-
-    const resultText =
-      typeof result === 'object' && 'result' in result ?
-        String((result as FilesystemReadMultipleFilesResult).result)
-      : '';
-
-    if (!resultText) return null;
+  const parseResult = (resultText: string | null): Map<string, number> | null => {
+    if (!resultText || isError) return null;
 
     const fileLineCounts = new Map<string, number>();
 
@@ -64,7 +61,7 @@ export function ReadMultipleFilesToolMessage({
     return fileLineCounts;
   };
 
-  const fileLineCounts = parseResult(result);
+  const fileLineCounts = parseResult(successText ?? null);
   const formattedPaths =
     paths && paths.length > 0 ?
       paths.map((p) => p.split('/').pop() || p).join(', ')
@@ -83,12 +80,12 @@ export function ReadMultipleFilesToolMessage({
           </text>
         ))
       : null}
-      {isError ?
+      {isError && errorText ?
         <text paddingLeft={2}>
-          {fg(error)(formatMultilineResult(String(result), '└ '))}
+          {fg(error)(formatMultilineResult(errorText, '└ '))}
         </text>
       : null}
-      {!isError && result && (!fileLineCounts || fileLineCounts.size === 0) ?
+      {!isError && successText && (!fileLineCounts || fileLineCounts.size === 0) ?
         <text paddingLeft={2}>
           {fg(success)(`└ Read ${paths?.length || 0} files`)}
         </text>

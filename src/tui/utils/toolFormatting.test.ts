@@ -131,15 +131,34 @@ describe('toolFormatting', () => {
       expect(extractResultText(result)).toBe('file contents here');
     });
 
+    it('should extract text from object with output property', () => {
+      const result = { output: { result: 'nested output text' } };
+      expect(extractResultText(result)).toBe('nested output text');
+    });
+
+    it('should extract text from output value structures', () => {
+      const result = {
+        output: {
+          type: 'json',
+          value: { result: 'value wrapped text' },
+        },
+      };
+      expect(extractResultText(result)).toBe('value wrapped text');
+    });
+
+    it('should stringify primitive non-string results', () => {
+      expect(extractResultText(123)).toBe('123');
+      expect(extractResultText(false)).toBe('false');
+    });
+
     it('should handle deeply nested result structures', () => {
       const result = { result: { result: 'deeply nested text' } };
       expect(extractResultText(result)).toBe('deeply nested text');
     });
 
-    it('should return empty string for invalid results', () => {
+    it('should return empty string for nullish results', () => {
       expect(extractResultText(null)).toBe('');
       expect(extractResultText(undefined)).toBe('');
-      expect(extractResultText(123)).toBe('');
     });
   });
 

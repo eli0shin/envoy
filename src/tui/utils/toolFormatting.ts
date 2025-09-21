@@ -104,21 +104,42 @@ export function formatToolArgs(args: unknown): string {
  * @returns Text content or empty string
  */
 export function extractResultText(result: unknown): string {
+  if (result === null || result === undefined) {
+    return '';
+  }
+
   if (typeof result === 'string') {
     return result;
+  }
+
+  if (typeof result === 'number' || typeof result === 'boolean') {
+    return String(result);
   }
 
   if (Array.isArray(result)) {
     const textParts: string[] = [];
     for (const item of result) {
-      if (
-        item &&
-        typeof item === 'object' &&
-        'type' in item &&
-        item.type === 'text' &&
-        'text' in item
-      ) {
-        textParts.push(String(item.text));
+      if (item === null || item === undefined) continue;
+
+      if (typeof item === 'string' || typeof item === 'number') {
+        textParts.push(String(item));
+        continue;
+      }
+
+      if (typeof item === 'object' && 'type' in item) {
+        if (item.type === 'text' && 'text' in item) {
+          textParts.push(String(item.text));
+          continue;
+        }
+        if (item.type === 'reasoning' && 'text' in item) {
+          textParts.push(String(item.text));
+          continue;
+        }
+      }
+
+      const nested = extractResultText(item);
+      if (nested) {
+        textParts.push(nested);
       }
     }
     return textParts.join(' ');
@@ -126,13 +147,43 @@ export function extractResultText(result: unknown): string {
 
   if (result && typeof result === 'object') {
     // Handle objects with 'result' property (common MCP tool response format)
+    if ('output' in result) {
+      const outputValue = (result as { output?: unknown }).output;
+      const outputText = extractResultText(outputValue);
+      if (outputText) return outputText;
+    }
+
     if ('result' in result) {
       // Recursively extract from nested result
       return extractResultText((result as { result: unknown }).result);
     }
     // Handle objects with 'text' property
     if ('text' in result) {
-      return String((result as { text: unknown }).text);
+      return extractResultText((result as { text: unknown }).text);
+    }
+
+    if ('message' in result) {
+      return extractResultText((result as { message: unknown }).message);
+    }
+
+    if ('error' in result) {
+      return extractResultText((result as { error: unknown }).error);
+    }
+
+    if ('content' in result) {
+      return extractResultText((result as { content: unknown }).content);
+    }
+
+    if ('value' in result) {
+      const valueText = extractResultText((result as { value: unknown }).value);
+      if (valueText) return valueText;
+    }
+
+    try {
+      const json = JSON.stringify(result);
+      return json || '';
+    } catch {
+      return '';
     }
   }
 

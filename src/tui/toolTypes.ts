@@ -140,9 +140,7 @@ export type ToolResult = {
   type: 'tool-result';
   toolCallId: string;
   toolName: string;
-  result: {
-    result: string;
-  };
+  output: unknown;
 };
 
 // Tool names as seen in conversation

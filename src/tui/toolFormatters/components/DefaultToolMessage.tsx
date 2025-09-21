@@ -3,6 +3,7 @@ import {
   formatToolArgs,
   truncateValue,
   formatMultilineResult,
+  extractResultText,
 } from '../../utils/toolFormatting.js';
 import { fg, bold } from '@opentui/core';
 import { error, info, filePath, lightGray } from '../../theme.js';
@@ -12,20 +13,19 @@ export function DefaultToolMessage({
   toolName,
   displayName,
   args,
-  result,
+  output,
+  error: errorPayload,
   isError,
   width,
 }: ToolMessageComponentProps) {
   const formattedArgs = formatToolArgs(args);
   const toolDisplayName = displayName || formatToolName(toolName);
 
-  // Extract the actual result string from { result: string } structure
-  const resultText =
-    result ?
-      typeof result === 'object' && result !== null && 'result' in result ?
-        (result as { result: string }).result
-      : String(result)
-    : '';
+  const successText = extractResultText(output);
+  const errorTextValue = extractResultText(
+    errorPayload ?? (isError ? output : undefined)
+  );
+  const displayText = isError ? errorTextValue || successText : successText || errorTextValue;
 
   return (
     <box flexDirection="column" width={width - 4}>
@@ -33,10 +33,10 @@ export function DefaultToolMessage({
         {bold(fg(lightGray)(toolDisplayName))}
         {formattedArgs ? fg(filePath)(`(${formattedArgs})`) : ''}
       </text>
-      {resultText ?
+      {displayText ?
         <text paddingLeft={2}>
           {fg(isError ? error : info)(
-            formatMultilineResult(truncateValue(resultText), '└ ')
+            formatMultilineResult(truncateValue(displayText), '└ ')
           )}
         </text>
       : null}

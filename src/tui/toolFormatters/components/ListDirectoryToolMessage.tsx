@@ -1,12 +1,14 @@
 import { fg, bold } from '@opentui/core';
 import { error, success, filePath, lightGray } from '../../theme.js';
+import { extractResultText } from '../../utils/toolFormatting.js';
 import type { ToolMessageComponentProps } from '../types.js';
 import type { FilesystemListDirectoryArgs } from '../../toolTypes.js';
 
 export function ListDirectoryToolMessage({
   displayName,
   args,
-  result,
+  output,
+  error: errorPayload,
   isError,
 }: ToolMessageComponentProps) {
   // Extract path from args
@@ -18,14 +20,11 @@ export function ListDirectoryToolMessage({
   let dirCount = 0;
   let fileCount = 0;
 
-  if (
-    result &&
-    !isError &&
-    typeof result === 'object' &&
-    result !== null &&
-    'result' in result
-  ) {
-    const resultText = (result as { result: string }).result;
+  const successText = extractResultText(output);
+  const errorText = extractResultText(errorPayload ?? (isError ? output : undefined));
+
+  if (successText && !isError) {
+    const resultText = successText;
     const lines = resultText.split('\n').filter((line) => line.trim());
 
     // Count directories and files
@@ -65,11 +64,11 @@ export function ListDirectoryToolMessage({
         {bold(fg(lightGray)(displayName || 'List Directory'))}
         {fg(filePath)(`(${path})`)}
       </text>
-      {!isError && result ?
+      {!isError && successText ?
         <text paddingLeft={2}>{fg(success)(`└ ${getCountMessage()}`)}</text>
       : null}
-      {isError ?
-        <text paddingLeft={2}>{fg(error)(`${String(result)}`)}</text>
+      {isError && errorText ?
+        <text paddingLeft={2}>{fg(error)(errorText)}</text>
       : null}
     </box>
   );

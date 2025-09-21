@@ -5,11 +5,13 @@ import {
   filePath as filePathColor,
   lightGray,
 } from '../../theme.js';
+import { extractResultText } from '../../utils/toolFormatting.js';
 import type { ToolMessageComponentProps } from '../types.js';
 
 export function WriteToolMessage({
   args,
-  result,
+  output,
+  error: errorPayload,
   isError,
 }: ToolMessageComponentProps) {
   // Extract the path and content from args (filesystem_write_file uses both)
@@ -25,13 +27,18 @@ export function WriteToolMessage({
         {bold(fg(lightGray)('Write File'))}
         {fg(filePathColor)(`(${filePath})`)}
       </text>
-      {!isError && result ?
+      {!isError ?
         <text paddingLeft={2}>
           {fg(success)(`└ Wrote ${lineCount} lines to ${filePath}`)}
         </text>
       : null}
       {isError ?
-        <text paddingLeft={2}>{fg(error)(`${String(result)}`)}</text>
+        <text paddingLeft={2}>
+          {fg(error)(
+            extractResultText(errorPayload ?? output) ||
+              'Tool execution failed'
+          )}
+        </text>
       : null}
     </box>
   );

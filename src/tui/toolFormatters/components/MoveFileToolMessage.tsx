@@ -1,11 +1,13 @@
 import { fg, bold } from '@opentui/core';
 import { error, success, filePath, lightGray } from '../../theme.js';
+import { extractResultText } from '../../utils/toolFormatting.js';
 import type { ToolMessageComponentProps } from '../types.js';
 import type { FilesystemMoveFileArgs } from '../../toolTypes.js';
 
 export function MoveFileToolMessage({
   args,
-  result,
+  output,
+  error: errorPayload,
   isError,
 }: ToolMessageComponentProps) {
   // Extract source and destination from args
@@ -13,22 +15,8 @@ export function MoveFileToolMessage({
   const source = typedArgs?.source || '';
   const destination = typedArgs?.destination || '';
 
-  // Get result message
-  const getResultMessage = () => {
-    if (
-      !result ||
-      isError ||
-      typeof result !== 'object' ||
-      result === null ||
-      !('result' in result)
-    ) {
-      return null;
-    }
-
-    return (result as { result: string }).result;
-  };
-
-  const resultMessage = getResultMessage();
+  const successText = extractResultText(output);
+  const errorText = extractResultText(errorPayload ?? (isError ? output : undefined));
 
   return (
     <box flexDirection="column">
@@ -36,11 +24,11 @@ export function MoveFileToolMessage({
         {bold(fg(lightGray)('Move File'))}
         {fg(filePath)(`(${source} → ${destination})`)}
       </text>
-      {!isError && resultMessage ?
-        <text paddingLeft={2}>{fg(success)(`└ ${resultMessage}`)}</text>
+      {!isError && successText ?
+        <text paddingLeft={2}>{fg(success)(`└ ${successText}`)}</text>
       : null}
-      {isError ?
-        <text paddingLeft={2}>{fg(error)(`${String(result)}`)}</text>
+      {isError && errorText ?
+        <text paddingLeft={2}>{fg(error)(errorText)}</text>
       : null}
     </box>
   );

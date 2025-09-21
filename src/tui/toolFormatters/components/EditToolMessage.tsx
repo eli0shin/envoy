@@ -8,7 +8,10 @@ import {
   backgrounds,
   lightGray,
 } from '../../theme.js';
-import { formatMultilineResult } from '../../utils/toolFormatting.js';
+import {
+  formatMultilineResult,
+  extractResultText,
+} from '../../utils/toolFormatting.js';
 import type { ToolMessageComponentProps } from '../types.js';
 import type { FilesystemEditFileArgs } from '../../toolTypes.js';
 
@@ -70,7 +73,8 @@ function parseDiffCounts(diffText: string) {
 export function EditToolMessage({
   displayName,
   args,
-  result,
+  output,
+  error: errorPayload,
   isError,
   width,
 }: ToolMessageComponentProps) {
@@ -78,30 +82,25 @@ export function EditToolMessage({
   const typedArgs = args as FilesystemEditFileArgs;
   const filePath = typedArgs?.path || 'unknown';
 
-  // Check if result content indicates an error (starts with "Error:")
-  const resultText =
-    result ?
-      typeof result === 'object' && result !== null && 'result' in result ?
-        (result as { result: string }).result
-      : String(result)
-    : '';
+  const successText = extractResultText(output);
+  const errorTextValue = extractResultText(
+    errorPayload ?? (isError ? output : undefined)
+  );
 
-  const hasErrorContent = resultText.startsWith('Error:');
-  const actualError = isError || hasErrorContent;
-
-  // Clean error message by removing "Error:" prefix if present
-  const cleanErrorMessage =
-    hasErrorContent ? resultText.substring(6).trim() : resultText;
+  const combinedForError = errorTextValue || successText || '';
+  const hasErrorPrefix = combinedForError.startsWith('Error:');
+  const actualError = Boolean(isError) || hasErrorPrefix;
+  const cleanErrorMessage = hasErrorPrefix ?
+    combinedForError.substring(6).trim()
+  : combinedForError;
+  const displayedErrorMessage =
+    cleanErrorMessage || (actualError ? 'Tool execution failed' : '');
 
   // Parse the diff result if present
   const renderDiff = () => {
-    if (!result || actualError) return null;
+    if (!successText || actualError) return null;
 
-    // Handle result structure - it might be { result: string } or just string
-    let diffText =
-      typeof result === 'object' && result !== null && 'result' in result ?
-        (result as { result: string }).result
-      : String(result);
+    let diffText = successText;
 
     if (!diffText) return null;
 
@@ -239,7 +238,7 @@ export function EditToolMessage({
       {!actualError ? renderDiff() : null}
       {actualError ?
         <text paddingLeft={2}>
-          {fg(error)(formatMultilineResult(cleanErrorMessage, '└ '))}
+          {fg(error)(formatMultilineResult(displayedErrorMessage, '└ '))}
         </text>
       : null}
     </box>

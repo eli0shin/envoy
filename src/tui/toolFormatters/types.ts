@@ -8,7 +8,8 @@ export type ToolMessageComponentProps = {
   toolName: string; // Original tool identifier
   displayName?: string; // User-friendly display name
   args: unknown; // Tool arguments
-  result?: unknown; // Tool execution result
+  output?: unknown; // Tool execution output payload (v5)
+  error?: unknown; // Tool execution error payload
   isError?: boolean; // Whether the result is an error
   width: number; // Available width for rendering
 };

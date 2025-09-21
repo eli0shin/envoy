@@ -176,9 +176,7 @@ export async function runAgent(
         // 2. AI provides text response without tool calls (completed response), OR
         // 3. AI only made tool calls but finishReason suggests completion
         const shouldTerminate =
-          finishReason === 'stop' ||
-          finishReason === 'length' ||
-          (toolResults.length === 0 && text.trim().length > 0); // AI gave final text response without tools
+          finishReason === 'stop' || finishReason === 'length';
 
         logger.debug('Termination decision', { shouldTerminate });
 
