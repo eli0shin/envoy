@@ -542,7 +542,9 @@ export async function main(): Promise<void> {
         enhancedMessage,
         configResult.config,
         agentSession,
-        false
+        false,
+        undefined,
+        AbortSignal.timeout(6000000) // 100 minutes for CLI execution
       );
 
       logger.info('Agent execution completed', {

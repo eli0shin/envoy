@@ -291,7 +291,7 @@ describe('Agent Dynamic Thinking Integration', () => {
         json: false,
       } as RuntimeConfiguration;
 
-      await runAgent('Just a regular message', mockConfig, mockSession);
+      await runAgent('Just a regular message', mockConfig, mockSession, false, undefined, AbortSignal.timeout(30000));
 
       expect(vi.mocked(generateText)).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -309,7 +309,7 @@ describe('Agent Dynamic Thinking Integration', () => {
         json: false,
       } as RuntimeConfiguration;
 
-      await runAgent('Think about this problem', mockConfig, mockSession);
+      await runAgent('Think about this problem', mockConfig, mockSession, false, undefined, AbortSignal.timeout(30000));
 
       expect(vi.mocked(generateText)).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -334,7 +334,7 @@ describe('Agent Dynamic Thinking Integration', () => {
         json: false,
       } as RuntimeConfiguration;
 
-      await runAgent('Solve this step by step', mockConfig, mockSession);
+      await runAgent('Solve this step by step', mockConfig, mockSession, false, undefined, AbortSignal.timeout(30000));
 
       expect(vi.mocked(generateText)).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -358,7 +358,7 @@ describe('Agent Dynamic Thinking Integration', () => {
         { role: 'user', content: 'Think harder about this complex problem' }, // This should trigger high thinking
       ];
 
-      await runAgent(conversationMessages, mockConfig, mockSession);
+      await runAgent(conversationMessages, mockConfig, mockSession, false, undefined, AbortSignal.timeout(30000));
 
       // Should use the last user message ("Think harder...") for thinking analysis
       expect(vi.mocked(generateText)).toHaveBeenCalledWith(

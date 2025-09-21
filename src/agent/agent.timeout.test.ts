@@ -188,7 +188,7 @@ describe('Agent Timeout Error Handling', () => {
         throw timeoutError;
       });
 
-      const result = await runAgent('test message', mockConfig, mockSession);
+      const result = await runAgent('test message', mockConfig, mockSession, false, undefined, AbortSignal.timeout(30000));
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('The operation was aborted due to timeout');
@@ -209,7 +209,7 @@ describe('Agent Timeout Error Handling', () => {
         throw timeoutError;
       });
 
-      await runAgent('test message', mockConfig, mockSession);
+      await runAgent('test message', mockConfig, mockSession, false, undefined, AbortSignal.timeout(30000));
 
       // Verify error logging matches simplified agent format
       expect(logger.error).toHaveBeenCalledWith(
@@ -233,7 +233,7 @@ describe('Agent Timeout Error Handling', () => {
         throw timeoutError;
       });
 
-      const result = await runAgent('test message', mockConfig, mockSession);
+      const result = await runAgent('test message', mockConfig, mockSession, false, undefined, AbortSignal.timeout(30000));
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('The operation was aborted due to timeout');
@@ -253,7 +253,7 @@ describe('Agent Timeout Error Handling', () => {
         throw timeoutError;
       });
 
-      const result = await runAgent('test message', mockConfig, mockSession);
+      const result = await runAgent('test message', mockConfig, mockSession, false, undefined, AbortSignal.timeout(30000));
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('The operation was aborted due to timeout');
@@ -282,7 +282,10 @@ describe('Agent Timeout Error Handling', () => {
           { role: 'assistant', content: 'partial response...' },
         ],
         mockConfig,
-        mockSession
+        mockSession,
+        false,
+        undefined,
+        AbortSignal.timeout(30000)
       );
 
       expect(result.success).toBe(false);
@@ -307,7 +310,9 @@ describe('Agent Timeout Error Handling', () => {
         'test message',
         mockConfig,
         mockSession,
-        false
+        false,
+        undefined,
+        AbortSignal.timeout(30000)
       );
 
       expect(result.success).toBe(false);
@@ -331,7 +336,9 @@ describe('Agent Timeout Error Handling', () => {
         'complex task',
         mockConfig,
         mockSession,
-        false
+        false,
+        undefined,
+        AbortSignal.timeout(30000)
       );
 
       expect(result.success).toBe(false);
@@ -352,7 +359,7 @@ describe('Agent Timeout Error Handling', () => {
         throw apiError;
       });
 
-      const result = await runAgent('test message', mockConfig, mockSession);
+      const result = await runAgent('test message', mockConfig, mockSession, false, undefined, AbortSignal.timeout(30000));
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('API error: API timeout error');
@@ -365,7 +372,7 @@ describe('Agent Timeout Error Handling', () => {
         throw unknownError;
       });
 
-      const result = await runAgent('test message', mockConfig, mockSession);
+      const result = await runAgent('test message', mockConfig, mockSession, false, undefined, AbortSignal.timeout(30000));
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('API error: Unknown error');

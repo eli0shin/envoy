@@ -51,6 +51,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
   const [originalInput, setOriginalInput] = useState('');
   const [exitConfirmation, setExitConfirmation] =
     useState<ExitConfirmationState | null>(null);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
   const { width, height } = useTerminalDimensions();
   const renderer = useRenderer();
 
@@ -90,6 +91,22 @@ export function TUIApp({ config, session }: TUIAppProps) {
     process.stdout.write('\x1b[999B\x1b[1G');
     process.exit(0);
   }, [renderer]);
+
+  const handleAgentCancel = useCallback(() => {
+    if (status === 'PROCESSING' && abortController) {
+      abortController.abort();
+      setStatus('READY');
+      setAbortController(null);
+      
+      // Add cancellation message
+      const cancelMessage: ModelMessage & { id: string } = {
+        role: 'assistant',
+        content: 'Operation cancelled by user.',
+        id: `cancel-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+      };
+      setMessages((prev) => [...prev, cancelMessage]);
+    }
+  }, [status, abortController]);
 
   const handleExitAttempt = useCallback(() => {
     if (exitConfirmation) {
@@ -224,6 +241,10 @@ export function TUIApp({ config, session }: TUIAppProps) {
     setMessages((prev) => [...prev, ...queuedMessages]);
     setQueuedMessages([]);
 
+    // Create abort controller for this agent execution
+    const controller = new AbortController();
+    setAbortController(controller);
+
     // Process entire conversation including newly added messages
     setStatus('PROCESSING');
     try {
@@ -240,9 +261,15 @@ export function TUIApp({ config, session }: TUIAppProps) {
             },
           ];
         });
-      });
+      }, controller.signal);
     } catch (error) {
-      // Add error message
+      // Handle abort error differently from other errors
+      if (error instanceof Error && error.name === 'AbortError') {
+        // Don't add error message for user-initiated cancellation
+        return;
+      }
+      
+      // Add error message for other errors
       const errorMessage: ModelMessage & { id: string } = {
         role: 'assistant',
         content: `Error: ${error instanceof Error ? error.message : String(error)}`,
@@ -251,6 +278,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setStatus('READY');
+      setAbortController(null);
     }
   }, [queuedMessages, messages, config, session]);
 
@@ -283,6 +311,10 @@ export function TUIApp({ config, session }: TUIAppProps) {
       // Agent is ready - process immediately
       const newMessages = [...messages, userMessage];
       setMessages((prev) => [...prev, userMessage]);
+      
+      // Create abort controller for this agent execution
+      const controller = new AbortController();
+      setAbortController(controller);
       setStatus('PROCESSING');
 
       try {
@@ -300,30 +332,40 @@ export function TUIApp({ config, session }: TUIAppProps) {
               },
             ];
           });
-        });
+        }, controller.signal);
       } catch (error) {
-        // Add error message
+        // Handle abort error differently from other errors
+        if (error instanceof Error && error.name === 'AbortError') {
+          // Don't add error message for user-initiated cancellation
+          return;
+        }
+        
+        // Add error message for other errors
         const errorMessage: ModelMessage & { id: string } = {
           role: 'assistant',
-          content: `Error: ${error instanceof Error ? error.message : String(error)}`,
+          content: `${error instanceof Error ? error.message : String(error)}`,
           id: `error-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
         };
         setMessages((prev) => [...prev, errorMessage]);
       } finally {
         setStatus('READY');
+        setAbortController(null);
       }
     },
     [messages, status, config, session]
   );
 
-  // Cleanup timeout on component unmount
+  // Cleanup timeout and abort controller on component unmount
   useEffect(() => {
     return () => {
       if (exitConfirmation) {
         clearTimeout(exitConfirmation.timeoutId);
       }
+      if (abortController) {
+        abortController.abort();
+      }
     };
-  }, [exitConfirmation]);
+  }, [exitConfirmation, abortController]);
 
   // Global key actions
   useKeys(
@@ -336,8 +378,8 @@ export function TUIApp({ config, session }: TUIAppProps) {
           () => setModalState((m) => (m === 'help' ? null : 'help')),
           'global'
         ) ||
-        // Consume stray escape to avoid unintended exits in the underlying TUI
-        parseKeys(key, 'global.cancel', () => {}, 'global')
+        // Handle ESC key - cancel agent if processing, otherwise consume
+        parseKeys(key, 'global.cancel', handleAgentCancel, 'global')
       );
     },
     { scope: 'global', enabled: true }

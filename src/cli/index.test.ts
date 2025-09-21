@@ -1639,7 +1639,9 @@ describe('CLI Tests', () => {
             systemPrompt: expect.any(String),
             mcpClients: expect.any(Array),
           }),
-          false
+          false,
+          undefined,
+          expect.any(AbortSignal)
         );
         const enhancedMessage = vi.mocked(agent.runAgent).mock.calls[0][0];
         expect(enhancedMessage).toContain('## Included Resources:');
@@ -1905,7 +1907,9 @@ describe('CLI Tests', () => {
             systemPrompt: expect.any(String),
             mcpClients: expect.any(Array),
           }),
-          false
+          false,
+          undefined,
+          expect.any(AbortSignal)
         );
         expect(process.exit).toHaveBeenCalledWith(0);
       });

@@ -239,7 +239,7 @@ async function runAgentWithMockSession(
   try {
     // First call initializeAgentSession to trigger mocks
     const session = await initializeAgentSession(config);
-    return await runAgent(message, config, session, isInteractive);
+    return await runAgent(message, config, session, isInteractive, undefined, AbortSignal.timeout(30000));
   } catch (error) {
     // If session initialization fails, return error result
     const errorMessage =

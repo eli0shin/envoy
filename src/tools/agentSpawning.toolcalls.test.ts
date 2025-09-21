@@ -123,7 +123,9 @@ describe('Agent Spawning Tool Calls Test', () => {
         systemPrompt: 'Test system prompt',
         tools: expect.any(Object),
       }),
-      false
+      false,
+      undefined,
+      expect.any(AbortSignal)
     );
   }, 10000); // 10 second timeout for unit test
 
@@ -179,7 +181,9 @@ describe('Agent Spawning Tool Calls Test', () => {
         systemPrompt: 'Test system prompt',
         tools: expect.any(Object),
       }),
-      false
+      false,
+      undefined,
+      expect.any(AbortSignal)
     );
   }, 10000); // 10 second timeout for unit test
 
@@ -271,7 +275,9 @@ describe('Agent Spawning Tool Calls Test', () => {
         systemPrompt: 'Test system prompt',
         tools: expect.any(Object),
       }),
-      false
+      false,
+      undefined,
+      expect.any(AbortSignal)
     );
   }, 10000);
 
@@ -308,7 +314,9 @@ describe('Agent Spawning Tool Calls Test', () => {
         systemPrompt: 'Test system prompt',
         tools: expect.any(Object),
       }),
-      false
+      false,
+      undefined,
+      expect.any(AbortSignal)
     );
   }, 10000);
 });

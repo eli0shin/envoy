@@ -67,7 +67,8 @@ export async function runAgent(
   config: RuntimeConfiguration,
   session: AgentSession,
   isInteractive: boolean = false,
-  onMessageUpdate?: (message: ModelMessage) => void
+  onMessageUpdate?: (message: ModelMessage) => void,
+  abortSignal: AbortSignal = AbortSignal.timeout(GENERATION_TIMEOUT_MS)
 ): Promise<AgentResult & { messages?: ModelMessage[] }> {
   const startTime = Date.now();
   let hasToolErrors = false;
@@ -121,6 +122,12 @@ export async function runAgent(
           typeof userMessage === 'string' ? userMessage : ''
         );
 
+        // Combine user abort signal with timeout signal
+        const combinedAbortSignal = AbortSignal.any([
+          abortSignal,
+          AbortSignal.timeout(GENERATION_TIMEOUT_MS)
+        ]);
+
         const result = generateText({
           model,
           system: systemConfig,
@@ -128,7 +135,7 @@ export async function runAgent(
           tools,
           stopWhen: stepCountIs(1),
           maxRetries: MAX_GENERATION_RETRIES,
-          abortSignal: AbortSignal.timeout(GENERATION_TIMEOUT_MS),
+          abortSignal: combinedAbortSignal,
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           providerOptions: providerOptions as any,
           headers,
@@ -291,6 +298,34 @@ export async function runAgent(
     };
   } catch (error) {
     const executionTime = Date.now() - startTime;
+    
+    // Handle AbortError specially - user-initiated cancellation
+    if (error instanceof Error && error.name === 'AbortError') {
+      logger.info('Agent execution cancelled by user', {
+        executionTime,
+        toolCallsCount,
+      });
+
+      if (config.json) {
+        const jsonResult = {
+          success: false,
+          error: 'Operation cancelled by user',
+          toolCallsCount,
+          executionTime,
+        };
+        process.stdout.write(JSON.stringify(jsonResult, null, 2) + '\n');
+      }
+
+      return {
+        success: false,
+        error: 'Operation cancelled by user',
+        toolCallsCount,
+        executionTime,
+        messages,
+        responseMessages: [], // No response messages when cancelled
+      };
+    }
+
     const errorMessage =
       error instanceof Error ? error.message : 'Unknown error occurred';
 

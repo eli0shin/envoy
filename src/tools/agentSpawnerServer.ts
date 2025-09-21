@@ -163,7 +163,9 @@ async function spawnAndRunAgent(params: SpawnAgentParams): Promise<{
         params.message,
         runtimeConfig,
         agentSession,
-        false
+        false,
+        undefined,
+        AbortSignal.timeout(params.timeout || 600000) // Use provided timeout or 5 minutes default
       );
     } finally {
       // Cleanup session resources

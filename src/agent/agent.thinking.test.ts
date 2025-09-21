@@ -227,7 +227,10 @@ describe('Agent Thinking Integration', () => {
       await runAgent(
         'Think step by step about this message',
         mockConfig,
-        mockSession
+        mockSession,
+        false,
+        undefined,
+        AbortSignal.timeout(30000)
       );
 
       // Verify streamText was called with thinking options

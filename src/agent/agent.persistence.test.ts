@@ -143,7 +143,9 @@ describe('runAgent conversation persistence integration', () => {
         userMessage,
         mockConfig,
         mockSession,
-        false
+        false,
+        undefined,
+        AbortSignal.timeout(30000)
       );
 
       expect(result.success).toBe(true);
@@ -175,7 +177,7 @@ describe('runAgent conversation persistence integration', () => {
         { role: 'user', content: 'Second message' },
       ];
 
-      await runAgent(conversationHistory, mockConfig, mockSession, false);
+      await runAgent(conversationHistory, mockConfig, mockSession, false, undefined, AbortSignal.timeout(30000));
 
       expect(mockConversationPersistence.persistMessages).toHaveBeenCalledTimes(
         1
@@ -210,7 +212,9 @@ describe('runAgent conversation persistence integration', () => {
         'Test message',
         mockConfig,
         mockSession,
-        false
+        false,
+        undefined,
+        AbortSignal.timeout(30000)
       );
 
       // Agent execution should succeed - persistence errors are handled internally
@@ -239,7 +243,7 @@ describe('runAgent conversation persistence integration', () => {
         conversationPersistence: mockPersistenceNoComplete,
       });
 
-      await runAgent('Test message', mockConfig, mockSession_NoComplete, false);
+      await runAgent('Test message', mockConfig, mockSession_NoComplete, false, undefined, AbortSignal.timeout(30000));
 
       // persistMessages should still be called, but with filtered messages
       expect(
@@ -261,7 +265,9 @@ describe('runAgent conversation persistence integration', () => {
         'Test message',
         mockConfig,
         mockSession,
-        false
+        false,
+        undefined,
+        AbortSignal.timeout(30000)
       );
 
       expect(result.success).toBe(true);
@@ -276,7 +282,9 @@ describe('runAgent conversation persistence integration', () => {
         'Test message',
         mockConfig,
         mockSession,
-        true // interactive mode
+        true, // interactive mode
+        undefined,
+        AbortSignal.timeout(30000)
       );
 
       expect(result.success).toBe(true);
@@ -294,7 +302,9 @@ describe('runAgent conversation persistence integration', () => {
         'Test message',
         mockConfig,
         mockSession,
-        false
+        false,
+        undefined,
+        AbortSignal.timeout(30000)
       );
 
       // Should persist messages regardless of tool errors
@@ -309,7 +319,9 @@ describe('runAgent conversation persistence integration', () => {
         'Test message',
         mockConfig,
         mockSession,
-        false
+        false,
+        undefined,
+        AbortSignal.timeout(30000)
       );
 
       expect(result.success).toBe(true);
