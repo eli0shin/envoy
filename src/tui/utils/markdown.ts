@@ -182,14 +182,11 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
       // Lists - process each list item recursively with proper indentation
       const listToken = token as Tokens.List;
 
-      // Only add a newline before the list if chunks don't already end with one
-      // This prevents double newlines after headings
-      // For nested lists (listDepth > 0), we don't add initial newline as parent handles it
+      // For top-level lists, ensure we start on a new line
+      // Check if we need to add a newline before the first item
       if (listDepth === 0 && chunks.length > 0) {
         const lastChunk = chunks[chunks.length - 1];
-        const needsNewline =
-          !lastChunk || !lastChunk.text || !lastChunk.text.endsWith('\n');
-        if (needsNewline) {
+        if (lastChunk && lastChunk.text && !lastChunk.text.endsWith('\n')) {
           chunks.push(fg(colors.text)('\n'));
         }
       }
@@ -240,9 +237,8 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
           bullet = getBulletForDepth(listDepth, listToken.ordered);
         }
 
-        // Add newline before each item
-        // For top-level lists, skip first item if we already added newline above
-        // For nested lists, always add newline before items
+        // Add newline before each item except the first one at depth 0
+        // (we already handled newline before the list if needed)
         if (i > 0 || listDepth > 0) {
           chunks.push(fg(colors.text)('\n'));
         }
