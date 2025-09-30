@@ -160,10 +160,10 @@ export type ToolName =
 
 // Example outputs for all tools
 export const FILESYSTEM_EDIT_FILE_EXAMPLE_OUTPUT = `\`\`\`diff
-Index: /Users/elioshinsky/code/language-learner/README_EXPLANATION.md
+Index: /Users/elioshinsky/code/envoy/README_EXPLANATION.md
 ===================================================================
---- /Users/elioshinsky/code/language-learner/README_EXPLANATION.md	original
-+++ /Users/elioshinsky/code/language-learner/README_EXPLANATION.md	modified
+--- /Users/elioshinsky/code/envoy/README_EXPLANATION.md	original
++++ /Users/elioshinsky/code/envoy/README_EXPLANATION.md	modified
 @@ -1,14 +1,14 @@
  # Envoy - AI Agent Messenger
 
@@ -240,7 +240,7 @@ export type FilesystemReadTextFileArgs = {
 
 === package.json ===
 {
-  "name": "language-learner",
+  "name": "envoy",
   "version": "1.0.0",
   "type": "module",
   "scripts": {
@@ -304,30 +304,30 @@ export const FILESYSTEM_CREATE_DIRECTORY_EXAMPLE_OUTPUT = `Successfully created 
 
 export const FILESYSTEM_MOVE_FILE_EXAMPLE_OUTPUT = `Successfully moved test-temp-dir to test-temp-renamed`;
 
-export const FILESYSTEM_SEARCH_FILES_EXAMPLE_OUTPUT = `/Users/elioshinsky/code/language-learner/src/tui/components/CommandAutocomplete.tsx
-/Users/elioshinsky/code/language-learner/src/tui/components/ErrorBoundary.tsx
-/Users/elioshinsky/code/language-learner/src/tui/components/FileAutocomplete.tsx
-/Users/elioshinsky/code/language-learner/src/tui/components/Header.tsx
-/Users/elioshinsky/code/language-learner/src/tui/components/HelpModal.tsx
-/Users/elioshinsky/code/language-learner/src/tui/components/InputArea.tsx
-/Users/elioshinsky/code/language-learner/src/tui/components/Message.tsx
-/Users/elioshinsky/code/language-learner/src/tui/components/MessageList.tsx
-/Users/elioshinsky/code/language-learner/src/tui/components/Modal.tsx
-/Users/elioshinsky/code/language-learner/src/tui/components/ModalDisplay.tsx
-/Users/elioshinsky/code/language-learner/src/tui/components/ModalProvider.tsx
-/Users/elioshinsky/code/language-learner/src/tui/components/MultiLineInput.tsx
-/Users/elioshinsky/code/language-learner/src/tui/components/StatusBar.tsx
-/Users/elioshinsky/code/language-learner/src/tui/components/TUIApp.tsx
-/Users/elioshinsky/code/language-learner/src/tui/index.tsx
-/Users/elioshinsky/code/language-learner/src/tui/keys/dispatcher.tsx
-/Users/elioshinsky/code/language-learner/src/tui/keys/prefixContext.tsx
-/Users/elioshinsky/code/language-learner/src/tui/toolFormatters/components/DefaultToolMessage.tsx
-/Users/elioshinsky/code/language-learner/src/tui/toolFormatters/components/EditToolMessage.tsx
-/Users/elioshinsky/code/language-learner/src/tui/toolFormatters/components/ListDirectoryToolMessage.tsx
-/Users/elioshinsky/code/language-learner/src/tui/toolFormatters/components/ReadMultipleFilesToolMessage.tsx
-/Users/elioshinsky/code/language-learner/src/tui/toolFormatters/components/ReadToolMessage.tsx
-/Users/elioshinsky/code/language-learner/src/tui/toolFormatters/components/WriteToolMessage.tsx
-/Users/elioshinsky/code/language-learner/src/tui/toolFormatters/registry.tsx`;
+export const FILESYSTEM_SEARCH_FILES_EXAMPLE_OUTPUT = `/Users/elioshinsky/code/envoy/src/tui/components/CommandAutocomplete.tsx
+/Users/elioshinsky/code/envoy/src/tui/components/ErrorBoundary.tsx
+/Users/elioshinsky/code/envoy/src/tui/components/FileAutocomplete.tsx
+/Users/elioshinsky/code/envoy/src/tui/components/Header.tsx
+/Users/elioshinsky/code/envoy/src/tui/components/HelpModal.tsx
+/Users/elioshinsky/code/envoy/src/tui/components/InputArea.tsx
+/Users/elioshinsky/code/envoy/src/tui/components/Message.tsx
+/Users/elioshinsky/code/envoy/src/tui/components/MessageList.tsx
+/Users/elioshinsky/code/envoy/src/tui/components/Modal.tsx
+/Users/elioshinsky/code/envoy/src/tui/components/ModalDisplay.tsx
+/Users/elioshinsky/code/envoy/src/tui/components/ModalProvider.tsx
+/Users/elioshinsky/code/envoy/src/tui/components/MultiLineInput.tsx
+/Users/elioshinsky/code/envoy/src/tui/components/StatusBar.tsx
+/Users/elioshinsky/code/envoy/src/tui/components/TUIApp.tsx
+/Users/elioshinsky/code/envoy/src/tui/index.tsx
+/Users/elioshinsky/code/envoy/src/tui/keys/dispatcher.tsx
+/Users/elioshinsky/code/envoy/src/tui/keys/prefixContext.tsx
+/Users/elioshinsky/code/envoy/src/tui/toolFormatters/components/DefaultToolMessage.tsx
+/Users/elioshinsky/code/envoy/src/tui/toolFormatters/components/EditToolMessage.tsx
+/Users/elioshinsky/code/envoy/src/tui/toolFormatters/components/ListDirectoryToolMessage.tsx
+/Users/elioshinsky/code/envoy/src/tui/toolFormatters/components/ReadMultipleFilesToolMessage.tsx
+/Users/elioshinsky/code/envoy/src/tui/toolFormatters/components/ReadToolMessage.tsx
+/Users/elioshinsky/code/envoy/src/tui/toolFormatters/components/WriteToolMessage.tsx
+/Users/elioshinsky/code/envoy/src/tui/toolFormatters/registry.tsx`;
 
 export const SHELL_RUN_COMMAND_EXAMPLE_OUTPUT = `Hello from shell command test`;
 

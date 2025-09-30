@@ -1,8 +1,8 @@
-# OpenTUI Implementation Design for Language Learner CLI
+# OpenTUI Implementation Design for Envoy CLI
 
 ## Executive Summary
 
-This document outlines the design and implementation plan for adding a Terminal User Interface (TUI) to the Language Learner CLI using OpenTUI with React integration. The TUI will activate when the CLI is run without arguments, providing an interactive conversational interface with message history and input capabilities.
+This document outlines the design and implementation plan for adding a Terminal User Interface (TUI) to the Envoy CLI using OpenTUI with React integration. The TUI will activate when the CLI is run without arguments, providing an interactive conversational interface with message history and input capabilities.
 
 ## Requirements
 
@@ -34,7 +34,7 @@ This document outlines the design and implementation plan for adding a Terminal 
 ├─────────────────────────────────────────────────────────┤
 │  ┌──────────────────────────────────────────────────┐  │
 │  │              Header Component                     │  │
-│  │  - Title: "Language Learner"                    │  │
+│  │  - Title: "Envoy"                               │  │
 │  │  - Session ID display                           │  │
 │  │  - Status indicators                            │  │
 │  └──────────────────────────────────────────────────┘  │
@@ -477,7 +477,7 @@ export function ToolCallDisplay({ toolCall }: { toolCall: ToolCall }) {
 
 ## Conclusion
 
-This design provides a comprehensive plan for implementing a modern TUI for the Language Learner CLI using OpenTUI. The phased approach allows for iterative development while maintaining the existing CLI functionality. The architecture is designed to be maintainable, performant, and extensible for future enhancements.
+This design provides a comprehensive plan for implementing a modern TUI for the Envoy CLI using OpenTUI. The phased approach allows for iterative development while maintaining the existing CLI functionality. The architecture is designed to be maintainable, performant, and extensible for future enhancements.
 
 ## Appendix A: Key Dependencies
 
@@ -513,11 +513,11 @@ src/
 
 ```bash
 # Launch TUI mode
-$ language-learner
+$ envoy
 
 # Traditional CLI mode (unchanged)
-$ language-learner "What is the weather?"
+$ envoy "What is the weather?"
 
 # With stdin (unchanged)
-$ echo "Hello" | language-learner --stdin
+$ echo "Hello" | envoy --stdin
 ```
