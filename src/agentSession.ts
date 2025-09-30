@@ -52,7 +52,7 @@ async function createModelProvider(
     typeof providerConfig === 'object' && providerConfig.model ?
       providerConfig.model
     : defaultProvider === 'openrouter' ? 'google/gemini-2.5-flash-preview-05-20'
-    : defaultProvider === 'anthropic' ? 'claude-sonnet-4-20250514'
+    : defaultProvider === 'anthropic' ? 'claude-sonnet-4-5-20250929'
     : defaultProvider === 'openai' ? 'o4-mini'
     : defaultProvider === 'google' ? 'gemini-2.5-pro'
     : 'gemini-2.5-pro'; // fallback for unknown providers

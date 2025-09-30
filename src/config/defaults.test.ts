@@ -35,7 +35,7 @@ describe('defaults', () => {
         model: 'gpt-4.1',
       });
       expect(config.providers?.anthropic).toEqual({
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5-20250929',
         authType: 'x-api-key',
       });
       expect(config.providers?.google).toEqual({

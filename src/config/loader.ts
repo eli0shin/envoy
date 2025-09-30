@@ -246,7 +246,7 @@ export async function createRuntimeConfiguration(
         ...configResult.config.providers?.openrouter,
       },
       anthropic: {
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5-20250929',
         ...configResult.config.providers?.anthropic,
       },
       google: {

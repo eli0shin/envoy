@@ -35,7 +35,7 @@ export function getDefaultConfiguration(): Configuration {
         model: 'gpt-4.1',
       },
       anthropic: {
-        model: 'claude-sonnet-4-20250514',
+        model: 'claude-sonnet-4-5-20250929',
         authType: 'x-api-key',
       },
       google: {

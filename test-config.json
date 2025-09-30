@@ -21,7 +21,7 @@
     "default": "anthropic",
     "anthropic": {
       "apiKey": "${ANTHROPIC_API_KEY}",
-      "model": "claude-sonnet-4-20250514",
+      "model": "claude-sonnet-4-5-20250929",
       "baseURL": "https://api.anthropic.com/v1"
     }
   },
