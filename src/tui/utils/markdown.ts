@@ -60,9 +60,13 @@ function processTokensRecursively(
 }
 
 // Helper function to get appropriate bullet character for list depth
-function getBulletForDepth(depth: number, ordered: boolean = false): string {
+function getBulletForDepth(
+  depth: number,
+  ordered: boolean = false,
+  itemIndex: number = 0
+): string {
   if (ordered) {
-    return '1. '; // For now, just use 1. for all ordered lists
+    return `${itemIndex + 1}. `;
   }
 
   switch (depth % 3) {
@@ -182,13 +186,10 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
       // Lists - process each list item recursively with proper indentation
       const listToken = token as Tokens.List;
 
-      // For top-level lists, ensure we start on a new line
-      // Check if we need to add a newline before the first item
-      if (listDepth === 0 && chunks.length > 0) {
-        const lastChunk = chunks[chunks.length - 1];
-        if (lastChunk && lastChunk.text && !lastChunk.text.endsWith('\n')) {
-          chunks.push(fg(colors.text)('\n'));
-        }
+      // For top-level lists, always ensure we start on a new line
+      // We can't check previous content since chunks is local to this token
+      if (listDepth === 0) {
+        chunks.push(fg(colors.text)('\n'));
       }
 
       for (let i = 0; i < listToken.items.length; i++) {
@@ -234,7 +235,7 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
           bullet = item.checked ? '☑ ' : '☐ ';
         } else {
           // Regular list item
-          bullet = getBulletForDepth(listDepth, listToken.ordered);
+          bullet = getBulletForDepth(listDepth, listToken.ordered, i);
         }
 
         // Add newline before each item except the first one at depth 0
@@ -247,10 +248,8 @@ function tokenToStyledChunks(token: Token, listDepth: number = 0): TextChunk[] {
         chunks.push(fg(colors.list)(bullet));
         chunks.push(...itemChunks);
 
-        // Add nested lists on separate lines with proper newline separation
+        // Add nested lists directly - they handle their own newlines
         if (nestedChunks.length > 0) {
-          // Nested lists should start on a new line
-          chunks.push(fg(colors.text)('\n'));
           chunks.push(...nestedChunks);
         }
       }
