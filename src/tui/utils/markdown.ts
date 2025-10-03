@@ -52,8 +52,37 @@ function processTokensRecursively(
 ): TextChunk[] {
   const chunks: TextChunk[] = [];
 
-  for (const token of tokens) {
-    chunks.push(...tokenToStyledChunks(token, listDepth));
+  for (let i = 0; i < tokens.length; i++) {
+    const token = tokens[i];
+    const tokenChunks = tokenToStyledChunks(token, listDepth);
+
+    // If this is a top-level list and previous content ends with newline,
+    // remove the leading newline that the list adds
+    if (
+      token.type === 'list' &&
+      listDepth === 0 &&
+      chunks.length > 0 &&
+      tokenChunks.length > 0
+    ) {
+      const lastChunk = chunks[chunks.length - 1];
+      const firstListChunk = tokenChunks[0];
+
+      // Check if the last chunk ends with newline and first list chunk is just a newline
+      // The list's leading newline is created by fg(colors.text)('\n'), so it will have
+      // text === '\n' and may have fg property but no other formatting
+      if (
+        lastChunk?.text?.endsWith('\n') &&
+        firstListChunk?.text === '\n' &&
+        firstListChunk.text.length === 1 &&
+        !firstListChunk.attributes
+      ) {
+        // Skip the first chunk (the extra newline)
+        chunks.push(...tokenChunks.slice(1));
+        continue;
+      }
+    }
+
+    chunks.push(...tokenChunks);
   }
 
   return chunks;
@@ -550,8 +579,33 @@ export function parseMarkdown(content: string): StyledText {
 
     const allChunks: TextChunk[] = [];
 
-    for (const token of tokens) {
+    for (let i = 0; i < tokens.length; i++) {
+      const token = tokens[i];
       const chunks = tokenToStyledChunks(token);
+
+      // If this is a list and previous content ends with newline,
+      // remove the leading newline that the list adds to prevent double newlines
+      if (
+        token.type === 'list' &&
+        allChunks.length > 0 &&
+        chunks.length > 0
+      ) {
+        const lastChunk = allChunks[allChunks.length - 1];
+        const firstListChunk = chunks[0];
+
+        // Check if the last chunk ends with newline and first list chunk is just a newline
+        if (
+          lastChunk?.text?.endsWith('\n') &&
+          firstListChunk?.text === '\n' &&
+          firstListChunk.text.length === 1 &&
+          !firstListChunk.attributes
+        ) {
+          // Skip the first chunk (the extra newline)
+          allChunks.push(...chunks.slice(1));
+          continue;
+        }
+      }
+
       allChunks.push(...chunks);
     }
 
