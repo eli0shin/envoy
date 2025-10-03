@@ -74,7 +74,6 @@
     "test": "vitest run --typecheck",
     "test:e2e": "vitest run e2e --config vitest.e2e.config.ts",
     "test:interactive": "vitest run --config vitest.interactive.config.ts",
-    "test:interactive:watch": "vitest --config vitest.interactive.config.ts",
     "test:e2e:all": "vitest run e2e --config vitest.e2e.config.ts",
     "test:e2e:coverage": "vitest run --coverage e2e --config vitest.e2e.config.ts",
     "test:watch": "vitest src",

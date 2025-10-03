@@ -18,9 +18,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Interactive Testing
 
-- `bun run test:interactive` - Run interactive CLI tests with real TTY support
+- `bun run test:interactive` - Run interactive CLI tests with tmux
 
-**Testing Interactive CLI Functionality**: To test the interactive mode of this CLI, use the dedicated interactive testing framework. Create test files with the pattern `*.interactive.test.ts` in the `interactive/` directory. These tests use `node-pty` to provide real TTY emulation, enabling full testing of OpenTUI-based interactive UI components.
+**Testing Interactive CLI Functionality**: To test the interactive mode of this CLI, use the tmux-based testing framework. Create test files in the `interactive-tests/` directory. These tests use tmux sessions to provide real terminal environments, enabling full testing of OpenTUI-based interactive UI components. See `interactive-tests/README.md` for usage details.
 
 ### Code Quality
 
@@ -51,4 +51,5 @@ Use `--log-level DEBUG` to enable detailed logging during development.
 - Use types instead of interfaces for typescript - ALWAYS use `type` keyword, never `interface`
 - Use zod for validations
 - do not mock in test unless the mock simulates a network call.
+- do not use try-catch in tests or test utilities. tests should fail loudly when something goes wrong.
 - always reference the theme file when adding colors. never add color values inline
