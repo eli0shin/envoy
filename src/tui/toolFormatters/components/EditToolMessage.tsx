@@ -14,44 +14,6 @@ import {
 import type { ToolMessageComponentProps } from '../types.js';
 import type { FilesystemEditFileArgs } from '../../toolTypes.js';
 
-// Helper function to wrap a line into segments that fit within maxWidth
-function wrapLine(line: string, maxWidth: number): string[] {
-  if (maxWidth <= 0 || line.length <= maxWidth) return [line];
-
-  const segments: string[] = [];
-  const words = line.split(' ');
-  let currentSegment = '';
-
-  for (const word of words) {
-    const testSegment = currentSegment ? `${currentSegment} ${word}` : word;
-
-    if (testSegment.length <= maxWidth) {
-      currentSegment = testSegment;
-    } else {
-      if (currentSegment) {
-        segments.push(currentSegment);
-        currentSegment = word;
-      } else {
-        // Word is longer than maxWidth, hard break it
-        let remaining = word;
-        while (remaining.length > maxWidth) {
-          segments.push(remaining.substring(0, maxWidth));
-          remaining = remaining.substring(maxWidth);
-        }
-        if (remaining) {
-          currentSegment = remaining;
-        }
-      }
-    }
-  }
-
-  if (currentSegment) {
-    segments.push(currentSegment);
-  }
-
-  return segments;
-}
-
 // Helper function to parse diff change counts
 function parseDiffCounts(diffText: string) {
   const lines = diffText.split('\n');
@@ -149,10 +111,6 @@ export function EditToolMessage({
     // Split into lines and render with colors
     const lines = diffText.split('\n');
 
-    // Calculate available width for diff content
-    // Subtract padding and margins from total width (extra padding for diff background)
-    const maxLineWidth = width ? width - 12 : 78; // Account for diff background padding
-
     return (
       <box flexDirection="column">
         {displayPath && (additions > 0 || deletions > 0) ?
@@ -187,38 +145,20 @@ export function EditToolMessage({
             if (line.startsWith('+')) {
               // Addition - green background, strip the + prefix
               const lineContent = line.substring(1);
-              const segments = wrapLine(lineContent, maxLineWidth);
-
-              return segments.map((segment, segmentIdx) => {
-                // Use segment content hash for uniqueness
-                const segmentKey = `${lineKey}-add-${segment.substring(0, 10)}-${segmentIdx}`;
-                return (
-                  <text key={segmentKey}><span bg={diffAddition}>{segment}</span></text>
-                );
-              });
+              return (
+                <text key={lineKey}><span bg={diffAddition}>{lineContent}</span></text>
+              );
             } else if (line.startsWith('-')) {
               // Deletion - red background, strip the - prefix
               const lineContent = line.substring(1);
-              const segments = wrapLine(lineContent, maxLineWidth);
-
-              return segments.map((segment, segmentIdx) => {
-                // Use segment content hash for uniqueness
-                const segmentKey = `${lineKey}-del-${segment.substring(0, 10)}-${segmentIdx}`;
-                return (
-                  <text key={segmentKey}><span bg={diffDeletion}>{segment}</span></text>
-                );
-              });
+              return (
+                <text key={lineKey}><span bg={diffDeletion}>{lineContent}</span></text>
+              );
             } else {
               // Context line or other
               const lineContent =
                 line.startsWith(' ') ? line.substring(1) : line;
-              const segments = wrapLine(lineContent, maxLineWidth);
-
-              return segments.map((segment, segmentIdx) => {
-                // Use segment content hash for uniqueness
-                const segmentKey = `${lineKey}-ctx-${segment.substring(0, 10)}-${segmentIdx}`;
-                return <text key={segmentKey}>{segment}</text>;
-              });
+              return <text key={lineKey}>{lineContent}</text>;
             }
           })}
         </box>
