@@ -3,6 +3,7 @@
  * Handles expensive setup operations that can be cached for reuse
  */
 
+import { tool } from 'ai';
 import { LanguageModelV2 } from '@ai-sdk/provider';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
@@ -12,12 +13,9 @@ import { createAnthropicAuthFetch } from './providers/anthropicAuth.js';
 import { createGoogleAuthConfig } from './providers/googleAuth.js';
 import { createCertificateAwareFetch } from './providers/certificateAwareFetch.js';
 import { AnthropicOAuth } from './auth/index.js';
-import {
-  loadMCPServersWithClients,
-  convertToolsForAISDK,
-} from './mcp/loader.js';
+import { loadMCPServersWithClients } from './mcp/loader.js';
 import { buildSystemPrompt } from './constants.js';
-import { WrappedTool, MCPClientWrapper } from './types/index.js';
+import { MCPClientWrapper, WrappedTool } from './types/index.js';
 import { RuntimeConfiguration } from './config/types.js';
 import { logger } from './logger.js';
 import {
@@ -26,6 +24,7 @@ import {
 } from './config/index.js';
 import type { AuthenticationInfo } from './types/index.js';
 import { ConversationPersistence } from './persistence/ConversationPersistence.js';
+import { createTodoTools } from './tools/todo.js';
 
 /**
  * Agent session containing all pre-initialized setup state
@@ -297,8 +296,9 @@ export async function initializeAgentSession(
     });
   }
 
-  // Convert tools to AI SDK format
-  const aiSDKTools = convertToolsForAISDK(tools);
+  // Merge MCP tools and built-in tools
+  const todoTools = createTodoTools();
+  const aiSDKTools = { ...tools, ...todoTools };
 
   // Initialize model provider
   const { model, authInfo } = await createModelProvider(config);

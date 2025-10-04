@@ -32,14 +32,14 @@ export function createMCPClientWrapperFromData(
   resources: MCPResource[],
   childProcess?: ChildProcess
 ): MCPClientWrapper {
-  const toolsMap = new Map<string, WrappedTool>();
+  const toolsObj: Record<string, WrappedTool> = {};
   const promptsMap = new Map<string, MCPPrompt>();
   const resourcesMap = new Map<string, MCPResource>();
 
-  // Populate tools map (keep first tool in case of duplicates)
+  // Populate tools object (keep first tool in case of duplicates)
   for (const tool of tools) {
-    if (!toolsMap.has(tool.toolName)) {
-      toolsMap.set(tool.toolName, tool);
+    if (!(tool.toolName in toolsObj)) {
+      toolsObj[tool.toolName] = tool;
     }
   }
 
@@ -53,21 +53,14 @@ export function createMCPClientWrapperFromData(
     resourcesMap.set(resource.uri, resource);
   }
 
-  // Add prompt and resource tools if capabilities support them
-  // Create tools even if no prompts/resources are available (empty tools for capability)
-  if (capabilities.prompts) {
-    const promptTools = createPromptTools(client, config.name, prompts);
-    for (const tool of promptTools) {
-      toolsMap.set(`${config.name}_${tool.toolName}`, tool);
-    }
-  }
+  const promptTools = capabilities.prompts ? createPromptTools(client, config.name, prompts) : {};
+  const resourceTools = capabilities.resources ? createResourceTools(client, config.name, resources) : {};
 
-  if (capabilities.resources) {
-    const resourceTools = createResourceTools(client, config.name, resources);
-    for (const tool of resourceTools) {
-      toolsMap.set(`${config.name}_${tool.toolName}`, tool);
-    }
-  }
+  const allTools = {
+    ...toolsObj,
+    ...promptTools,
+    ...resourceTools,
+  };
 
   // Register child process immediately when wrapper is created
   if (childProcess) {
@@ -77,7 +70,7 @@ export function createMCPClientWrapperFromData(
   const wrapper: MCPClientWrapper = {
     serverName: config.name,
     serverConfig: config,
-    tools: toolsMap,
+    tools: allTools,
     prompts: promptsMap,
     resources: resourcesMap,
     isConnected: true, // Client is already connected from initialization

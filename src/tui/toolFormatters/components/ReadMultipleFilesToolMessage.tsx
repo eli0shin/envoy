@@ -7,6 +7,7 @@ import {
 import {
   formatMultilineResult,
   extractResultText,
+  stripCwd,
 } from '../../utils/toolFormatting.js';
 import type { ToolMessageComponentProps } from '../types.js';
 import type { FilesystemReadMultipleFilesArgs } from '../../toolTypes.js';
@@ -63,7 +64,7 @@ export function ReadMultipleFilesToolMessage({
   const fileLineCounts = parseResult(successText ?? null);
   const formattedPaths =
     paths && paths.length > 0 ?
-      paths.map((p) => p.split('/').pop() || p).join(', ')
+      paths.map((p) => stripCwd(p).split('/').pop() || p).join(', ')
     : 'Unknown files';
 
   return (
@@ -75,7 +76,7 @@ export function ReadMultipleFilesToolMessage({
       {!isError && fileLineCounts && fileLineCounts.size > 0 ?
         Array.from(fileLineCounts.entries()).map(([fileName, lineCount]) => (
           <text key={fileName} paddingLeft={2}>
-            <span fg={success}>└ Read {lineCount} lines from {fileName}</span>
+            <span fg={success}>└ Read {lineCount} lines from {stripCwd(fileName)}</span>
           </text>
         ))
       : null}

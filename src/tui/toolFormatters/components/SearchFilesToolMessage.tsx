@@ -1,5 +1,5 @@
 import { error, success, filePath as filePathColor, lightGray } from '../../theme.js';
-import { extractResultText } from '../../utils/toolFormatting.js';
+import { extractResultText, stripCwd } from '../../utils/toolFormatting.js';
 import type { ToolMessageComponentProps } from '../types.js';
 import type { FilesystemSearchFilesArgs } from '../../toolTypes.js';
 
@@ -11,7 +11,7 @@ export function SearchFilesToolMessage({
 }: ToolMessageComponentProps) {
   // Extract path and pattern from args
   const typedArgs = args as FilesystemSearchFilesArgs;
-  const path = typedArgs?.path || '.';
+  const path = stripCwd(typedArgs?.path || '.');
   const pattern = typedArgs?.pattern || '';
 
   // Count the number of results

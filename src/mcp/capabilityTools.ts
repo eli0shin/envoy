@@ -3,6 +3,7 @@
  * Creates tools for prompt and resource access from MCP servers
  */
 
+import { tool } from 'ai';
 import { z } from 'zod/v3';
 import type {
   GetPromptResult,
@@ -57,23 +58,16 @@ export function createPromptTools(
   client: Client,
   serverName: string,
   prompts: MCPPrompt[]
-): WrappedTool[] {
-  const tools: WrappedTool[] = [];
-
-  // List prompts tool
-  tools.push({
+) {
+  const list_prompts = tool({
     description: `List available prompts from ${serverName}`,
-    inputSchema: z.object({}) as z.ZodType<unknown>,
+    inputSchema: z.object({}),
     execute: async () => {
-      return { result: JSON.stringify(prompts, null, 2) };
+      return JSON.stringify(prompts, null, 2);
     },
-    originalExecute: async () => ({ result: JSON.stringify(prompts, null, 2) }),
-    serverName,
-    toolName: 'list_prompts',
   });
 
-  // Get/execute prompt tool
-  tools.push({
+  const get_prompt = tool({
     description: `Get and execute a prompt from ${serverName}`,
     inputSchema: z.object({
       name: z.string().describe('Name of the prompt to execute'),
@@ -82,37 +76,25 @@ export function createPromptTools(
         .optional()
         .describe('Arguments for the prompt'),
     }),
-    execute: async (args: unknown) => {
-      const { name, arguments: argParams } = args as {
-        name: string;
-        arguments?: Record<string, unknown>;
-      };
+    execute: async ({ name, arguments: argParams }) => {
       try {
         const result = await executePrompt(client, name, argParams);
-        return { result: JSON.stringify(result, null, 2) };
+        return JSON.stringify(result, null, 2);
       } catch (error) {
-        return {
-          result:
-            'Error: ' +
-            (error instanceof Error ?
-              error.message
-            : 'Failed to execute prompt'),
-        };
+        return (
+          'Error: ' +
+          (error instanceof Error ?
+            error.message
+          : 'Failed to execute prompt')
+        );
       }
     },
-    originalExecute: async (args: unknown) => {
-      const { name, arguments: argParams } = args as {
-        name: string;
-        arguments?: Record<string, unknown>;
-      };
-      const result = await executePrompt(client, name, argParams);
-      return { result: JSON.stringify(result, null, 2) };
-    },
-    serverName,
-    toolName: 'get_prompt',
   });
 
-  return tools;
+  return {
+    [`${serverName}_list_prompts`]: { ...list_prompts, serverName, toolName: 'list_prompts' },
+    [`${serverName}_get_prompt`]: { ...get_prompt, serverName, toolName: 'get_prompt' },
+  };
 }
 
 /**
@@ -122,52 +104,37 @@ export function createResourceTools(
   client: Client,
   serverName: string,
   resources: MCPResource[]
-): WrappedTool[] {
-  const tools: WrappedTool[] = [];
-
-  // List resources tool
-  tools.push({
+) {
+  const list_resources = tool({
     description: `List available resources from ${serverName}`,
-    inputSchema: z.object({}) as z.ZodType<unknown>,
+    inputSchema: z.object({}),
     execute: async () => {
-      return { result: JSON.stringify(resources, null, 2) };
+      return JSON.stringify(resources, null, 2);
     },
-    originalExecute: async () => ({
-      result: JSON.stringify(resources, null, 2),
-    }),
-    serverName,
-    toolName: 'list_resources',
   });
 
-  // Read resource tool
-  tools.push({
+  const read_resource = tool({
     description: `Read content from a resource in ${serverName}`,
     inputSchema: z.object({
       uri: z.string().describe('URI of the resource to read'),
     }),
-    execute: async (args: unknown) => {
-      const { uri } = args as { uri: string };
+    execute: async ({ uri }) => {
       try {
         const result = await readResourceContent(client, uri);
-        return { result: JSON.stringify(result, null, 2) };
+        return JSON.stringify(result, null, 2);
       } catch (error) {
-        return {
-          result:
-            'Error: ' +
-            (error instanceof Error ?
-              error.message
-            : 'Failed to read resource'),
-        };
+        return (
+          'Error: ' +
+          (error instanceof Error ?
+            error.message
+          : 'Failed to read resource')
+        );
       }
     },
-    originalExecute: async (args: unknown) => {
-      const { uri } = args as { uri: string };
-      const result = await readResourceContent(client, uri);
-      return { result: JSON.stringify(result, null, 2) };
-    },
-    serverName,
-    toolName: 'read_resource',
   });
 
-  return tools;
+  return {
+    [`${serverName}_list_resources`]: { ...list_resources, serverName, toolName: 'list_resources' },
+    [`${serverName}_read_resource`]: { ...read_resource, serverName, toolName: 'read_resource' },
+  };
 }

@@ -1,5 +1,5 @@
 import { error, success, filePath, lightGray } from '../../theme.js';
-import { extractResultText } from '../../utils/toolFormatting.js';
+import { extractResultText, stripCwd } from '../../utils/toolFormatting.js';
 import type { ToolMessageComponentProps } from '../types.js';
 import type { FilesystemMoveFileArgs } from '../../toolTypes.js';
 
@@ -11,8 +11,8 @@ export function MoveFileToolMessage({
 }: ToolMessageComponentProps) {
   // Extract source and destination from args
   const typedArgs = args as FilesystemMoveFileArgs;
-  const source = typedArgs?.source || '';
-  const destination = typedArgs?.destination || '';
+  const source = stripCwd(typedArgs?.source || '');
+  const destination = stripCwd(typedArgs?.destination || '');
 
   const successText = extractResultText(output);
   const errorText = extractResultText(errorPayload ?? (isError ? output : undefined));

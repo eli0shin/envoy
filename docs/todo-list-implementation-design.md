@@ -59,36 +59,21 @@ type TodoResponse = {
 - **Parameters**: `{ content: string }`
 - **Behavior**: Adds new todo at end of list with 'pending' status
 - **Returns**: Full todo list
+- **Usage**: REQUIRED for multi-step tasks (>2 steps). Break down requests into concrete, actionable steps.
 
 ### 2. `todo_list`
 
 - **Parameters**: None
 - **Behavior**: Returns current todo list
 - **Returns**: Full todo list
+- **Usage**: Use frequently during multi-step operations to check what remains and maintain context.
 
 ### 3. `todo_update`
 
 - **Parameters**: `{ id: string, status: 'pending' | 'in_progress' | 'completed' }`
 - **Behavior**: Updates status of specified todo
 - **Returns**: Full todo list
-
-### 4. `todo_remove`
-
-- **Parameters**: `{ id: string }`
-- **Behavior**: Removes specified todo
-- **Returns**: Full todo list
-
-### 5. `todo_clear`
-
-- **Parameters**: None
-- **Behavior**: Removes all todos
-- **Returns**: Empty todo list
-
-### 6. `todo_reorder`
-
-- **Parameters**: `{ id: string, newPosition: number }`
-- **Behavior**: Moves todo to new position (0-indexed)
-- **Returns**: Full todo list
+- **Usage**: REQUIRED to mark items as 'in_progress' when starting them and 'completed' when finished. Ensures transparent progress tracking.
 
 ## Session Management
 
@@ -170,32 +155,25 @@ type TodoResponse = {
 
 ## Implementation Plan
 
-### Phase 1: Core MCP Server
+### Phase 1: Core Built-in Tools
 
-1. Create `src/todoServer.ts` with basic MCP server setup
+1. Create `src/tools/todo.ts` with built-in tool implementation
 2. Implement in-memory storage with session management
-3. Add core CRUD operations (add, list, update, remove)
+3. Add core operations (add, list, update)
 
-### Phase 2: Enhanced Operations
-
-1. Add reorder functionality
-2. Implement clear operation
-3. Add session cleanup logic
-
-### Phase 3: Output Formatting
+### Phase 2: Output Formatting
 
 1. Implement Markdown formatter for human output
 2. Add JSON output support
 3. Integrate with logger for proper prefixing
 
-### Phase 4: Integration
+### Phase 3: Integration
 
-1. Register server in `constants.ts`
+1. Register tools in built-in tools system
 2. Add environment variable passing for session ID
 3. Test with interactive mode
-4. Add `/clear` hook for todo reset
 
-### Phase 5: Logging
+### Phase 4: Logging
 
 1. Implement timestamp logging to files
 2. Add JSONL formatter
@@ -216,10 +194,23 @@ type TodoResponse = {
 4. Session lifecycle tests
 5. Error condition tests
 
+## Design Rationale: Simplified Tool Set
+
+The implementation uses only 3 core tools (add, list, update) instead of the original 6 tools:
+
+**Removed tools and rationale:**
+- `todo_remove`: Just mark items completed instead. Simpler mental model, less decision fatigue.
+- `todo_reorder`: Plan better upfront. Adds complexity for rare use case.
+- `todo_clear`: Completed items accumulate (cleared on new session). Not worth a dedicated tool.
+
+**Benefits:**
+- Simpler mental model for agents
+- Fewer decisions to make during workflow
+- Covers 99% of real usage patterns
+- Maintains essential in_progress state for tracking active work
+
 ## Future Enhancements
 
 - Todo templates for common workflows
-- Bulk operations (mark multiple as complete)
+- Session-based auto-clear on completion
 - Export/import functionality
-- Todo dependencies (blocked by another todo)
-- Time estimates and tracking

@@ -3,6 +3,7 @@
  * Defines interfaces for MCP server configurations and tool wrappers
  */
 
+import { tool } from 'ai';
 import { z } from 'zod/v3';
 import type { ChildProcess } from 'child_process';
 import type { ModelMessage } from 'ai';
@@ -48,12 +49,9 @@ export type MCPServerConfig = StdioMCPServerConfig | SSEMCPServerConfig;
 
 /**
  * Wrapped tool with logging functionality
+ * AI SDK tool with metadata
  */
-export type WrappedTool = {
-  description?: string;
-  inputSchema: z.ZodType<unknown>;
-  execute: (args: unknown) => Promise<{ result: string }>;
-  originalExecute: (args: unknown) => Promise<{ result: string }>;
+export type WrappedTool = ReturnType<typeof tool<unknown, unknown>> & {
   serverName: string;
   toolName: string;
 };
@@ -113,7 +111,7 @@ export type ResourceContent = {
 export type MCPClientWrapper = {
   serverName: string;
   serverConfig: MCPServerConfig;
-  tools: Map<string, WrappedTool>;
+  tools: Record<string, WrappedTool>;
   prompts: Map<string, MCPPrompt>;
   resources: Map<string, MCPResource>;
   isConnected: boolean;
@@ -133,7 +131,7 @@ export type MCPClientWrapper = {
  * Tool loading result
  */
 export type ToolLoadResult = {
-  tools: Map<string, WrappedTool>;
+  tools: Record<string, WrappedTool>;
   errors: Array<{
     serverName: string;
     error: string;
@@ -144,7 +142,7 @@ export type ToolLoadResult = {
  * Integrated MCP server loading result with both tools and client wrappers
  */
 export type MCPLoadResult = {
-  tools: Map<string, WrappedTool>;
+  tools: Record<string, WrappedTool>;
   clients: MCPClientWrapper[];
   errors: Array<{
     serverName: string;

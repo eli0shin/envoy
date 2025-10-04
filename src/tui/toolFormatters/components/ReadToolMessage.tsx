@@ -4,7 +4,7 @@ import {
   filePath as filePathColor,
   lightGray,
 } from '../../theme.js';
-import { extractResultText } from '../../utils/toolFormatting.js';
+import { extractResultText, stripCwd } from '../../utils/toolFormatting.js';
 import type { ToolMessageComponentProps } from '../types.js';
 
 export function ReadToolMessage({
@@ -15,7 +15,7 @@ export function ReadToolMessage({
 }: ToolMessageComponentProps) {
   // Extract the path argument (filesystem_read_text_file uses 'path')
   const { path } = args as { path: string };
-  const filePath = path || 'Unknown file';
+  const filePath = stripCwd(path || 'Unknown file');
 
   // Count lines in the result (filesystem_read_text_file returns {result: "content"})
   const successText = extractResultText(output);

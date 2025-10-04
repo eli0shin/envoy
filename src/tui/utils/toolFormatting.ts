@@ -150,7 +150,7 @@ export function extractResultText(result: unknown): string {
     if ('output' in result) {
       const outputValue = (result as { output?: unknown }).output;
       const outputText = extractResultText(outputValue);
-      if (outputText) return outputText;
+      if (outputText !== undefined && outputText !== null) return outputText;
     }
 
     if ('result' in result) {
@@ -176,7 +176,7 @@ export function extractResultText(result: unknown): string {
 
     if ('value' in result) {
       const valueText = extractResultText((result as { value: unknown }).value);
-      if (valueText) return valueText;
+      if (valueText !== undefined && valueText !== null) return valueText;
     }
 
     try {
@@ -216,6 +216,24 @@ export function formatMultilineResult(
       return indent + line;
     })
     .join('\n');
+}
+
+/**
+ * Strip the current working directory from a file path if present
+ * @param filePath - The absolute or relative file path
+ * @returns Path relative to cwd or original path if not in cwd
+ */
+export function stripCwd(filePath: string): string {
+  const cwd = process.cwd();
+
+  // If the path starts with the cwd, remove it
+  if (filePath.startsWith(cwd)) {
+    // Remove cwd and leading slash
+    const relative = filePath.substring(cwd.length);
+    return relative.startsWith('/') ? relative.substring(1) : relative;
+  }
+
+  return filePath;
 }
 
 export type ToolCallState = 'pending' | 'success' | 'error';

@@ -9,6 +9,7 @@ import { SearchFilesToolMessage } from './components/SearchFilesToolMessage.js';
 import { WebSearchToolMessage } from './components/WebSearchToolMessage.js';
 import { CreateDirectoryToolMessage } from './components/CreateDirectoryToolMessage.js';
 import { MoveFileToolMessage } from './components/MoveFileToolMessage.js';
+import { TodoToolMessage } from './components/TodoToolMessage.js';
 import type { ToolRegistry, ToolConfig } from './types.js';
 
 // Helper to convert snake_case to Title Case
@@ -64,6 +65,15 @@ export const toolRegistry: ToolRegistry = {
   'brave-search_brave_web_search': {
     displayName: 'Web Search',
     component: WebSearchToolMessage,
+  },
+  // Todo tools
+  todo_write: {
+    displayName: 'Todo Write',
+    component: TodoToolMessage,
+  },
+  todo_list: {
+    displayName: 'Todo List',
+    component: TodoToolMessage,
   },
 };
 

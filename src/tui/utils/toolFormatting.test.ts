@@ -8,6 +8,7 @@ import {
   renderToolCall,
   renderToolCallWithErrorMarkers,
   formatMultilineResult,
+  stripCwd,
 } from './toolFormatting.js';
 
 describe('toolFormatting', () => {
@@ -282,6 +283,34 @@ describe('toolFormatting', () => {
       const result = renderToolCallWithErrorMarkers(formatted);
       expect(result).not.toContain('[ERROR]');
       expect(result).toContain('└ Result: file contents');
+    });
+  });
+
+  describe('stripCwd', () => {
+    it('should strip cwd from absolute paths', () => {
+      const cwd = process.cwd();
+      const filePath = `${cwd}/src/test.ts`;
+      expect(stripCwd(filePath)).toBe('src/test.ts');
+    });
+
+    it('should handle paths with cwd prefix and no leading slash', () => {
+      const cwd = process.cwd();
+      const filePath = `${cwd}test.ts`;
+      expect(stripCwd(filePath)).toBe('test.ts');
+    });
+
+    it('should return original path if not in cwd', () => {
+      const filePath = '/some/other/path/test.ts';
+      expect(stripCwd(filePath)).toBe('/some/other/path/test.ts');
+    });
+
+    it('should handle relative paths unchanged', () => {
+      const filePath = 'src/test.ts';
+      expect(stripCwd(filePath)).toBe('src/test.ts');
+    });
+
+    it('should handle empty strings', () => {
+      expect(stripCwd('')).toBe('');
     });
   });
 });

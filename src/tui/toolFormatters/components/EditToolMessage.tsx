@@ -10,6 +10,7 @@ import {
 import {
   formatMultilineResult,
   extractResultText,
+  stripCwd,
 } from '../../utils/toolFormatting.js';
 import type { ToolMessageComponentProps } from '../types.js';
 import type { FilesystemEditFileArgs } from '../../toolTypes.js';
@@ -41,7 +42,7 @@ export function EditToolMessage({
 }: ToolMessageComponentProps) {
   // Extract path from args - handle both 'path' and 'file_path' keys
   const typedArgs = args as FilesystemEditFileArgs;
-  const filePath = typedArgs?.path || 'unknown';
+  const filePath = stripCwd(typedArgs?.path || 'unknown');
 
   const successText = extractResultText(output);
   const errorTextValue = extractResultText(
@@ -67,13 +68,6 @@ export function EditToolMessage({
 
     // Parse diff change counts before cleaning
     const { additions, deletions } = parseDiffCounts(diffText);
-
-    // Convert absolute path to relative if it contains the project
-    let displayPath = filePath;
-    const projectMatch = filePath.match(/.*\/(src\/.+)$/);
-    if (projectMatch) {
-      displayPath = projectMatch[1];
-    }
 
     // Aggressively remove all backtick-based diff wrappers
     // First, trim whitespace
@@ -113,9 +107,9 @@ export function EditToolMessage({
 
     return (
       <box flexDirection="column">
-        {displayPath && (additions > 0 || deletions > 0) ?
+        {filePath && (additions > 0 || deletions > 0) ?
           <text paddingLeft={2}>
-            <span fg={success}>└ Updated {displayPath} with {additions} additions and {deletions} deletions</span>
+            <span fg={success}>└ Updated {filePath} with {additions} additions and {deletions} deletions</span>
           </text>
         : null}
         <box

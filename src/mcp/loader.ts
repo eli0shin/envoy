@@ -38,7 +38,7 @@ export async function loadMCPServersWithClients(
   serverConfigs: readonly MCPServerConfig[] | Readonly<MCPServerConfig[]>,
   runtimeConfig?: RuntimeConfiguration
 ): Promise<MCPLoadResult> {
-  const allTools = new Map<string, WrappedTool>();
+  const allTools: Record<string, WrappedTool> = {};
   const allClients: MCPClientWrapper[] = [];
   const errors: Array<{ serverName: string; error: string }> = [];
 
@@ -107,7 +107,7 @@ export async function loadMCPServersWithClients(
 
       // Add all tools from the wrapper (includes regular, prompt, and resource tools)
       // Regular tools need server prefix, prompt/resource tools already have it
-      for (const [toolKey, tool] of Array.from(wrapper.tools.entries())) {
+      for (const [toolKey, tool] of Object.entries(wrapper.tools)) {
         let finalToolKey = toolKey;
 
         // If the toolKey doesn't start with server name, add server prefix for regular tools
@@ -123,7 +123,7 @@ export async function loadMCPServersWithClients(
           continue; // Skip disabled tools (logging handled in isToolDisabled)
         }
 
-        if (allTools.has(finalToolKey)) {
+        if (finalToolKey in allTools) {
           errors.push({
             serverName: serverInit.config.name,
             error: `Tool name conflict: ${toolKey} already exists`,
@@ -131,7 +131,7 @@ export async function loadMCPServersWithClients(
           continue;
         }
 
-        allTools.set(finalToolKey, tool);
+        allTools[finalToolKey] = tool;
       }
     } else {
       const error =
@@ -146,7 +146,7 @@ export async function loadMCPServersWithClients(
   }
 
   logger.debug(
-    `Loaded ${allTools.size} tools and ${allClients.length} client wrappers from ${successfulInits.length} servers`
+    `Loaded ${Object.keys(allTools).length} tools and ${allClients.length} client wrappers from ${successfulInits.length} servers`
   );
 
   return {
@@ -170,28 +170,6 @@ export async function loadMCPTools(
   };
 }
 
-/**
- * Converts the tool map to the format expected by the AI SDK
- */
-export function convertToolsForAISDK(
-  tools: Map<string, WrappedTool>
-): Record<string, any> {
-  const aiSDKTools: Record<string, any> = {};
-
-  for (const [toolKey, tool] of Array.from(tools.entries())) {
-    aiSDKTools[toolKey] = {
-      description: tool.description,
-      inputSchema: tool.inputSchema,
-      parameters: tool.inputSchema, // AI SDK expects parameters property
-      execute: tool.execute,
-      originalExecute: tool.originalExecute,
-      serverName: tool.serverName,
-      toolName: tool.toolName,
-    };
-  }
-
-  return aiSDKTools;
-}
 
 /**
  * Creates a client wrapper that manages connection lifecycle

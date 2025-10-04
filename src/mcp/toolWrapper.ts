@@ -3,10 +3,10 @@
  * Provides tool wrapping functionality with logging, validation, and error handling
  */
 
+import { tool } from 'ai';
 import { z } from 'zod/v3';
 import type { Tool, CallToolResult } from '@modelcontextprotocol/sdk/types.js';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
-import type { WrappedTool } from '../types/index.js';
 import { TOOL_TIMEOUT_MS } from '../constants.js';
 import { logMcpTool } from '../logger.js';
 
@@ -70,128 +70,107 @@ export function convertMCPSchemaToZod(
  * Creates a wrapped tool with logging functionality and argument validation
  */
 export function createWrappedTool(
-  tool: Tool,
+  mcpTool: Tool,
   client: Client,
   serverName: string
-): WrappedTool {
-  // Convert MCP tool schema to AI SDK CoreTool format for validation
+) {
+  // Convert MCP tool schema to Zod schema for validation
   const inputSchema =
-    tool.inputSchema ?
-      convertMCPSchemaToZod(tool.inputSchema as Record<string, unknown>)
+    mcpTool.inputSchema ?
+      convertMCPSchemaToZod(mcpTool.inputSchema as Record<string, unknown>)
     : z.object({});
 
-  const execute = async (args: unknown) => {
-    // Log the tool call
-    logMcpTool(serverName, tool.name, 'INFO', 'Tool called', {
-      args,
-      description: tool.description,
-    });
+  const aiTool = tool({
+    description: mcpTool.description || `Tool ${mcpTool.name} from ${serverName}`,
+    inputSchema,
+    execute: async (args) => {
+      // Log the tool call
+      logMcpTool(serverName, mcpTool.name, 'INFO', 'Tool called', {
+        args,
+        description: mcpTool.description,
+      });
 
-    // Progress logging is now handled centrally in agent.ts onStepFinish for correct ordering
-
-    try {
-      // Validate arguments using Zod
-      let validatedArgs: Record<string, unknown>;
       try {
-        validatedArgs = inputSchema.parse(args || {}) as Record<string, unknown>;
-      } catch (validationError) {
-        const errorMsg = `Invalid arguments for tool ${tool.name}: ${validationError instanceof Error ? validationError.message : 'Validation failed'}`;
+        // Execute the tool with timeout
+        const timeoutPromise = new Promise<never>((_, reject) => {
+          setTimeout(
+            () => reject(new Error('Tool execution timeout')),
+            TOOL_TIMEOUT_MS
+          );
+        });
 
-        logMcpTool(serverName, tool.name, 'ERROR', 'Validation failed', {
-          error: errorMsg,
+        const executionPromise = client.callTool(
+          {
+            name: mcpTool.name,
+            arguments: args as Record<string, unknown>,
+          },
+          undefined,
+          {
+            timeout: TOOL_TIMEOUT_MS,
+            resetTimeoutOnProgress: true,
+          }
+        );
+
+        const result = (await Promise.race([
+          executionPromise,
+          timeoutPromise,
+        ])) as CallToolResult;
+
+        if (result.isError) {
+          const errorMsg = result.content[0]?.text || 'Tool execution failed';
+
+          logMcpTool(serverName, mcpTool.name, 'ERROR', 'Tool execution failed', {
+            error: errorMsg,
+            args,
+          });
+
+          return 'Error: ' + errorMsg;
+        }
+
+        // Extract content from the result
+        const content = (
+          result.content as Array<{
+            type: string;
+            text?: string;
+            data?: string;
+            resource?: { uri: string };
+          }>
+        )
+          .map((item) => {
+            if (item.type === 'text') {
+              return item.text;
+            } else if (item.type === 'image') {
+              return `[Image: ${item.data}]`;
+            } else if (item.type === 'resource') {
+              return `[Resource: ${item.resource?.uri}]`;
+            }
+            return '[Unknown content type]';
+          })
+          .join('\n');
+
+        logMcpTool(serverName, mcpTool.name, 'INFO', 'Tool executed successfully', {
+          args,
+          resultLength: content.length,
+        });
+
+        return content;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Unknown error';
+
+        logMcpTool(serverName, mcpTool.name, 'ERROR', 'Tool execution exception', {
+          error: errorMessage,
           args,
         });
 
-        return { result: 'Error: ' + errorMsg };
+        return 'Error: ' + errorMessage;
       }
+    },
+  });
 
-      // Execute the tool with timeout
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(
-          () => reject(new Error('Tool execution timeout')),
-          TOOL_TIMEOUT_MS
-        );
-      });
-
-      const executionPromise = client.callTool(
-        {
-          name: tool.name,
-          arguments: validatedArgs,
-        },
-        undefined,
-        {
-          timeout: TOOL_TIMEOUT_MS,
-          resetTimeoutOnProgress: true,
-        }
-      );
-
-      const result = (await Promise.race([
-        executionPromise,
-        timeoutPromise,
-      ])) as CallToolResult;
-
-      if (result.isError) {
-        const errorMsg = result.content[0]?.text || 'Tool execution failed';
-
-        logMcpTool(serverName, tool.name, 'ERROR', 'Tool execution failed', {
-          error: errorMsg,
-          args: validatedArgs,
-        });
-
-        return { result: 'Error: ' + errorMsg };
-      }
-
-      // Extract content from the result
-      const content = (
-        result.content as Array<{
-          type: string;
-          text?: string;
-          data?: string;
-          resource?: { uri: string };
-        }>
-      )
-        .map((item) => {
-          if (item.type === 'text') {
-            return item.text;
-          } else if (item.type === 'image') {
-            return `[Image: ${item.data}]`;
-          } else if (item.type === 'resource') {
-            return `[Resource: ${item.resource?.uri}]`;
-          }
-          return '[Unknown content type]';
-        })
-        .join('\n');
-
-      logMcpTool(serverName, tool.name, 'INFO', 'Tool executed successfully', {
-        args: validatedArgs,
-        resultLength: content.length,
-      });
-
-      return { result: content };
-    } catch (error) {
-      const errorMessage =
-        error instanceof Error ? error.message : 'Unknown error';
-
-      logMcpTool(serverName, tool.name, 'ERROR', 'Tool execution exception', {
-        error: errorMessage,
-        args,
-      });
-
-      // Return error information as a successful result
-      return {
-        result: 'Error: ' + errorMessage,
-      };
-    }
-  };
-
-  const wrappedTool: WrappedTool = {
-    description: tool.description || `Tool ${tool.name} from ${serverName}`,
-    inputSchema,
-    execute,
-    originalExecute: execute,
+  // Add metadata as properties on the tool object
+  return Object.assign(aiTool, {
     serverName,
-    toolName: tool.name,
-  };
-
-  return wrappedTool;
+    toolName: mcpTool.name,
+  });
 }

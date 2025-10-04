@@ -16,7 +16,7 @@
 [ ] - ability to set allowed disallowed tools in config
 [ ] - ability to go back in conversation history, will require generating a new session id and writing all of the messages to the new session file
 [ ] - fix the agent tool prompts
-[ ] - fix the todo tool prompts
+[x] - fix the todo tool prompts (simplified to 3 core tools: add, list, update)
 [ ] - write a proper search tool with rg and fzf
 [ ] - write a proper edit tool
 [ ] - custom agents - config files that setup use-cases and tools
