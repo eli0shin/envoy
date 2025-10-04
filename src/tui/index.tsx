@@ -7,8 +7,15 @@ export async function launchTUI(
   config: RuntimeConfiguration,
   agentSession: AgentSession
 ): Promise<void> {
+  // Remove opentui's SIGINT handler and install a no-op to prevent process.exit()
+  // This allows Ctrl+C to be handled by our keyboard event system
+  process.removeAllListeners('SIGINT');
+  process.on('SIGINT', () => {
+    // No-op: let the keypress handler (from stdin \x03) handle Ctrl+C
+  });
+
   // Initialize TUI with existing session
-  // Disable OpenTUI's built-in Ctrl+C handling to allow our double-press logic
+  // exitOnCtrlC: false allows Ctrl+C keypress (\x03) to reach our handlers
   render(<TUIApp config={config} session={agentSession} />, {
     exitOnCtrlC: false,
   });

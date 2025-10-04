@@ -2,10 +2,14 @@ import { useState, useEffect, useCallback } from 'react';
 import { useTerminalDimensions, useRenderer } from '@opentui/react';
 import { MessageList } from './MessageList.js';
 import { InputArea } from './InputArea.js';
+import type { AutocompleteState } from './InputArea.js';
 import { StatusBar } from './StatusBar.js';
 import { Header } from './Header.js';
 import { ModalProvider } from './ModalProvider.js';
 import { ModalDisplay } from './ModalDisplay.js';
+import { ErrorBoundary } from './ErrorBoundary.js';
+import { CommandAutocomplete } from './CommandAutocomplete.js';
+import { FileAutocomplete } from './FileAutocomplete.js';
 import { colors } from '../theme.js';
 import { runAgent } from '../../agent/index.js';
 import { commandRegistry } from '../commands/registry.js';
@@ -51,7 +55,10 @@ export function TUIApp({ config, session }: TUIAppProps) {
   const [originalInput, setOriginalInput] = useState('');
   const [exitConfirmation, setExitConfirmation] =
     useState<ExitConfirmationState | null>(null);
-  const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [abortController, setAbortController] =
+    useState<AbortController | null>(null);
+  const [autocompleteState, setAutocompleteState] =
+    useState<AutocompleteState>(null);
   const { width, height } = useTerminalDimensions();
   const renderer = useRenderer();
 
@@ -97,7 +104,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
       abortController.abort();
       setStatus('READY');
       setAbortController(null);
-      
+
       // Add cancellation message
       const cancelMessage: ModelMessage & { id: string } = {
         role: 'assistant',
@@ -121,13 +128,6 @@ export function TUIApp({ config, session }: TUIAppProps) {
       setExitConfirmation({ active: true, timeoutId });
     }
   }, [exitConfirmation, handleExit]);
-
-  // Remove all SIGINT handlers after TUI mounts to prevent immediate exit on C-c
-  useEffect(() => {
-    // Remove all SIGINT listeners to allow our double-press logic to work
-    // This removes both our handler and OpenTUI's singleton handler
-    process.removeAllListeners('SIGINT');
-  }, []);
 
   // Load existing conversation history if available and set command callbacks
   useEffect(() => {
@@ -248,27 +248,34 @@ export function TUIApp({ config, session }: TUIAppProps) {
     // Process entire conversation including newly added messages
     setStatus('PROCESSING');
     try {
-      await runAgent(allMessages, config, session, true, (message) => {
-        setMessages((prev) => {
-          return [
-            ...prev,
-            {
-              ...message,
-              id:
-                'id' in message && typeof message.id === 'string' ?
-                  message.id
-                : `agent-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-            },
-          ];
-        });
-      }, controller.signal);
+      await runAgent(
+        allMessages,
+        config,
+        session,
+        true,
+        (message) => {
+          setMessages((prev) => {
+            return [
+              ...prev,
+              {
+                ...message,
+                id:
+                  'id' in message && typeof message.id === 'string' ?
+                    message.id
+                  : `agent-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+              },
+            ];
+          });
+        },
+        controller.signal
+      );
     } catch (error) {
       // Handle abort error differently from other errors
       if (error instanceof Error && error.name === 'AbortError') {
         // Don't add error message for user-initiated cancellation
         return;
       }
-      
+
       // Add error message for other errors
       const errorMessage: ModelMessage & { id: string } = {
         role: 'assistant',
@@ -311,7 +318,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
       // Agent is ready - process immediately
       const newMessages = [...messages, userMessage];
       setMessages((prev) => [...prev, userMessage]);
-      
+
       // Create abort controller for this agent execution
       const controller = new AbortController();
       setAbortController(controller);
@@ -319,27 +326,34 @@ export function TUIApp({ config, session }: TUIAppProps) {
 
       try {
         // Process with agent
-        await runAgent(newMessages, config, session, true, (message) => {
-          setMessages((prev) => {
-            return [
-              ...prev,
-              {
-                ...message,
-                id:
-                  'id' in message && typeof message.id === 'string' ?
-                    message.id
-                  : `agent-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-              },
-            ];
-          });
-        }, controller.signal);
+        await runAgent(
+          newMessages,
+          config,
+          session,
+          true,
+          (message) => {
+            setMessages((prev) => {
+              return [
+                ...prev,
+                {
+                  ...message,
+                  id:
+                    'id' in message && typeof message.id === 'string' ?
+                      message.id
+                    : `agent-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+                },
+              ];
+            });
+          },
+          controller.signal
+        );
       } catch (error) {
         // Handle abort error differently from other errors
         if (error instanceof Error && error.name === 'AbortError') {
           // Don't add error message for user-initiated cancellation
           return;
         }
-        
+
         // Add error message for other errors
         const errorMessage: ModelMessage & { id: string } = {
           role: 'assistant',
@@ -390,19 +404,20 @@ export function TUIApp({ config, session }: TUIAppProps) {
       <ModalProvider modalState={modalState} setModalState={setModalState}>
         <KeyDispatcher />
         <box
-          position="relative"
           flexDirection="column"
           width={width}
           height={height}
           backgroundColor={colors.backgrounds.main}
+          flexShrink={0}
         >
           <Header />
-          <MessageList
-            key={`${resizeKey}-${messages.length}-${queuedMessages.length}`}
-            messages={messages}
-            queuedMessages={queuedMessages}
-            width={width}
-          />
+          <ErrorBoundary>
+            <MessageList
+              messages={messages}
+              queuedMessages={queuedMessages}
+              width={width}
+            />
+          </ErrorBoundary>
           <InputArea
             onSubmit={handleSendMessage}
             onCommandExecute={handleCommandExecute}
@@ -414,6 +429,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
             setOriginalInput={setOriginalInput}
             queuedMessages={queuedMessages}
             onQueuePop={handleQueuePop}
+            onAutocompleteChange={setAutocompleteState}
           />
           <StatusBar
             status={status}
@@ -421,8 +437,21 @@ export function TUIApp({ config, session }: TUIAppProps) {
             exitConfirmation={!!exitConfirmation}
             queuedMessages={queuedMessages}
           />
-          <ModalDisplay />
         </box>
+        {autocompleteState?.showCommand && (
+          <CommandAutocomplete
+            inputValue={autocompleteState.inputValue}
+            onSelect={autocompleteState.onCommandSelect}
+          />
+        )}
+        {autocompleteState?.showFile && (
+          <FileAutocomplete
+            inputValue={autocompleteState.inputValue}
+            cursorPosition={autocompleteState.cursorPosition}
+            onSelect={autocompleteState.onFileSelect}
+          />
+        )}
+        <ModalDisplay />
       </ModalProvider>
     </KeysProvider>
   );

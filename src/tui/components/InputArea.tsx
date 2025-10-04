@@ -1,12 +1,19 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { MultiLineInput } from './MultiLineInput';
-import { CommandAutocomplete } from './CommandAutocomplete';
-import { FileAutocomplete } from './FileAutocomplete';
 import { useModalState } from './ModalProvider.js';
 import { colors } from '../theme.js';
 import { commandRegistry } from '../commands/registry.js';
 import { parseFilePattern } from '../utils/inputParser.js';
 import type { ModelMessage } from 'ai';
+
+export type AutocompleteState = {
+  showCommand: boolean;
+  showFile: boolean;
+  inputValue: string;
+  cursorPosition: number;
+  onCommandSelect: (command: string) => void;
+  onFileSelect: (replacement: string, start: number, end: number) => void;
+} | null;
 
 type InputAreaProps = {
   onSubmit: (message: string) => void;
@@ -19,6 +26,7 @@ type InputAreaProps = {
   setOriginalInput: (input: string) => void;
   queuedMessages: (ModelMessage & { id: string })[];
   onQueuePop: () => string | null;
+  onAutocompleteChange: (state: AutocompleteState) => void;
 };
 
 export function InputArea({
@@ -32,6 +40,7 @@ export function InputArea({
   setOriginalInput,
   queuedMessages,
   onQueuePop,
+  onAutocompleteChange,
 }: InputAreaProps) {
   const [value, setValue] = useState('');
   const [cursorPosition, setCursorPosition] = useState(0);
@@ -40,6 +49,7 @@ export function InputArea({
 
   const handleCommandSelect = useCallback((command: string) => {
     setValue(command);
+    setCursorPosition(command.length);
   }, []);
 
   const handleFileSelect = useCallback(
@@ -62,6 +72,31 @@ export function InputArea({
   const showCommandAutocomplete = value.startsWith('/');
   const filePattern = parseFilePattern(value, cursorPosition);
   const showFileAutocomplete = filePattern !== null;
+
+  // Notify parent of autocomplete state changes
+  useEffect(() => {
+    if (showCommandAutocomplete && !showFileAutocomplete) {
+      onAutocompleteChange({
+        showCommand: true,
+        showFile: false,
+        inputValue: value,
+        cursorPosition,
+        onCommandSelect: handleCommandSelect,
+        onFileSelect: handleFileSelect,
+      });
+    } else if (showFileAutocomplete) {
+      onAutocompleteChange({
+        showCommand: false,
+        showFile: true,
+        inputValue: value,
+        cursorPosition,
+        onCommandSelect: handleCommandSelect,
+        onFileSelect: handleFileSelect,
+      });
+    } else {
+      onAutocompleteChange(null);
+    }
+  }, [showCommandAutocomplete, showFileAutocomplete, value, cursorPosition, handleCommandSelect, handleFileSelect, onAutocompleteChange]);
 
   const handleInputArrowKey = useCallback(
     (direction: 'up' | 'down', shouldHandleHistory: boolean): boolean => {
@@ -143,25 +178,8 @@ export function InputArea({
   };
 
   return (
-    <box flexDirection="column">
-      {/* Autocomplete positioned absolutely relative to viewport */}
-      {showCommandAutocomplete && !showFileAutocomplete && (
-        <CommandAutocomplete
-          inputValue={value}
-          onSelect={handleCommandSelect}
-        />
-      )}
-      {showFileAutocomplete && (
-        <FileAutocomplete
-          inputValue={value}
-          cursorPosition={cursorPosition}
-          onSelect={handleFileSelect}
-        />
-      )}
-
-      {/* Input area with padding */}
-      <box flexDirection="column" backgroundColor={colors.backgrounds.input}>
-        {/* Top padding line */}
+    <box flexDirection="column" flexShrink={0} minHeight={3}>
+      <box flexDirection="column" backgroundColor={colors.backgrounds.input} flexShrink={0}>
         <box height={1}>
           <text> </text>
         </box>
@@ -181,7 +199,6 @@ export function InputArea({
           disabled={disabled}
         />
 
-        {/* Bottom padding line */}
         <box height={1}>
           <text> </text>
         </box>

@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fg } from '@opentui/core';
 import { useTerminalDimensions } from '@opentui/react';
 import { useKeys, parseKeys } from '../keys/index.js';
 import { colors } from '../theme.js';
@@ -179,15 +178,15 @@ export function FileAutocomplete({
         >
           <text>
             {index === visibleSelectedIndex ?
-              fg(colors.text)(path)
-            : fg(colors.primary)(path)}
+              <span fg={colors.text}>{path}</span>
+            : <span fg={colors.primary}>{path}</span>}
           </text>
         </box>
       ))}
       {suggestions.length > maxItems && (
         <box height={1} paddingLeft={1}>
           <text>
-            {fg(colors.muted)(`... and ${suggestions.length - maxItems} more`)}
+            <span fg={colors.muted}>... and {suggestions.length - maxItems} more</span>
           </text>
         </box>
       )}

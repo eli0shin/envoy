@@ -1,4 +1,4 @@
-import { formatContent, formatBackground } from '../theme.js';
+import { MessageContent as MessageContentComponent, formatBackground } from '../theme.js';
 import { getToolConfig } from '../toolFormatters/index.js';
 import { ErrorBoundary } from './ErrorBoundary.js';
 import type { ModelMessage } from 'ai';
@@ -143,16 +143,7 @@ export function Message({
   };
 
   const wrappedContent = wrapText(displayContent, textWidth);
-
-  // Use theme system for all formatting, including queued messages
-  const styledContent = formatContent(
-    message.role,
-    contentType,
-    wrappedContent,
-    isQueued
-  );
   const backgroundColor = formatBackground(message.role);
-
   const verticalPadding = message.role === 'user' ? 1 : 0;
 
   return (
@@ -164,7 +155,14 @@ export function Message({
         paddingRight={1}
         backgroundColor={backgroundColor}
       >
-        <text>{styledContent}</text>
+        <text>
+          <MessageContentComponent
+            role={message.role}
+            contentType={contentType}
+            content={wrappedContent}
+            isQueued={isQueued}
+          />
+        </text>
       </box>
     </box>
   );

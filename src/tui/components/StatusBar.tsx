@@ -1,4 +1,3 @@
-import { fg } from '@opentui/core';
 import { statusColors, colors } from '../theme.js';
 import type { AgentSession } from '../../agentSession.js';
 import type { ModelMessage } from 'ai';
@@ -45,24 +44,28 @@ export function StatusBar({
 
   const sessionInfo = `${provider} | ${authMethod} | ${modelId}`;
 
+  const StatusText = () => {
+    if (exitConfirmation) {
+      return <span fg={colors.warning}> Press Ctrl+C again to exit</span>;
+    }
+    return <span fg={statusColor}> {statusText}</span>;
+  };
+
   return (
-    <box style={{ flexDirection: 'column' }}>
+    <box flexDirection="column" flexShrink={0} minHeight={2}>
       <box
-        style={{
-          height: 1,
-          flexDirection: 'row',
-          justifyContent: 'space-between',
-        }}
+        height={1}
+        flexDirection="row"
+        justifyContent="space-between"
+        flexShrink={0}
       >
         <text>
-          {exitConfirmation ?
-            fg(colors.warning)(` Press Ctrl+C again to exit`)
-          : fg(statusColor)(` ${statusText}`)}
+          <StatusText />
         </text>
-        <text>{fg(colors.muted)(`${sessionInfo} `)}</text>
+        <text><span fg={colors.muted}>{sessionInfo} </span></text>
       </box>
       {/* Bottom padding line */}
-      <box style={{ height: 1 }}>
+      <box height={1}>
         <text> </text>
       </box>
     </box>

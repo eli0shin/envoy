@@ -1,4 +1,3 @@
-import { fg, bg, bold } from '@opentui/core';
 import {
   error,
   success,
@@ -158,9 +157,7 @@ export function EditToolMessage({
       <box flexDirection="column">
         {displayPath && (additions > 0 || deletions > 0) ?
           <text paddingLeft={2}>
-            {fg(success)(
-              `└ Updated ${displayPath} with ${additions} additions and ${deletions} deletions`
-            )}
+            <span fg={success}>└ Updated {displayPath} with {additions} additions and {deletions} deletions</span>
           </text>
         : null}
         <box
@@ -196,7 +193,7 @@ export function EditToolMessage({
                 // Use segment content hash for uniqueness
                 const segmentKey = `${lineKey}-add-${segment.substring(0, 10)}-${segmentIdx}`;
                 return (
-                  <text key={segmentKey}>{bg(diffAddition)(segment)}</text>
+                  <text key={segmentKey}><span bg={diffAddition}>{segment}</span></text>
                 );
               });
             } else if (line.startsWith('-')) {
@@ -208,7 +205,7 @@ export function EditToolMessage({
                 // Use segment content hash for uniqueness
                 const segmentKey = `${lineKey}-del-${segment.substring(0, 10)}-${segmentIdx}`;
                 return (
-                  <text key={segmentKey}>{bg(diffDeletion)(segment)}</text>
+                  <text key={segmentKey}><span bg={diffDeletion}>{segment}</span></text>
                 );
               });
             } else {
@@ -232,13 +229,13 @@ export function EditToolMessage({
   return (
     <box flexDirection="column">
       <text>
-        {bold(fg(lightGray)(displayName || 'Edit File'))}
-        {fg(filePathColor)(`(${filePath})`)}
+        <b><span fg={lightGray}>{displayName || 'Edit File'}</span></b>
+        <span fg={filePathColor}>({filePath})</span>
       </text>
       {!actualError ? renderDiff() : null}
       {actualError ?
         <text paddingLeft={2}>
-          {fg(error)(formatMultilineResult(displayedErrorMessage, '└ '))}
+          <span fg={error}>{formatMultilineResult(displayedErrorMessage, '└ ')}</span>
         </text>
       : null}
     </box>

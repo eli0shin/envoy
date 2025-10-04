@@ -1,6 +1,5 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { useTerminalDimensions } from '@opentui/react';
-import { fg } from '@opentui/core';
 import type { InputRenderable } from '@opentui/core';
 import { colors } from '../theme.js';
 import { useKeys, parseKeys } from '../keys/index.js';
@@ -272,62 +271,7 @@ export function MultiLineInput({
         }
       }
 
-      // Newline and submit via keybindings
-      if (
-        parseKeys(
-          key,
-          'input.newline',
-          () => {
-            const currentLine = lines[editingLine] || '';
-            const beforeCursor = currentLine.slice(0, cursorPosition);
-            const afterCursor = currentLine.slice(cursorPosition);
-            const newLines = [...lines];
-            newLines[editingLine] = beforeCursor;
-            newLines.splice(editingLine + 1, 0, afterCursor);
-            onChange(newLines.join('\n'));
-            setEditingLine(editingLine + 1);
-            updateCursorPosition(0, editingLine + 1);
-            onResize?.();
-          },
-          'input'
-        )
-      ) {
-        return true;
-      }
-
-      if (
-        parseKeys(
-          key,
-          'input.submit',
-          () => {
-            const currentLine = lines[editingLine] || '';
-            // Backslash continuation on submit
-            if (currentLine.trim().endsWith('\\')) {
-              // Remove backslash and add new line
-              const newLines = [...lines];
-              newLines[editingLine] = currentLine.trim().slice(0, -1);
-              newLines.splice(editingLine + 1, 0, '');
-              onChange(newLines.join('\n'));
-              setEditingLine(editingLine + 1);
-              updateCursorPosition(0, editingLine + 1);
-              onResize?.();
-              return;
-            }
-
-            // Regular Enter - submit message
-            if (value.trim()) {
-              onSubmit(value);
-              onChange('');
-              setEditingLine(0);
-              updateCursorPosition(0, 0);
-              onResize?.();
-            }
-          },
-          'input'
-        )
-      ) {
-        return true;
-      }
+      // Note: Enter key handling moved to input's onKeyDown to properly use preventDefault
 
       // Clear input - <leader>c
       if (
@@ -436,11 +380,11 @@ export function MultiLineInput({
   const height = Math.max(minHeight, lines.length);
 
   return (
-    <box height={height} backgroundColor={backgroundColor} flexDirection="row">
-      <box width={3}>
+    <box height={height} backgroundColor={backgroundColor} flexDirection="row" flexShrink={0}>
+      <box width={3} flexShrink={0}>
         <text>{' >'} </text>
       </box>
-      <box flexGrow={1} flexDirection="column">
+      <box flexGrow={1} flexDirection="column" flexShrink={0}>
         {lines.map((line, index) => (
           <box
             key={`line-${index}`} /* eslint-disable-line react/no-array-index-key -- Line position is semantically important for multi-line input */
@@ -453,10 +397,50 @@ export function MultiLineInput({
                 placeholder={index === 0 && !value ? placeholder : ''}
                 focused={!shouldDisableTextInput}
                 onInput={handleLineInput}
+                onKeyDown={(key) => {
+                  // Handle Enter key for submission
+                  if (key.name === 'return' || key.name === 'enter') {
+                    const currentLine = lines[editingLine] || '';
+                    // Check for Shift+Enter for newline
+                    if (key.shift) {
+                      const beforeCursor = currentLine.slice(0, cursorPosition);
+                      const afterCursor = currentLine.slice(cursorPosition);
+                      const newLines = [...lines];
+                      newLines[editingLine] = beforeCursor;
+                      newLines.splice(editingLine + 1, 0, afterCursor);
+                      onChange(newLines.join('\n'));
+                      setEditingLine(editingLine + 1);
+                      updateCursorPosition(0, editingLine + 1);
+                      onResize?.();
+                      return;
+                    }
+
+                    // Backslash continuation on submit
+                    if (currentLine.trim().endsWith('\\')) {
+                      const newLines = [...lines];
+                      newLines[editingLine] = currentLine.trim().slice(0, -1);
+                      newLines.splice(editingLine + 1, 0, '');
+                      onChange(newLines.join('\n'));
+                      setEditingLine(editingLine + 1);
+                      updateCursorPosition(0, editingLine + 1);
+                      onResize?.();
+                      return;
+                    }
+
+                    // Regular Enter - submit message
+                    if (value.trim()) {
+                      onSubmit(value);
+                      onChange('');
+                      setEditingLine(0);
+                      updateCursorPosition(0, 0);
+                      onResize?.();
+                    }
+                  }
+                }}
                 backgroundColor={backgroundColor}
                 textColor={textColor}
               />
-            : <text>{fg(textColor)(line || ' ')}</text>}
+            : <text><span fg={textColor}>{line || ' '}</span></text>}
           </box>
         ))}
       </box>

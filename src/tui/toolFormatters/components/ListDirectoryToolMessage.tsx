@@ -1,4 +1,3 @@
-import { fg, bold } from '@opentui/core';
 import { error, success, filePath, lightGray } from '../../theme.js';
 import { extractResultText } from '../../utils/toolFormatting.js';
 import type { ToolMessageComponentProps } from '../types.js';
@@ -61,14 +60,14 @@ export function ListDirectoryToolMessage({
   return (
     <box flexDirection="column">
       <text>
-        {bold(fg(lightGray)(displayName || 'List Directory'))}
-        {fg(filePath)(`(${path})`)}
+        <b><span fg={lightGray}>{displayName || 'List Directory'}</span></b>
+        <span fg={filePath}>({path})</span>
       </text>
       {!isError && successText ?
-        <text paddingLeft={2}>{fg(success)(`└ ${getCountMessage()}`)}</text>
+        <text paddingLeft={2}><span fg={success}>└ {getCountMessage()}</span></text>
       : null}
       {isError && errorText ?
-        <text paddingLeft={2}>{fg(error)(errorText)}</text>
+        <text paddingLeft={2}><span fg={error}>{errorText}</span></text>
       : null}
     </box>
   );

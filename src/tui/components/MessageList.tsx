@@ -11,6 +11,172 @@ type MessageListProps = {
   key: string;
 };
 
+type ToolData = {
+  toolName: string;
+  args: unknown;
+  output?: unknown;
+  error?: unknown;
+  isError?: boolean;
+};
+
+type RenderableMessage = ModelMessage & {
+  id: string;
+  toolData?: ToolData;
+  contentType?: 'normal' | 'reasoning' | 'tool';
+};
+
+function processMessagesWithToolAggregation(
+  messages: (ModelMessage & { id: string })[]
+): RenderableMessage[] {
+  const renderableMessages: RenderableMessage[] = [];
+  const consumedMessageIndices = new Set<number>();
+
+  for (let messageIndex = 0; messageIndex < messages.length; messageIndex++) {
+    const message = messages[messageIndex];
+
+    // Skip if this message was already consumed as a tool result
+    if (consumedMessageIndices.has(messageIndex)) {
+      continue;
+    }
+
+    // Handle string content - pass through as-is
+    if (typeof message.content === 'string') {
+      renderableMessages.push(message);
+      continue;
+    }
+
+    // Handle array content - split into parts
+    const parts = message.content;
+    if (!Array.isArray(parts)) {
+      renderableMessages.push(message);
+      continue;
+    }
+
+    // Check if message has only text/reasoning parts (no tool calls)
+    const hasOnlyTextContent = parts.every(
+      (part) =>
+        part?.type === 'text' ||
+        part?.type === 'reasoning' ||
+        !part ||
+        typeof part !== 'object'
+    );
+
+    if (hasOnlyTextContent) {
+      renderableMessages.push(message);
+      continue;
+    }
+
+    // Message has tool calls - process each part
+    for (let partIndex = 0; partIndex < parts.length; partIndex++) {
+      const part = parts[partIndex];
+
+      if (!part || typeof part !== 'object' || !('type' in part)) {
+        continue;
+      }
+
+      // Handle text and reasoning parts
+      if (part.type === 'text' && 'text' in part && part.text) {
+        renderableMessages.push({
+          ...message,
+          id: `${message.id}-part-${partIndex}`,
+          content: part.text,
+          contentType: 'normal',
+        });
+      } else if (part.type === 'reasoning' && 'text' in part && part.text) {
+        renderableMessages.push({
+          ...message,
+          id: `${message.id}-part-${partIndex}`,
+          content: part.text,
+          contentType: 'reasoning',
+        });
+      } else if (
+        part.type === 'tool-call' &&
+        'toolName' in part &&
+        'toolCallId' in part
+      ) {
+        // Look ahead for matching tool result
+        let matchingResult: unknown = null;
+
+        for (
+          let resultMessageIndex = messageIndex + 1;
+          resultMessageIndex < messages.length;
+          resultMessageIndex++
+        ) {
+          const resultMessage = messages[resultMessageIndex];
+
+          if (
+            resultMessage.role === 'tool' &&
+            Array.isArray(resultMessage.content)
+          ) {
+            for (const resultPart of resultMessage.content) {
+              const isMatchingPart =
+                (resultPart?.type === 'tool-result' ||
+                  resultPart?.type === 'tool-error') &&
+                'toolCallId' in resultPart &&
+                resultPart.toolCallId === part.toolCallId;
+
+              if (isMatchingPart) {
+                matchingResult = resultPart;
+                consumedMessageIndices.add(resultMessageIndex);
+                break;
+              }
+            }
+            if (matchingResult) break;
+          }
+        }
+
+        // Extract output/error from result
+        let outputPayload: unknown = undefined;
+        let errorPayload: unknown = undefined;
+        let isError = false;
+
+        if (matchingResult && typeof matchingResult === 'object') {
+          const resultObject = matchingResult as Record<string, unknown>;
+          const partType =
+            typeof resultObject.type === 'string'
+              ? resultObject.type
+              : undefined;
+
+          if ('isError' in resultObject) {
+            isError = Boolean(resultObject.isError);
+          }
+
+          if (partType === 'tool-error') {
+            isError = true;
+            errorPayload =
+              'error' in resultObject ? resultObject.error : resultObject;
+          } else {
+            outputPayload =
+              'output' in resultObject ? resultObject.output : resultObject;
+          }
+
+          if (!errorPayload && 'error' in resultObject) {
+            errorPayload = resultObject.error;
+          }
+        }
+
+        const toolData: ToolData = {
+          toolName: part.toolName,
+          args: part.input,
+          output: outputPayload,
+          error: errorPayload,
+          isError: matchingResult ? isError : undefined,
+        };
+
+        renderableMessages.push({
+          ...message,
+          id: `${message.id}-part-${partIndex}`,
+          content: '',
+          toolData,
+          contentType: 'tool',
+        });
+      }
+    }
+  }
+
+  return renderableMessages;
+}
+
 export function MessageList({
   messages,
   queuedMessages,
@@ -89,206 +255,35 @@ export function MessageList({
     { scope: 'messages', enabled: true }
   );
 
-  const renderMessage = (
-    message: ModelMessage & { id: string },
-    messageIndex: number,
-    allMessages: (ModelMessage & { id: string })[],
-    consumedMessageIndices: Set<number>
-  ) => {
-    // Handle content based on type - can be string or array of parts
-    if (typeof message.content === 'string') {
-      return [<Message message={message} width={width} key={message.id} />];
-    }
-
-    // Content is an array of parts - process with tool call/result pairing
-    const parts = [];
-
-    for (let partIndex = 0; partIndex < message.content.length; partIndex++) {
-      const part = message.content[partIndex];
-
-      // Extract displayable content from different part types
-      let displayContent = '';
-      let contentType: 'normal' | 'reasoning' | 'tool' = 'normal';
-
-      if (part?.type === 'text' && 'text' in part) {
-        displayContent = part.text;
-      } else if (part?.type === 'reasoning' && 'text' in part) {
-        displayContent = part.text;
-        contentType = 'reasoning';
-      } else if (
-        part?.type === 'tool-call' &&
-        'toolName' in part &&
-        'toolCallId' in part
-      ) {
-        // Look ahead to subsequent messages for matching tool result
-        let matchingResult: unknown = null;
-        let matchingResultMessageIndex = -1;
-
-        for (
-          let resultMessageIndex = messageIndex + 1;
-          resultMessageIndex < allMessages.length;
-          resultMessageIndex++
-        ) {
-          const resultMessage = allMessages[resultMessageIndex];
-
-          // Look for tool role messages
-          if (
-            resultMessage.role === 'tool' &&
-            Array.isArray(resultMessage.content)
-          ) {
-            for (const resultPart of resultMessage.content) {
-              const isMatchingPart =
-                (resultPart?.type === 'tool-result' ||
-                  resultPart?.type === 'tool-error') &&
-                'toolCallId' in resultPart &&
-                resultPart.toolCallId === part.toolCallId;
-
-              if (isMatchingPart) {
-                matchingResult = resultPart;
-                matchingResultMessageIndex = resultMessageIndex;
-                break;
-              }
-            }
-            if (matchingResult) break;
-          }
-        }
-
-        let outputPayload: unknown = undefined;
-        let errorPayload: unknown = undefined;
-        let isError = false;
-
-        if (matchingResult && typeof matchingResult === 'object') {
-          const resultObject = matchingResult as Record<string, unknown>;
-          const partType = typeof resultObject.type === 'string' ? resultObject.type : undefined;
-
-          if ('isError' in resultObject) {
-            isError = Boolean(resultObject.isError);
-          }
-
-          if (partType === 'tool-error') {
-            isError = true;
-            errorPayload = 'error' in resultObject ? resultObject.error : resultObject;
-          } else {
-            outputPayload = 'output' in resultObject ? resultObject.output : resultObject;
-          }
-
-          if (!errorPayload && 'error' in resultObject) {
-            errorPayload = resultObject.error;
-          }
-        }
-
-        const toolData = {
-          toolName: part.toolName,
-          args: part.input,
-          output: outputPayload,
-          error: errorPayload,
-          isError: matchingResult ? isError : undefined,
-        };
-
-        // Create message with tool data for custom component rendering
-        const partMessage: ModelMessage & { toolData?: typeof toolData } = {
-          role: 'assistant',
-          content: '', // Empty since component will render
-          toolData,
-        };
-
-        parts.push(
-          <Message
-            key={`${message.id}-part-${partIndex}`}
-            message={partMessage}
-            contentType="tool"
-            width={width}
-          />
-        );
-
-        // Mark result message as consumed if we found one
-        if (matchingResultMessageIndex >= 0) {
-          consumedMessageIndices.add(matchingResultMessageIndex);
-        }
-
-        // Skip the normal message creation below
-        continue;
-      }
-
-      if (displayContent) {
-        const partMessage: ModelMessage = {
-          role: 'assistant',
-          content: displayContent,
-        };
-
-        parts.push(
-          <Message
-            key={`${message.id}-part-${partIndex}`}
-            message={partMessage}
-            contentType={contentType}
-            width={width}
-          />
-        );
-      }
-    }
-
-    return parts;
-  };
-
-  // Process messages and pair tool calls with results
-  const processedMessages = [];
-  const consumedMessageIndices = new Set<number>();
-
-  for (let messageIndex = 0; messageIndex < messages.length; messageIndex++) {
-    const message = messages[messageIndex];
-
-    // Skip if this message was already consumed as a tool result
-    if (consumedMessageIndices.has(messageIndex)) {
-      continue;
-    }
-
-    processedMessages.push({
-      message,
-      messageIndex,
-      renderedParts: renderMessage(
-        message,
-        messageIndex,
-        messages,
-        consumedMessageIndices
-      ),
-    });
-  }
-
-  // Add queued messages as separate entries
-  const queuedProcessed = queuedMessages.map((message) => ({
-    message,
-    messageIndex: -1, // Not part of main conversation
-    renderedParts: [
-      <Message
-        message={message}
-        width={width}
-        key={message.id}
-        isQueued={true}
-      />,
-    ],
-  }));
+  const processedMessages = processMessagesWithToolAggregation(messages);
 
   return (
-    <scrollbox
-      ref={scrollBoxRef}
-      verticalScrollbarOptions={{ visible: false }}
-      horizontalScrollbarOptions={{ visible: false }}
-      style={{
-        rootOptions: {
-          flexGrow: 1,
-        },
-        contentOptions: {
+    <box flexGrow={1} flexShrink={1}>
+      <scrollbox
+        ref={scrollBoxRef}
+        verticalScrollbarOptions={{ visible: false }}
+        horizontalScrollbarOptions={{ visible: false }}
+        contentOptions={{
           flexDirection: 'column',
-        },
-      }}
-    >
-      {processedMessages.map(({ message, renderedParts }) => (
-        <box key={message.id}>{renderedParts}</box>
-      ))}
-
-      {queuedProcessed.map(({ message, renderedParts }) => (
-        <box key={message.id}>{renderedParts}</box>
-      ))}
-    </scrollbox>
+        }}
+      >
+        {processedMessages.map((message) => (
+          <Message
+            key={message.id}
+            message={message}
+            contentType={message.contentType}
+            width={width}
+          />
+        ))}
+        {queuedMessages.map((message) => (
+          <Message
+            key={message.id}
+            message={message}
+            width={width}
+            isQueued={true}
+          />
+        ))}
+      </scrollbox>
+    </box>
   );
 }

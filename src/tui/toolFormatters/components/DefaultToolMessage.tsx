@@ -5,7 +5,6 @@ import {
   formatMultilineResult,
   extractResultText,
 } from '../../utils/toolFormatting.js';
-import { fg, bold } from '@opentui/core';
 import { error, info, filePath, lightGray } from '../../theme.js';
 import type { ToolMessageComponentProps } from '../types.js';
 
@@ -30,14 +29,12 @@ export function DefaultToolMessage({
   return (
     <box flexDirection="column" width={width - 4}>
       <text>
-        {bold(fg(lightGray)(toolDisplayName))}
-        {formattedArgs ? fg(filePath)(`(${formattedArgs})`) : ''}
+        <b><span fg={lightGray}>{toolDisplayName}</span></b>
+        {formattedArgs ? <span fg={filePath}>({formattedArgs})</span> : ''}
       </text>
       {displayText ?
         <text paddingLeft={2}>
-          {fg(isError ? error : info)(
-            formatMultilineResult(truncateValue(displayText), '└ ')
-          )}
+          <span fg={isError ? error : info}>{formatMultilineResult(truncateValue(displayText), '└ ')}</span>
         </text>
       : null}
     </box>

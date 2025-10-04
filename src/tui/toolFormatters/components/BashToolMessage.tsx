@@ -1,4 +1,3 @@
-import { fg, bold } from '@opentui/core';
 import { error, success, filePath as filePathColor, lightGray } from '../../theme.js';
 import { extractResultText } from '../../utils/toolFormatting.js';
 import type { ToolMessageComponentProps } from '../types.js';
@@ -37,14 +36,14 @@ export function BashToolMessage({
   return (
     <box flexDirection="column">
       <text>
-        {bold(fg(lightGray)('Bash'))}
-        {fg(filePathColor)(`(${command})`)}
+        <b><span fg={lightGray}>Bash</span></b>
+        <span fg={filePathColor}>({command})</span>
       </text>
       {!isError && successText ?
-        <text paddingLeft={2}>{fg(success)(`└ ${getResultDisplay()}`)}</text>
+        <text paddingLeft={2}><span fg={success}>└ {getResultDisplay()}</span></text>
       : null}
       {isError && errorText ?
-        <text paddingLeft={2}>{fg(error)(errorText)}</text>
+        <text paddingLeft={2}><span fg={error}>{errorText}</span></text>
       : null}
     </box>
   );

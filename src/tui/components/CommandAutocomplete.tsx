@@ -1,5 +1,4 @@
 import { useState, useEffect, useCallback } from 'react';
-import { fg } from '@opentui/core';
 import { useTerminalDimensions } from '@opentui/react';
 import { useKeys, parseKeys } from '../keys/index.js';
 import { colors } from '../theme.js';
@@ -151,19 +150,19 @@ export function CommandAutocomplete({
         >
           <text>
             {index === visibleSelectedIndex ?
-              fg(colors.text)(`/${cmd.name}`)
-            : fg(colors.primary)(`/${cmd.name}`)}
-            {fg(colors.muted)(' - ')}
+              <span fg={colors.text}>/{cmd.name}</span>
+            : <span fg={colors.primary}>/{cmd.name}</span>}
+            <span fg={colors.muted}> - </span>
             {index === visibleSelectedIndex ?
-              fg(colors.lightGray)(cmd.description)
-            : fg(colors.muted)(cmd.description)}
+              <span fg={colors.lightGray}>{cmd.description}</span>
+            : <span fg={colors.muted}>{cmd.description}</span>}
           </text>
         </box>
       ))}
       {suggestions.length > maxItems && (
         <box height={1} paddingLeft={1}>
           <text>
-            {fg(colors.muted)(`... and ${suggestions.length - maxItems} more`)}
+            <span fg={colors.muted}>... and {suggestions.length - maxItems} more</span>
           </text>
         </box>
       )}

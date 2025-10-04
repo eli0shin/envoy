@@ -1,4 +1,3 @@
-import { fg, bold } from '@opentui/core';
 import {
   error,
   success,
@@ -24,20 +23,18 @@ export function WriteToolMessage({
   return (
     <box flexDirection="column">
       <text>
-        {bold(fg(lightGray)('Write File'))}
-        {fg(filePathColor)(`(${filePath})`)}
+        <b><span fg={lightGray}>Write File</span></b>
+        <span fg={filePathColor}>({filePath})</span>
       </text>
       {!isError ?
         <text paddingLeft={2}>
-          {fg(success)(`└ Wrote ${lineCount} lines to ${filePath}`)}
+          <span fg={success}>└ Wrote {lineCount} lines to {filePath}</span>
         </text>
       : null}
       {isError ?
         <text paddingLeft={2}>
-          {fg(error)(
-            extractResultText(errorPayload ?? output) ||
-              'Tool execution failed'
-          )}
+          <span fg={error}>{extractResultText(errorPayload ?? output) ||
+              'Tool execution failed'}</span>
         </text>
       : null}
     </box>

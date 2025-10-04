@@ -1,4 +1,3 @@
-import { fg } from '@opentui/core';
 import { useTerminalDimensions } from '@opentui/react';
 import { Modal } from './Modal.js';
 import { colors } from '../theme.js';
@@ -63,13 +62,13 @@ export function HelpModal() {
         }}
       >
         <box height={1} paddingLeft={1}>
-          <text>{fg(colors.primary)('Available Commands:')}</text>
+          <text><span fg={colors.primary}>Available Commands:</span></text>
         </box>
         {commands.map((cmd) => (
           <box key={cmd.name} height={1}>
             <text>
               {' '}
-              {fg(colors.accent)(`/${cmd.name}`)} - {cmd.description}
+              <span fg={colors.accent}>/{cmd.name}</span> - {cmd.description}
             </text>
           </box>
         ))}
@@ -79,14 +78,14 @@ export function HelpModal() {
         </box>
 
         <box height={1}>
-          <text>{fg(colors.primary)('Keyboard Shortcuts:')}</text>
+          <text><span fg={colors.primary}>Keyboard Shortcuts:</span></text>
         </box>
 
         {shortcuts.map((shortcut) => (
           <box key={shortcut.action} height={1}>
             <text>
               {' '}
-              {fg(colors.accent)(shortcut.keys)} - {shortcut.description}
+              <span fg={colors.accent}>{shortcut.keys}</span> - {shortcut.description}
             </text>
           </box>
         ))}
@@ -96,7 +95,7 @@ export function HelpModal() {
         <text> </text>
       </box>
       <box height={1} paddingLeft={1}>
-        <text>{fg(colors.muted)('Press ESC to close')}</text>
+        <text><span fg={colors.muted}>Press ESC to close</span></text>
       </box>
     </Modal>
   );

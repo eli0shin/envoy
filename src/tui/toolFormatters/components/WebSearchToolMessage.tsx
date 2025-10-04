@@ -1,4 +1,3 @@
-import { fg, bold } from '@opentui/core';
 import { error, success, filePath as filePathColor, lightGray } from '../../theme.js';
 import { extractResultText } from '../../utils/toolFormatting.js';
 import type { ToolMessageComponentProps } from '../types.js';
@@ -36,16 +35,16 @@ export function WebSearchToolMessage({
   return (
     <box flexDirection="column">
       <text>
-        {bold(fg(lightGray)('Web Search'))}
-        {fg(filePathColor)(`(${query})`)}
+        <b><span fg={lightGray}>Web Search</span></b>
+        <span fg={filePathColor}>({query})</span>
       </text>
       {!isError && successText ?
         <text paddingLeft={2}>
-          {fg(success)(`└ Found ${resultCount} results`)}
+          <span fg={success}>└ Found {resultCount} results</span>
         </text>
       : null}
       {isError && errorText ?
-        <text paddingLeft={2}>{fg(error)(errorText)}</text>
+        <text paddingLeft={2}><span fg={error}>{errorText}</span></text>
       : null}
     </box>
   );

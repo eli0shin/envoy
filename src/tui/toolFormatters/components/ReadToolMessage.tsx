@@ -1,4 +1,3 @@
-import { fg, bold } from '@opentui/core';
 import {
   error,
   success,
@@ -26,16 +25,16 @@ export function ReadToolMessage({
   return (
     <box flexDirection="column">
       <text>
-        {bold(fg(lightGray)('Read File'))}
-        {fg(filePathColor)(`(${filePath})`)}
+        <b><span fg={lightGray}>Read File</span></b>
+        <span fg={filePathColor}>({filePath})</span>
       </text>
       {!isError && successText ?
         <text paddingLeft={2}>
-          {fg(success)(`└ Read ${lineCount} lines from ${filePath}`)}
+          <span fg={success}>└ Read {lineCount} lines from {filePath}</span>
         </text>
       : null}
       {isError && errorText ?
-        <text paddingLeft={2}>{fg(error)(errorText)}</text>
+        <text paddingLeft={2}><span fg={error}>{errorText}</span></text>
       : null}
     </box>
   );

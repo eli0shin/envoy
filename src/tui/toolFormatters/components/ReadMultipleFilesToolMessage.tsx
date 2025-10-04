@@ -1,4 +1,3 @@
-import { fg, bold } from '@opentui/core';
 import {
   error,
   success,
@@ -70,24 +69,24 @@ export function ReadMultipleFilesToolMessage({
   return (
     <box flexDirection="column">
       <text>
-        {bold(fg(lightGray)('Read Files'))}
-        {fg(filePathColor)(`(${formattedPaths})`)}
+        <b><span fg={lightGray}>Read Files</span></b>
+        <span fg={filePathColor}>({formattedPaths})</span>
       </text>
       {!isError && fileLineCounts && fileLineCounts.size > 0 ?
         Array.from(fileLineCounts.entries()).map(([fileName, lineCount]) => (
           <text key={fileName} paddingLeft={2}>
-            {fg(success)(`└ Read ${lineCount} lines from ${fileName}`)}
+            <span fg={success}>└ Read {lineCount} lines from {fileName}</span>
           </text>
         ))
       : null}
       {isError && errorText ?
         <text paddingLeft={2}>
-          {fg(error)(formatMultilineResult(errorText, '└ '))}
+          <span fg={error}>{formatMultilineResult(errorText, '└ ')}</span>
         </text>
       : null}
       {!isError && successText && (!fileLineCounts || fileLineCounts.size === 0) ?
         <text paddingLeft={2}>
-          {fg(success)(`└ Read ${paths?.length || 0} files`)}
+          <span fg={success}>└ Read {paths?.length || 0} files</span>
         </text>
       : null}
     </box>
