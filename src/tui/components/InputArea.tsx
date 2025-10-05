@@ -1,4 +1,5 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import { useRenderer } from '@opentui/react';
 import { MultiLineInput } from './MultiLineInput';
 import { useModalState } from './ModalProvider.js';
 import { colors } from '../theme.js';
@@ -47,6 +48,45 @@ export function InputArea({
   const [cursorPosition, setCursorPosition] = useState(0);
   const { currentModal } = useModalState();
   const disabled = currentModal !== null;
+  const renderer = useRenderer();
+
+  // Use refs to avoid recreating listener on every cursor/value change
+  const cursorPositionRef = useRef(cursorPosition);
+  const valueRef = useRef(value);
+  const onChangeRef = useRef(onChange);
+  const disabledRef = useRef(disabled);
+
+  // Keep refs in sync
+  useEffect(() => {
+    cursorPositionRef.current = cursorPosition;
+    valueRef.current = value;
+    onChangeRef.current = onChange;
+    disabledRef.current = disabled;
+  });
+
+  // Listen for paste events from the terminal
+  useEffect(() => {
+    const handlePaste = (pastedText: string) => {
+      if (disabledRef.current) return;
+
+      // Insert pasted text at cursor position
+      const currentCursor = cursorPositionRef.current;
+      const currentValue = valueRef.current;
+      const before = currentValue.slice(0, currentCursor);
+      const after = currentValue.slice(currentCursor);
+      const newValue = before + pastedText + after;
+      onChangeRef.current(newValue);
+
+      // Move cursor to end of pasted text
+      setCursorPosition(currentCursor + pastedText.length);
+    };
+
+    renderer.keyInput.on('paste', handlePaste);
+
+    return () => {
+      renderer.keyInput.removeListener('paste', handlePaste);
+    };
+  }, [renderer]);
 
   const handleCommandSelect = useCallback((command: string) => {
     onChange(command);
