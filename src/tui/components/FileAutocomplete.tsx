@@ -9,12 +9,14 @@ type FileAutocompleteProps = {
   inputValue: string;
   cursorPosition: number;
   onSelect: (replacement: string, start: number, end: number) => void;
+  bottomOffset: number;
 };
 
 export function FileAutocomplete({
   inputValue,
   cursorPosition,
   onSelect,
+  bottomOffset,
 }: FileAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -149,7 +151,7 @@ export function FileAutocomplete({
   const boxHeight = visibleSuggestions.length + 2;
 
   // Position above the input area at bottom of screen
-  const autocompleteTop = terminalHeight - 5 - boxHeight; // 5 lines for input area
+  const autocompleteTop = terminalHeight - bottomOffset - boxHeight;
 
   return (
     <box

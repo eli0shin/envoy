@@ -6,9 +6,7 @@ import { useKeys, parseKeys } from '../keys/index.js';
 
 type MessageListProps = {
   messages: (ModelMessage & { id: string })[];
-  queuedMessages: (ModelMessage & { id: string })[];
   width: number;
-  key: string;
 };
 
 type ToolData = {
@@ -133,9 +131,9 @@ function processMessagesWithToolAggregation(
         if (matchingResult && typeof matchingResult === 'object') {
           const resultObject = matchingResult as Record<string, unknown>;
           const partType =
-            typeof resultObject.type === 'string'
-              ? resultObject.type
-              : undefined;
+            typeof resultObject.type === 'string' ?
+              resultObject.type
+            : undefined;
 
           if ('isError' in resultObject) {
             isError = Boolean(resultObject.isError);
@@ -177,11 +175,7 @@ function processMessagesWithToolAggregation(
   return renderableMessages;
 }
 
-export function MessageList({
-  messages,
-  queuedMessages,
-  width,
-}: MessageListProps) {
+export function MessageList({ messages, width }: MessageListProps) {
   const scrollBoxRef = useRef<ScrollBoxRenderable>(null);
 
   const scrollToBottom = () => {
@@ -225,7 +219,7 @@ export function MessageList({
     setImmediate(() => {
       scrollToBottom();
     });
-  }, [messages, queuedMessages]);
+  }, [messages]);
 
   // Keybindings for scrolling the messages area
   useKeys(
@@ -273,14 +267,6 @@ export function MessageList({
             message={message}
             contentType={message.contentType}
             width={width}
-          />
-        ))}
-        {queuedMessages.map((message) => (
-          <Message
-            key={message.id}
-            message={message}
-            width={width}
-            isQueued={true}
           />
         ))}
       </scrollbox>

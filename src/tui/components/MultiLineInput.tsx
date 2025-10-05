@@ -10,7 +10,6 @@ type MultiLineInputProps = {
   value: string;
   onChange: (value: string) => void;
   onSubmit: (value: string) => void;
-  onResize?: () => void;
   onTabKey?: () => boolean; // Returns true if tab was handled
   onArrowKey?: (direction: 'up' | 'down', shouldHandleHistory: boolean) => boolean; // Returns true if arrow was handled
   onCursorChange?: (position: number) => void; // Reports cursor position in full text
@@ -26,7 +25,6 @@ export function MultiLineInput({
   value,
   onChange,
   onSubmit,
-  onResize,
   onTabKey,
   onArrowKey,
   onCursorChange,
@@ -166,7 +164,6 @@ export function MultiLineInput({
         // Move to the next line (the remaining part)
         setEditingLine(editingLine + 1);
         updateCursorPosition(remainingPart.length, editingLine + 1);
-        onResize?.();
         return;
       }
     }
@@ -250,8 +247,7 @@ export function MultiLineInput({
             updateCursorPosition(targetLine.length, newEditingLine);
           }
 
-          onResize?.();
-          return true;
+            return true;
         }
 
         // If at start of non-empty line, merge with previous line
@@ -266,8 +262,7 @@ export function MultiLineInput({
 
           setEditingLine(editingLine - 1);
           updateCursorPosition(previousLine.length, editingLine - 1);
-          onResize?.();
-          return true;
+            return true;
         }
       }
 
@@ -282,8 +277,7 @@ export function MultiLineInput({
             onChange('');
             setEditingLine(0);
             updateCursorPosition(0, 0);
-            onResize?.();
-          },
+              },
           'input'
         )
       ) {
@@ -315,8 +309,7 @@ export function MultiLineInput({
               onChange('');
               setEditingLine(0);
               updateCursorPosition(0, 0);
-              onResize?.();
-            });
+                  });
           },
           'input'
         )
@@ -361,8 +354,7 @@ export function MultiLineInput({
                   );
                 }
 
-                onResize?.();
-              }
+                      }
             });
           },
           'input'
@@ -411,8 +403,7 @@ export function MultiLineInput({
                       onChange(newLines.join('\n'));
                       setEditingLine(editingLine + 1);
                       updateCursorPosition(0, editingLine + 1);
-                      onResize?.();
-                      return;
+                                    return;
                     }
 
                     // Backslash continuation on submit
@@ -423,8 +414,7 @@ export function MultiLineInput({
                       onChange(newLines.join('\n'));
                       setEditingLine(editingLine + 1);
                       updateCursorPosition(0, editingLine + 1);
-                      onResize?.();
-                      return;
+                                    return;
                     }
 
                     // Regular Enter - submit message
@@ -433,8 +423,7 @@ export function MultiLineInput({
                       onChange('');
                       setEditingLine(0);
                       updateCursorPosition(0, 0);
-                      onResize?.();
-                    }
+                                  }
                   }
                 }}
                 backgroundColor={backgroundColor}

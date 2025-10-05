@@ -16,9 +16,10 @@ export type AutocompleteState = {
 } | null;
 
 type InputAreaProps = {
+  value: string;
+  onChange: (value: string) => void;
   onSubmit: (message: string) => void;
   onCommandExecute: (commandInput: string, result?: string) => void;
-  onResize?: () => void;
   userHistory: string[];
   historyIndex: number;
   setHistoryIndex: (index: number) => void;
@@ -30,9 +31,10 @@ type InputAreaProps = {
 };
 
 export function InputArea({
+  value,
+  onChange,
   onSubmit,
   onCommandExecute,
-  onResize,
   userHistory,
   historyIndex,
   setHistoryIndex,
@@ -42,26 +44,25 @@ export function InputArea({
   onQueuePop,
   onAutocompleteChange,
 }: InputAreaProps) {
-  const [value, setValue] = useState('');
   const [cursorPosition, setCursorPosition] = useState(0);
   const { currentModal } = useModalState();
   const disabled = currentModal !== null;
 
   const handleCommandSelect = useCallback((command: string) => {
-    setValue(command);
+    onChange(command);
     setCursorPosition(command.length);
-  }, []);
+  }, [onChange]);
 
   const handleFileSelect = useCallback(
     (replacement: string, start: number, end: number) => {
       const newValue = value.slice(0, start) + replacement + value.slice(end);
-      setValue(newValue);
+      onChange(newValue);
       // Use setTimeout to ensure the value update completes before setting cursor
       setTimeout(() => {
         setCursorPosition(start + replacement.length);
       }, 0);
     },
-    [value]
+    [value, onChange]
   );
 
   const handleCursorChange = useCallback((position: number) => {
@@ -105,7 +106,7 @@ export function InputArea({
         if (historyIndex === -1 && shouldHandleHistory && queuedMessages.length > 0) {
           const queuedContent = onQueuePop();
           if (queuedContent) {
-            setValue(queuedContent);
+            onChange(queuedContent);
             return true;
           }
         }
@@ -118,7 +119,7 @@ export function InputArea({
         const newIndex = historyIndex + 1;
         if (newIndex < userHistory.length) {
           const messageToLoad = userHistory[userHistory.length - 1 - newIndex];
-          setValue(messageToLoad);
+          onChange(messageToLoad);
           setHistoryIndex(newIndex);
           return true;
         }
@@ -127,9 +128,9 @@ export function InputArea({
         setHistoryIndex(newIndex);
 
         if (newIndex >= 0) {
-          setValue(userHistory[userHistory.length - 1 - newIndex]);
+          onChange(userHistory[userHistory.length - 1 - newIndex]);
         } else {
-          setValue(originalInput);
+          onChange(originalInput);
         }
         return true;
       }
@@ -145,13 +146,14 @@ export function InputArea({
       setOriginalInput,
       queuedMessages.length,
       onQueuePop,
+      onChange,
     ]
   );
 
   const handleInputChange = useCallback((newValue: string) => {
-    setValue(newValue);
+    onChange(newValue);
     // Do NOT reset history on input change - only on submit
-  }, []);
+  }, [onChange]);
 
   const handleSubmit = (submittedValue: string) => {
     if (disabled) return;
@@ -174,7 +176,7 @@ export function InputArea({
       onSubmit(trimmed);
     }
 
-    setValue('');
+    onChange('');
   };
 
   return (
@@ -188,7 +190,6 @@ export function InputArea({
           value={value}
           onChange={handleInputChange}
           onSubmit={handleSubmit}
-          onResize={onResize}
           onArrowKey={handleInputArrowKey}
           onCursorChange={handleCursorChange}
           externalCursorPosition={cursorPosition}

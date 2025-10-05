@@ -10,6 +10,7 @@ import { ModalDisplay } from './ModalDisplay.js';
 import { ErrorBoundary } from './ErrorBoundary.js';
 import { CommandAutocomplete } from './CommandAutocomplete.js';
 import { FileAutocomplete } from './FileAutocomplete.js';
+import { QueuedMessagesList } from './QueuedMessagesList.js';
 import { colors } from '../theme.js';
 import { runAgent } from '../../agent/index.js';
 import { commandRegistry } from '../commands/registry.js';
@@ -49,7 +50,6 @@ export function TUIApp({ config, session }: TUIAppProps) {
     (ModelMessage & { id: string })[]
   >([]);
   const [status, setStatus] = useState<Status>('READY');
-  const [resizeKey, setResizeKey] = useState(0);
   const [modalState, setModalState] = useState<ModalType>(null);
   const [historyIndex, setHistoryIndex] = useState(-1);
   const [originalInput, setOriginalInput] = useState('');
@@ -59,8 +59,16 @@ export function TUIApp({ config, session }: TUIAppProps) {
     useState<AbortController | null>(null);
   const [autocompleteState, setAutocompleteState] =
     useState<AutocompleteState>(null);
+  const [inputValue, setInputValue] = useState('');
   const { width, height } = useTerminalDimensions();
   const renderer = useRenderer();
+
+  // Calculate bottom offset for absolutely positioned components
+  // This is the space taken by InputArea + StatusBar at the bottom of the screen
+  const inputLines = Math.max(1, inputValue.split('\n').length);
+  const inputAreaHeight = inputLines + 2; // +2 for padding lines
+  const statusBarHeight = 2;
+  const bottomOffset = inputAreaHeight + statusBarHeight;
 
   const getUserMessageHistory = useCallback(
     (messages: (ModelMessage & { id: string })[]): string[] => {
@@ -83,10 +91,6 @@ export function TUIApp({ config, session }: TUIAppProps) {
     },
     []
   );
-
-  const handleInputResize = useCallback(() => {
-    setResizeKey((prev) => prev + 1);
-  }, []);
 
   const handleExit = useCallback(() => {
     // Clean up MCP server processes before exiting
@@ -193,17 +197,19 @@ export function TUIApp({ config, session }: TUIAppProps) {
         id: `command-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
       };
 
-      setMessages((prev) => [...prev, commandMessageWithId]);
+      // Use updater function to get current state for persistence
+      setMessages((prev) => {
+        const updatedMessages = [...prev, commandMessageWithId];
 
-      // Persist the command message if available
-      if (session.conversationPersistence) {
-        session.conversationPersistence.persistMessages([
-          ...messages,
-          commandMessageWithId,
-        ]);
-      }
+        // Persist with current state, not stale closure value
+        if (session.conversationPersistence) {
+          session.conversationPersistence.persistMessages(updatedMessages);
+        }
+
+        return updatedMessages;
+      });
     },
-    [messages, session]
+    [session]
   );
 
   const handleQueuePop = useCallback(() => {
@@ -234,12 +240,15 @@ export function TUIApp({ config, session }: TUIAppProps) {
   const processQueue = useCallback(async () => {
     if (queuedMessages.length === 0) return;
 
-    // Calculate the full conversation before any state updates
-    const allMessages = [...messages, ...queuedMessages];
+    // Capture queued messages before clearing
+    const messagesToProcess = [...queuedMessages];
 
-    // Move all queued messages to main conversation
-    setMessages((prev) => [...prev, ...queuedMessages]);
+    // Clear queue first
     setQueuedMessages([]);
+
+    // Add queued messages to current messages
+    const allMessages = [...messages, ...messagesToProcess];
+    setMessages(allMessages);
 
     // Create abort controller for this agent execution
     const controller = new AbortController();
@@ -317,7 +326,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
 
       // Agent is ready - process immediately
       const newMessages = [...messages, userMessage];
-      setMessages((prev) => [...prev, userMessage]);
+      setMessages(newMessages);
 
       // Create abort controller for this agent execution
       const controller = new AbortController();
@@ -366,7 +375,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
         setAbortController(null);
       }
     },
-    [messages, status, config, session]
+    [status, messages, config, session]
   );
 
   // Cleanup timeout and abort controller on component unmount
@@ -402,56 +411,59 @@ export function TUIApp({ config, session }: TUIAppProps) {
   return (
     <KeysProvider>
       <ModalProvider modalState={modalState} setModalState={setModalState}>
-        <KeyDispatcher />
-        <box
-          flexDirection="column"
-          width={width}
-          height={height}
-          backgroundColor={colors.backgrounds.main}
-          flexShrink={0}
-        >
-          <Header />
-          <ErrorBoundary>
-            <MessageList
-              messages={messages}
+        <ErrorBoundary>
+          <KeyDispatcher />
+          <box
+            flexDirection="column"
+            width={width}
+            height={height}
+            backgroundColor={colors.backgrounds.main}
+            flexShrink={0}
+          >
+            <Header />
+            <MessageList messages={messages} width={width} />
+            <InputArea
+              value={inputValue}
+              onChange={setInputValue}
+              onSubmit={handleSendMessage}
+              onCommandExecute={handleCommandExecute}
+              userHistory={getUserMessageHistory(messages)}
+              historyIndex={historyIndex}
+              setHistoryIndex={setHistoryIndex}
+              originalInput={originalInput}
+              setOriginalInput={setOriginalInput}
               queuedMessages={queuedMessages}
-              width={width}
+              onQueuePop={handleQueuePop}
+              onAutocompleteChange={setAutocompleteState}
             />
-          </ErrorBoundary>
-          <InputArea
-            onSubmit={handleSendMessage}
-            onCommandExecute={handleCommandExecute}
-            onResize={handleInputResize}
-            userHistory={getUserMessageHistory(messages)}
-            historyIndex={historyIndex}
-            setHistoryIndex={setHistoryIndex}
-            originalInput={originalInput}
-            setOriginalInput={setOriginalInput}
+            <StatusBar
+              status={status}
+              session={session}
+              exitConfirmation={!!exitConfirmation}
+              queuedMessages={queuedMessages}
+            />
+          </box>
+          {autocompleteState?.showCommand && (
+            <CommandAutocomplete
+              inputValue={autocompleteState.inputValue}
+              onSelect={autocompleteState.onCommandSelect}
+              bottomOffset={bottomOffset}
+            />
+          )}
+          {autocompleteState?.showFile && (
+            <FileAutocomplete
+              inputValue={autocompleteState.inputValue}
+              cursorPosition={autocompleteState.cursorPosition}
+              onSelect={autocompleteState.onFileSelect}
+              bottomOffset={bottomOffset}
+            />
+          )}
+          <QueuedMessagesList
             queuedMessages={queuedMessages}
-            onQueuePop={handleQueuePop}
-            onAutocompleteChange={setAutocompleteState}
+            bottomOffset={bottomOffset}
           />
-          <StatusBar
-            status={status}
-            session={session}
-            exitConfirmation={!!exitConfirmation}
-            queuedMessages={queuedMessages}
-          />
-        </box>
-        {autocompleteState?.showCommand && (
-          <CommandAutocomplete
-            inputValue={autocompleteState.inputValue}
-            onSelect={autocompleteState.onCommandSelect}
-          />
-        )}
-        {autocompleteState?.showFile && (
-          <FileAutocomplete
-            inputValue={autocompleteState.inputValue}
-            cursorPosition={autocompleteState.cursorPosition}
-            onSelect={autocompleteState.onFileSelect}
-          />
-        )}
-        <ModalDisplay />
+          <ModalDisplay />
+        </ErrorBoundary>
       </ModalProvider>
     </KeysProvider>
   );

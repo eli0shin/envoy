@@ -8,11 +8,13 @@ import type { Command } from '../commands/registry.js';
 type CommandAutocompleteProps = {
   inputValue: string;
   onSelect: (command: string) => void;
+  bottomOffset: number;
 };
 
 export function CommandAutocomplete({
   inputValue,
   onSelect,
+  bottomOffset,
 }: CommandAutocompleteProps) {
   const [suggestions, setSuggestions] = useState<Command[]>([]);
   const [selectedIndex, setSelectedIndex] = useState(0);
@@ -121,7 +123,7 @@ export function CommandAutocomplete({
   const boxHeight = visibleSuggestions.length + 2;
 
   // Position above the input area at bottom of screen
-  const autocompleteTop = terminalHeight - 5 - boxHeight; // 5 lines for input area
+  const autocompleteTop = terminalHeight - bottomOffset - boxHeight;
 
   return (
     <box
