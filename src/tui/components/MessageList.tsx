@@ -17,8 +17,10 @@ type ToolData = {
   isError?: boolean;
 };
 
-type RenderableMessage = ModelMessage & {
+type RenderableMessage = {
   id: string;
+  role: 'user' | 'assistant' | 'system' | 'tool';
+  content: string;
   toolData?: ToolData;
   contentType?: 'normal' | 'reasoning' | 'tool';
 };
@@ -39,14 +41,22 @@ function processMessagesWithToolAggregation(
 
     // Handle string content - pass through as-is
     if (typeof message.content === 'string') {
-      renderableMessages.push(message);
+      renderableMessages.push({
+        id: message.id,
+        role: message.role,
+        content: message.content,
+      });
       continue;
     }
 
     // Handle array content - split into parts
     const parts = message.content;
     if (!Array.isArray(parts)) {
-      renderableMessages.push(message);
+      renderableMessages.push({
+        id: message.id,
+        role: message.role,
+        content: '',
+      });
       continue;
     }
 
@@ -60,7 +70,15 @@ function processMessagesWithToolAggregation(
     );
 
     if (hasOnlyTextContent) {
-      renderableMessages.push(message);
+      const textContent = parts
+        .filter((part) => part && typeof part === 'object' && 'text' in part && part.text)
+        .map((part) => (part as { text: string }).text)
+        .join('\n');
+      renderableMessages.push({
+        id: message.id,
+        role: message.role,
+        content: textContent,
+      });
       continue;
     }
 
@@ -264,7 +282,7 @@ export function MessageList({ messages, width }: MessageListProps) {
         {processedMessages.map((message) => (
           <Message
             key={message.id}
-            message={message}
+            message={message as ModelMessage & { toolData?: ToolData }}
             contentType={message.contentType}
             width={width}
           />

@@ -53,3 +53,4 @@ Use `--log-level DEBUG` to enable detailed logging during development.
 - do not mock in test unless the mock simulates a network call.
 - do not use try-catch in tests or test utilities. tests should fail loudly when something goes wrong.
 - always reference the theme file when adding colors. never add color values inline
+- use bun run test to run the tests. never run the test with bun test

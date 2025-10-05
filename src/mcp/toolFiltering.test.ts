@@ -21,7 +21,6 @@ describe('Tool Filtering', () => {
       description: 'Test tool',
       inputSchema: {} as WrappedTool['inputSchema'],
       execute: vi.fn(),
-      originalExecute: vi.fn(),
       serverName: 'test-server',
       toolName: 'write_file',
     };

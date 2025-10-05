@@ -189,16 +189,12 @@ import { openai } from '@ai-sdk/openai';
 import {
   loadMCPTools,
   loadMCPServersWithClients,
-  convertToolsForAISDK,
 } from '../mcp/loader.js';
 
 const mockGenerateText = generateText as ReturnType<typeof vi.fn>;
 const mockOpenAI = openai as unknown as ReturnType<typeof vi.fn>;
 const mockLoadMCPTools = loadMCPTools as ReturnType<typeof vi.fn>;
 const mockLoadMCPServersWithClients = loadMCPServersWithClients as ReturnType<
-  typeof vi.fn
->;
-const mockConvertToolsForAISDK = convertToolsForAISDK as ReturnType<
   typeof vi.fn
 >;
 const mockInitializeAgentSession = initializeAgentSession as ReturnType<
@@ -263,17 +259,15 @@ describe('agent', () => {
 
     // Setup default mocks
     mockLoadMCPTools.mockResolvedValue({
-      tools: new Map(),
+      tools: {},
       errors: [],
     });
 
     mockLoadMCPServersWithClients.mockResolvedValue({
-      tools: new Map(),
+      tools: {},
       clients: [],
       errors: [],
     });
-
-    mockConvertToolsForAISDK.mockReturnValue({});
 
     mockOpenAI.mockReturnValue(
       () =>
@@ -339,7 +333,6 @@ describe('agent', () => {
             description: 'Test tool',
             inputSchema: {},
             execute: vi.fn(),
-            originalExecute: vi.fn(),
             serverName: 'test-server',
             toolName: 'test-tool',
           },
@@ -354,7 +347,6 @@ describe('agent', () => {
             description: 'Test tool',
             inputSchema: {},
             execute: vi.fn(),
-            originalExecute: vi.fn(),
             serverName: 'test-server',
             toolName: 'test-tool',
           },

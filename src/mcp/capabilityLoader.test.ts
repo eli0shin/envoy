@@ -44,7 +44,6 @@ function createMockTool(name: string): WrappedTool {
     description: `Test tool ${name}`,
     inputSchema: {} as ZodType<unknown, ZodTypeDef, unknown>,
     execute: vi.fn(),
-    originalExecute: vi.fn(),
   };
 }
 

@@ -25,10 +25,7 @@ import { createOpenRouter } from '@openrouter/ai-sdk-provider';
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { buildSystemPrompt } from './constants.js';
 import { AnthropicOAuth } from './auth/index.js';
-import {
-  loadMCPServersWithClients,
-  convertToolsForAISDK,
-} from './mcp/loader.js';
+import { loadMCPServersWithClients } from './mcp/loader.js';
 import {
   getMCPServersFromConfig,
   loadSystemPromptContent,
@@ -113,7 +110,6 @@ vi.mock('./auth/index.js', () => ({
 
 vi.mock('./mcp/loader.js', () => ({
   loadMCPServersWithClients: vi.fn(),
-  convertToolsForAISDK: vi.fn(),
 }));
 
 vi.mock('./constants.js', () => ({
@@ -217,7 +213,6 @@ describe('agentSession', () => {
             _def: { typeName: 'ZodObject' },
           } as unknown as z.ZodSchema,
           execute: vi.fn(),
-          originalExecute: vi.fn(),
           serverName: 'test',
           toolName: 'testTool',
         },
@@ -226,7 +221,7 @@ describe('agentSession', () => {
         {
           serverName: 'test',
           serverConfig: { name: 'test', type: 'stdio', command: 'test' },
-          tools: new Map(),
+          tools: {},
           prompts: new Map(),
           resources: new Map(),
           isConnected: true,
@@ -274,11 +269,10 @@ describe('agentSession', () => {
         'Test system prompt'
       );
       vi.mocked(loadMCPServersWithClients).mockResolvedValue({
-        tools: new Map(),
+        tools: mockTools,
         clients: mockClients,
         errors: [],
       });
-      vi.mocked(convertToolsForAISDK).mockReturnValue(mockTools);
 
       const config = {
         ...mockConfig,
@@ -293,19 +287,20 @@ describe('agentSession', () => {
 
       const result = await initializeAgentSession(config);
 
-      expect(result).toEqual({
-        model: mockModel,
-        tools: mockTools,
-        systemPrompt: 'System prompt',
-        mcpClients: mockClients,
-        authInfo: {
-          method: 'api-key',
-          source: 'environment',
-          details: {
-            envVarName: 'OPENAI_API_KEY',
-          },
+      expect(result.model).toBe(mockModel);
+      expect(result.systemPrompt).toBe('System prompt');
+      expect(result.mcpClients).toBe(mockClients);
+      expect(result.authInfo).toEqual({
+        method: 'api-key',
+        source: 'environment',
+        details: {
+          envVarName: 'OPENAI_API_KEY',
         },
       });
+      // Check that mockTools are present (todo tools are also added)
+      expect(result.tools.testTool).toBe(mockTools.testTool);
+      expect(result.tools.todo_list).toBeDefined();
+      expect(result.tools.todo_write).toBeDefined();
       expect(mockProvider).toHaveBeenCalledWith('gpt-4');
     });
 
@@ -361,7 +356,6 @@ describe('agentSession', () => {
             _def: { typeName: 'ZodObject' },
           } as unknown as z.ZodSchema,
           execute: vi.fn(),
-          originalExecute: vi.fn(),
           serverName: 'test',
           toolName: 'testTool',
         },
@@ -370,7 +364,7 @@ describe('agentSession', () => {
         {
           serverName: 'test',
           serverConfig: { name: 'test', type: 'stdio', command: 'test' },
-          tools: new Map(),
+          tools: {},
           prompts: new Map(),
           resources: new Map(),
           isConnected: true,
@@ -389,11 +383,10 @@ describe('agentSession', () => {
         'Test system prompt'
       );
       vi.mocked(loadMCPServersWithClients).mockResolvedValue({
-        tools: new Map(),
+        tools: mockTools,
         clients: mockClients,
         errors: [],
       });
-      vi.mocked(convertToolsForAISDK).mockReturnValue(mockTools);
 
       await initializeAgentSession(mockConfig);
 
@@ -463,7 +456,6 @@ describe('agentSession', () => {
             _def: { typeName: 'ZodObject' },
           } as unknown as z.ZodSchema,
           execute: vi.fn(),
-          originalExecute: vi.fn(),
           serverName: 'test',
           toolName: 'testTool',
         },
@@ -472,7 +464,7 @@ describe('agentSession', () => {
         {
           serverName: 'test',
           serverConfig: { name: 'test', type: 'stdio', command: 'test' },
-          tools: new Map(),
+          tools: {},
           prompts: new Map(),
           resources: new Map(),
           isConnected: true,
@@ -494,11 +486,10 @@ describe('agentSession', () => {
         'Test system prompt'
       );
       vi.mocked(loadMCPServersWithClients).mockResolvedValue({
-        tools: new Map(),
+        tools: mockTools,
         clients: mockClients,
         errors: [],
       });
-      vi.mocked(convertToolsForAISDK).mockReturnValue(mockTools);
 
       const config = {
         ...mockConfig,
@@ -580,7 +571,6 @@ describe('agentSession', () => {
             _def: { typeName: 'ZodObject' },
           } as unknown as z.ZodSchema,
           execute: vi.fn(),
-          originalExecute: vi.fn(),
           serverName: 'test',
           toolName: 'testTool',
         },
@@ -589,7 +579,7 @@ describe('agentSession', () => {
         {
           serverName: 'test',
           serverConfig: { name: 'test', type: 'stdio', command: 'test' },
-          tools: new Map(),
+          tools: {},
           prompts: new Map(),
           resources: new Map(),
           isConnected: true,
@@ -612,11 +602,10 @@ describe('agentSession', () => {
         'Test system prompt'
       );
       vi.mocked(loadMCPServersWithClients).mockResolvedValue({
-        tools: new Map(),
+        tools: mockTools,
         clients: mockClients,
         errors: [],
       });
-      vi.mocked(convertToolsForAISDK).mockReturnValue(mockTools);
 
       const config = {
         ...mockConfig,
@@ -671,7 +660,6 @@ describe('agentSession', () => {
             _def: { typeName: 'ZodObject' },
           } as unknown as z.ZodSchema,
           execute: vi.fn(),
-          originalExecute: vi.fn(),
           serverName: 'test',
           toolName: 'testTool',
         },
@@ -680,7 +668,7 @@ describe('agentSession', () => {
         {
           serverName: 'test',
           serverConfig: { name: 'test', type: 'stdio', command: 'test' },
-          tools: new Map(),
+          tools: {},
           prompts: new Map(),
           resources: new Map(),
           isConnected: true,
@@ -700,11 +688,10 @@ describe('agentSession', () => {
         'Test system prompt'
       );
       vi.mocked(loadMCPServersWithClients).mockResolvedValue({
-        tools: new Map(),
+        tools: mockTools,
         clients: mockClients,
         errors: [],
       });
-      vi.mocked(convertToolsForAISDK).mockReturnValue(mockTools);
 
       const config = {
         ...mockConfig,
@@ -735,11 +722,10 @@ describe('agentSession', () => {
         'Test system prompt'
       );
       vi.mocked(loadMCPServersWithClients).mockResolvedValue({
-        tools: new Map(),
+        tools: {},
         clients: [],
         errors: [],
       });
-      vi.mocked(convertToolsForAISDK).mockReturnValue({});
 
       const config = {
         ...mockConfig,
@@ -793,11 +779,10 @@ describe('agentSession', () => {
         'Test system prompt'
       );
       vi.mocked(loadMCPServersWithClients).mockResolvedValue({
-        tools: new Map(),
+        tools: {},
         clients: [],
         errors: [],
       });
-      vi.mocked(convertToolsForAISDK).mockReturnValue({});
 
       // Test with no specific model configured
       const config = {
@@ -850,11 +835,10 @@ describe('agentSession', () => {
       vi.mocked(getMCPServersFromConfig).mockReturnValue([]);
       vi.mocked(loadSystemPromptContent).mockResolvedValue('Custom prompt');
       vi.mocked(loadMCPServersWithClients).mockResolvedValue({
-        tools: new Map(),
+        tools: {},
         clients: [],
         errors: [],
       });
-      vi.mocked(convertToolsForAISDK).mockReturnValue({});
 
       const config = {
         ...mockConfig,
@@ -901,7 +885,7 @@ describe('agentSession', () => {
         {
           serverName: 'test-server',
           serverConfig: { name: 'test-server', type: 'stdio', command: 'test' },
-          tools: new Map(),
+          tools: {},
           prompts: new Map(),
           resources: new Map(),
           isConnected: true,
@@ -921,7 +905,6 @@ describe('agentSession', () => {
             _def: { typeName: 'ZodObject' },
           } as unknown as z.ZodSchema,
           execute: vi.fn(),
-          originalExecute: vi.fn(),
           serverName: 'test-server',
           toolName: 'testTool',
         },
@@ -962,11 +945,10 @@ describe('agentSession', () => {
         'Test system prompt'
       );
       vi.mocked(loadMCPServersWithClients).mockResolvedValue({
-        tools: new Map(),
+        tools: mockTools,
         clients: mockClients,
         errors: [],
       });
-      vi.mocked(convertToolsForAISDK).mockReturnValue(mockTools);
 
       const config = {
         ...mockConfig,
@@ -986,9 +968,11 @@ describe('agentSession', () => {
         mockMCPServers,
         config
       );
-      expect(convertToolsForAISDK).toHaveBeenCalledWith(expect.any(Map));
       expect(result.mcpClients).toBe(mockClients);
-      expect(result.tools).toBe(mockTools);
+      // Tools should include mockTools and built-in todo tools
+      expect(result.tools.testTool).toBe(mockTools.testTool);
+      expect(result.tools.todo_list).toBeDefined();
+      expect(result.tools.todo_write).toBeDefined();
     });
 
     it('should handle dotenv import failure gracefully', async () => {
@@ -1027,11 +1011,10 @@ describe('agentSession', () => {
         'Test system prompt'
       );
       vi.mocked(loadMCPServersWithClients).mockResolvedValue({
-        tools: new Map(),
+        tools: {},
         clients: [],
         errors: [],
       });
-      vi.mocked(convertToolsForAISDK).mockReturnValue({});
 
       // Mock dotenv import to throw
       vi.doMock('dotenv/config', () => {
@@ -1177,11 +1160,10 @@ describe('agentSession', () => {
         'Test system prompt'
       );
       vi.mocked(loadMCPServersWithClients).mockResolvedValue({
-        tools: new Map(),
+        tools: {},
         clients: [],
         errors: [],
       });
-      vi.mocked(convertToolsForAISDK).mockReturnValue({});
 
       const configWithPersistence = {
         ...mockConfig,
@@ -1247,11 +1229,10 @@ describe('agentSession', () => {
         'Test system prompt'
       );
       vi.mocked(loadMCPServersWithClients).mockResolvedValue({
-        tools: new Map(),
+        tools: {},
         clients: [],
         errors: [],
       });
-      vi.mocked(convertToolsForAISDK).mockReturnValue({});
 
       const configWithoutPersistence = {
         ...mockConfig,
@@ -1312,11 +1293,10 @@ describe('agentSession', () => {
         'Test system prompt'
       );
       vi.mocked(loadMCPServersWithClients).mockResolvedValue({
-        tools: new Map(),
+        tools: {},
         clients: [],
         errors: [],
       });
-      vi.mocked(convertToolsForAISDK).mockReturnValue({});
 
       // Use config without persistence - change provider to avoid openrouter mock issue
       const configWithoutPersistenceConfig = {

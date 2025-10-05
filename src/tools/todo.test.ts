@@ -3,11 +3,12 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
+import type { ToolCallOptions } from 'ai';
 import { createTodoTools, clearTodoStorage } from './todo.js';
 import type { WrappedTool } from '../types/index.js';
 
 describe('todo tools', () => {
-  let tools: Map<string, WrappedTool>;
+  let tools: Record<string, WrappedTool>;
 
   beforeEach(() => {
     // Clear storage and create fresh tools
@@ -21,18 +22,18 @@ describe('todo tools', () => {
   describe('todo_write', () => {
     it('should write a new todo list', async () => {
       const todoWrite = tools.todo_write;
-      const result = await todoWrite.execute({ 
-        todos: '- [ ] First task\n- [ ] Second task' 
-      });
+      const result = await todoWrite.execute?.({
+        todos: '- [ ] First task\n- [ ] Second task'
+      }, {} as ToolCallOptions);
 
       expect(result).toBe('- [ ] First task\n- [ ] Second task');
     });
 
     it('should write todos with different statuses', async () => {
       const todoWrite = tools['todo_write'];
-      const result = await todoWrite.execute({ 
-        todos: '- [ ] Pending task\n- [~] In progress task\n- [x] Completed task' 
-      });
+      const result = await todoWrite.execute?.({
+        todos: '- [ ] Pending task\n- [~] In progress task\n- [x] Completed task'
+      }, {} as ToolCallOptions);
 
       expect(result).toBe('- [ ] Pending task\n- [~] In progress task\n- [x] Completed task');
     });
@@ -40,13 +41,13 @@ describe('todo tools', () => {
     it('should replace existing todos', async () => {
       const todoWrite = tools['todo_write'];
       
-      await todoWrite.execute({ 
-        todos: '- [ ] First task' 
-      });
-      
-      const result = await todoWrite.execute({ 
-        todos: '- [ ] New task\n- [x] Another task' 
-      });
+      await todoWrite.execute?.({
+        todos: '- [ ] First task'
+      }, {} as ToolCallOptions);
+
+      const result = await todoWrite.execute?.({
+        todos: '- [ ] New task\n- [x] Another task'
+      }, {} as ToolCallOptions);
 
       expect(result).toBe('- [ ] New task\n- [x] Another task');
     });
@@ -55,7 +56,7 @@ describe('todo tools', () => {
   describe('todo_list', () => {
     it('should return empty string initially', async () => {
       const todoList = tools['todo_list'];
-      const result = await todoList.execute({});
+      const result = await todoList.execute?.({}, {} as ToolCallOptions);
 
       expect(result).toBe('');
     });
@@ -64,11 +65,11 @@ describe('todo tools', () => {
       const todoWrite = tools['todo_write'];
       const todoList = tools['todo_list'];
 
-      await todoWrite.execute({ 
-        todos: '- [ ] First task\n- [~] Second task' 
-      });
+      await todoWrite.execute?.({
+        todos: '- [ ] First task\n- [~] Second task'
+      }, {} as ToolCallOptions);
       
-      const result = await todoList.execute({});
+      const result = await todoList.execute?.({}, {} as ToolCallOptions);
 
       expect(result).toBe('- [ ] First task\n- [~] Second task');
     });

@@ -59,7 +59,7 @@ vi.mock('../../mcp/loader.js', () => ({
       command: 'test-command',
       args: [],
     },
-    tools: new Map(),
+    tools: {},
     prompts: new Map(),
     resources: new Map(),
     isConnected: true,

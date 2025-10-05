@@ -4,9 +4,9 @@
 
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { z } from 'zod/v3';
+import type { ToolCallOptions } from 'ai';
 import {
   loadMCPTools,
-  convertToolsForAISDK,
   createMCPClientWrapper,
   loadMCPServersWithClients,
 } from './loader.js';
@@ -344,8 +344,8 @@ describe('mcpLoader', () => {
 
       // If we get here, the mocks were called - now check the result
       expect(result.errors).toHaveLength(0);
-      expect(result.tools.size).toBe(1);
-      expect(result.tools.has('test-server_test-tool')).toBe(true);
+      expect(Object.keys(result.tools).length).toBe(1);
+      expect(('test-server_test-tool' in result.tools)).toBe(true);
     });
 
     it('should load tools from SSE servers successfully', async () => {
@@ -374,9 +374,9 @@ describe('mcpLoader', () => {
 
       const result = await loadMCPTools(serverConfigs);
 
-      expect(result.tools.size).toBe(1);
+      expect(Object.keys(result.tools).length).toBe(1);
       expect(result.errors).toHaveLength(0);
-      expect(result.tools.has('weather-server_weather-tool')).toBe(true);
+      expect(('weather-server_weather-tool' in result.tools)).toBe(true);
     });
 
     it('should handle server connection errors gracefully', async () => {
@@ -394,7 +394,7 @@ describe('mcpLoader', () => {
 
       const result = await loadMCPTools(serverConfigs);
 
-      expect(result.tools.size).toBe(0);
+      expect(Object.keys(result.tools).length).toBe(0);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0].serverName).toBe('failing-server');
       expect(result.errors[0].error).toContain('Connection failed');
@@ -433,9 +433,9 @@ describe('mcpLoader', () => {
       const result = await loadMCPTools(serverConfigs);
 
       // Both tools should be loaded since they have different server prefixes
-      expect(result.tools.size).toBe(2);
-      expect(result.tools.has('server1_duplicate-tool')).toBe(true);
-      expect(result.tools.has('server2_duplicate-tool')).toBe(true);
+      expect(Object.keys(result.tools).length).toBe(2);
+      expect(('server1_duplicate-tool' in result.tools)).toBe(true);
+      expect(('server2_duplicate-tool' in result.tools)).toBe(true);
       expect(result.errors).toHaveLength(0);
     });
 
@@ -472,35 +472,6 @@ describe('mcpLoader', () => {
     });
   });
 
-  describe('convertToolsForAISDK', () => {
-    it('should convert wrapped tools to AI SDK format', () => {
-      const wrappedTool: WrappedTool = {
-        description: 'Test tool',
-        inputSchema: z.object({ input: z.string() }),
-        execute: vi.fn(),
-        originalExecute: vi.fn(),
-        serverName: 'test-server',
-        toolName: 'test-tool',
-      };
-
-      const toolsMap = new Map([['test-server_test-tool', wrappedTool]]);
-      const aiSDKTools = convertToolsForAISDK(toolsMap);
-
-      expect(aiSDKTools).toHaveProperty('test-server_test-tool');
-      expect(aiSDKTools['test-server_test-tool']).toHaveProperty('description');
-      expect(aiSDKTools['test-server_test-tool']).toHaveProperty('parameters');
-      expect(aiSDKTools['test-server_test-tool']).toHaveProperty('execute');
-      expect(aiSDKTools['test-server_test-tool'].description).toBe('Test tool');
-    });
-
-    it('should handle empty tools map', () => {
-      const toolsMap = new Map<string, WrappedTool>();
-      const aiSDKTools = convertToolsForAISDK(toolsMap);
-
-      expect(Object.keys(aiSDKTools)).toHaveLength(0);
-    });
-  });
-
   describe('wrapped tool execution', () => {
     it('should log tool calls with correct format', async () => {
       const mockTools = [
@@ -534,13 +505,13 @@ describe('mcpLoader', () => {
       ];
 
       const result = await loadMCPTools(serverConfigs);
-      const tool = result.tools.get('test-server_test-tool');
+      const tool = result.tools['test-server_test-tool'];
 
       expect(tool).toBeDefined();
 
       // Execute the tool
       const args = { input: 'test value' };
-      await tool!.execute(args);
+      await tool?.execute?.(args, {} as ToolCallOptions);
 
       // Progress logging is now handled centrally in agent.ts onStepFinish
       // Verify that file logging still happens (first call when tool starts)
@@ -584,20 +555,20 @@ describe('mcpLoader', () => {
       ];
 
       const result = await loadMCPTools(serverConfigs);
-      const tool = result.tools.get('test-server_slow-tool');
+      const tool = result.tools['test-server_slow-tool'];
 
       expect(tool).toBeDefined();
 
       // Execute the tool (this should timeout)
-      const executePromise = tool!.execute({});
+      const executePromise = tool!.execute?.({}, {} as ToolCallOptions);
 
       // Advance timers to trigger the timeout immediately
       vi.advanceTimersByTime(1800000); // TOOL_TIMEOUT_MS
 
       const executeResult = await executePromise;
 
-      expect(executeResult).toHaveProperty('result');
-      expect(executeResult.result).toBe('Error: Tool execution timeout');
+      // Tools return strings directly, not objects
+      expect(executeResult).toBe('Error: Tool execution timeout');
 
       vi.useRealTimers();
     });
@@ -629,14 +600,14 @@ describe('mcpLoader', () => {
       ];
 
       const result = await loadMCPTools(serverConfigs);
-      const tool = result.tools.get('test-server_error-tool');
+      const tool = result.tools['test-server_error-tool'];
 
       expect(tool).toBeDefined();
 
-      const executeResult = await tool!.execute({});
+      const executeResult = await tool?.execute?.({}, {} as ToolCallOptions);
 
-      expect(executeResult).toHaveProperty('result');
-      expect(executeResult.result).toContain('Error: Tool execution failed');
+      // Tools return strings directly, not objects
+      expect(executeResult).toContain('Error: Tool execution failed');
     });
 
     it('should validate tool arguments', async () => {
@@ -654,7 +625,13 @@ describe('mcpLoader', () => {
         },
       ];
 
-      mockClient = createMockMcpClient({ tools: mockTools });
+      mockClient = createMockMcpClient({
+        tools: mockTools,
+        customCallToolResponse: {
+          isError: true,
+          content: [{ type: 'text', text: 'Invalid arguments for tool validation-tool' }],
+        },
+      });
 
       const serverConfigs: StdioMCPServerConfig[] = [
         {
@@ -666,15 +643,15 @@ describe('mcpLoader', () => {
       ];
 
       const result = await loadMCPTools(serverConfigs);
-      const tool = result.tools.get('test-server_validation-tool');
+      const tool = result.tools['test-server_validation-tool'];
 
       expect(tool).toBeDefined();
 
       // Test with invalid arguments (missing required field)
-      const executeResult = await tool!.execute({});
+      const executeResult = await tool?.execute?.({}, {} as ToolCallOptions);
 
-      expect(executeResult).toHaveProperty('result');
-      expect(executeResult.result).toContain('Error: Invalid arguments');
+      // Tools return strings directly, not objects
+      expect(executeResult).toContain('Error: Invalid arguments');
     });
 
     it('should handle unknown content types in tool results', async () => {
@@ -716,17 +693,17 @@ describe('mcpLoader', () => {
       ];
 
       const result = await loadMCPTools(serverConfigs);
-      const tool = result.tools.get('test-server_unknown-content-tool');
+      const tool = result.tools['test-server_unknown-content-tool'];
 
       expect(tool).toBeDefined();
 
-      const executeResult = await tool!.execute({});
+      const executeResult = await tool?.execute?.({}, {} as ToolCallOptions);
 
-      expect(executeResult).toHaveProperty('result');
-      expect(executeResult.result).toContain('Normal text');
-      expect(executeResult.result).toContain('[Unknown content type]');
-      expect(executeResult.result).toContain('[Image: base64data]');
-      expect(executeResult.result).toContain('[Resource: file://test.txt]');
+      // Tools return strings directly, not objects
+      expect(executeResult).toContain('Normal text');
+      expect(executeResult).toContain('[Unknown content type]');
+      expect(executeResult).toContain('[Image: base64data]');
+      expect(executeResult).toContain('[Resource: file://test.txt]');
     });
 
     it('should handle actual tool name conflicts within same server', async () => {
@@ -756,11 +733,11 @@ describe('mcpLoader', () => {
       const result = await loadMCPTools(serverConfigs);
 
       // Should load both tools with same namespaced key (second overwrites first)
-      expect(result.tools.size).toBe(1);
-      expect(result.tools.has('conflicted-server_duplicate-tool')).toBe(true);
+      expect(Object.keys(result.tools).length).toBe(1);
+      expect(('conflicted-server_duplicate-tool' in result.tools)).toBe(true);
 
       // The first tool will be the one that remains (tools are processed in order)
-      const tool = result.tools.get('conflicted-server_duplicate-tool');
+      const tool = result.tools['conflicted-server_duplicate-tool'];
       expect(tool?.description).toBe('First tool');
     });
 
@@ -794,13 +771,13 @@ describe('mcpLoader', () => {
 
       // Test with JSON mode enabled
       const result = await loadMCPTools(serverConfigs);
-      const tool = result.tools.get('test-server_json-mode-tool');
+      const tool = result.tools['test-server_json-mode-tool'];
 
       expect(tool).toBeDefined();
 
       // Execute the tool
       const args = { input: 'test' };
-      await tool!.execute(args);
+      await tool?.execute?.(args, {} as ToolCallOptions);
 
       // Verify that no console output occurs in JSON mode
       expect(consoleSpy).not.toHaveBeenCalled();
@@ -848,7 +825,7 @@ describe('mcpLoader', () => {
       ];
 
       const result = await loadMCPTools(serverConfigs);
-      const tool = result.tools.get('test-server_complex-schema-tool');
+      const tool = result.tools['test-server_complex-schema-tool'];
 
       expect(tool).toBeDefined();
 
@@ -863,8 +840,8 @@ describe('mcpLoader', () => {
         },
       };
 
-      const executeResult = await tool!.execute(validArgs);
-      expect(executeResult).toHaveProperty('result');
+      const executeResult = await tool?.execute?.(validArgs, {} as ToolCallOptions);
+      // Tools return strings directly, not objects
     });
   });
 
@@ -885,7 +862,7 @@ describe('mcpLoader', () => {
       expect(wrapper.serverName).toBe('test-server');
       expect(wrapper.serverConfig).toBe(config);
       expect(wrapper.isConnected).toBe(true);
-      expect(wrapper.tools.size).toBe(0);
+      expect(Object.keys(wrapper.tools).length).toBe(0);
     });
 
     it('should connect and load tools', async () => {
@@ -936,12 +913,12 @@ describe('mcpLoader', () => {
 
       expect(wrapper.isConnected).toBe(true);
       // Now we have 5 tools: 1 original + 2 prompt tools + 2 resource tools
-      expect(wrapper.tools.size).toBe(5);
-      expect(wrapper.tools.has('test-tool')).toBe(true);
-      expect(wrapper.tools.has('test-server_list_prompts')).toBe(true);
-      expect(wrapper.tools.has('test-server_get_prompt')).toBe(true);
-      expect(wrapper.tools.has('test-server_list_resources')).toBe(true);
-      expect(wrapper.tools.has('test-server_read_resource')).toBe(true);
+      expect(Object.keys(wrapper.tools).length).toBe(5);
+      expect(('test-tool' in wrapper.tools)).toBe(true);
+      expect(('test-server_list_prompts' in wrapper.tools)).toBe(true);
+      expect(('test-server_get_prompt' in wrapper.tools)).toBe(true);
+      expect(('test-server_list_resources' in wrapper.tools)).toBe(true);
+      expect(('test-server_read_resource' in wrapper.tools)).toBe(true);
     });
 
     it('should handle connection errors', async () => {
@@ -1023,7 +1000,7 @@ describe('mcpLoader', () => {
       ];
 
       const result = await loadMCPTools(serverConfigs);
-      const tool = result.tools.get('test-server_no-schema-tool');
+      const tool = result.tools['test-server_no-schema-tool'];
       expect(tool).toBeDefined();
     });
 
@@ -1067,7 +1044,7 @@ describe('mcpLoader', () => {
       ];
 
       const result = await loadMCPTools(serverConfigs);
-      const tool = result.tools.get('test-server_all-types-tool');
+      const tool = result.tools['test-server_all-types-tool'];
 
       expect(tool).toBeDefined();
 
@@ -1082,8 +1059,8 @@ describe('mcpLoader', () => {
         unknownType: 'any value',
       };
 
-      const executeResult = await tool!.execute(validArgs);
-      expect(executeResult).toHaveProperty('result');
+      const executeResult = await tool?.execute?.(validArgs, {} as ToolCallOptions);
+      // Tools return strings directly, not objects
     });
   });
 
@@ -1183,13 +1160,13 @@ describe('mcpLoader', () => {
       const wrapper = await createMCPClientWrapper(config);
 
       // Check that prompt tools were created
-      expect(wrapper.tools.has('prompt-server_list_prompts')).toBe(true);
-      expect(wrapper.tools.has('prompt-server_get_prompt')).toBe(true);
+      expect(('prompt-server_list_prompts' in wrapper.tools)).toBe(true);
+      expect(('prompt-server_get_prompt' in wrapper.tools)).toBe(true);
 
-      const listPromptsTools = wrapper.tools.get('prompt-server_list_prompts');
+      const listPromptsTools = wrapper.tools['prompt-server_list_prompts'];
       expect(listPromptsTools?.description).toContain('List available prompts');
 
-      const getPromptTool = wrapper.tools.get('prompt-server_get_prompt');
+      const getPromptTool = wrapper.tools['prompt-server_get_prompt'];
       expect(getPromptTool?.description).toContain('Get and execute a prompt');
     });
 
@@ -1212,13 +1189,13 @@ describe('mcpLoader', () => {
 
       const wrapper = await createMCPClientWrapper(config);
 
-      const listPromptsTool = wrapper.tools.get('prompt-server_list_prompts');
+      const listPromptsTool = wrapper.tools['prompt-server_list_prompts'];
       expect(listPromptsTool).toBeDefined();
 
-      const result = await listPromptsTool!.execute({});
-      expect(result).toHaveProperty('result');
+      const result = await listPromptsTool?.execute?.({}, {} as ToolCallOptions);
+      expect(result).toBeDefined();
 
-      const parsedResult = JSON.parse(result.result);
+      const parsedResult = JSON.parse(result as string);
       expect(parsedResult).toHaveLength(1);
       expect(parsedResult[0].name).toBe('test-prompt');
     });
@@ -1254,17 +1231,17 @@ describe('mcpLoader', () => {
 
       const wrapper = await createMCPClientWrapper(config);
 
-      const getPromptTool = wrapper.tools.get('prompt-server_get_prompt');
+      const getPromptTool = wrapper.tools['prompt-server_get_prompt'];
       expect(getPromptTool).toBeDefined();
 
-      const result = await getPromptTool!.execute({
+      const result = await getPromptTool?.execute?.({
         name: 'test-prompt',
         arguments: { input: 'test value' },
-      });
+      }, {} as ToolCallOptions);
 
-      expect(result).toHaveProperty('result');
+      expect(result).toBeDefined();
 
-      const parsedResult = JSON.parse(result.result);
+      const parsedResult = JSON.parse(result as string);
       expect(parsedResult.description).toBe('Executed test prompt');
       expect(parsedResult.messages).toHaveLength(1);
       expect(parsedResult.messages[0].content.text).toBe(
@@ -1300,15 +1277,15 @@ describe('mcpLoader', () => {
 
       const wrapper = await createMCPClientWrapper(config);
 
-      const getPromptTool = wrapper.tools.get('prompt-server_get_prompt');
+      const getPromptTool = wrapper.tools['prompt-server_get_prompt'];
       expect(getPromptTool).toBeDefined();
 
-      const result = await getPromptTool!.execute({
+      const result = await getPromptTool?.execute?.({
         name: 'error-prompt',
-      });
+      }, {} as ToolCallOptions);
 
-      expect(result).toHaveProperty('result');
-      expect(result.result).toBe('Error: Prompt execution failed');
+      expect(result).toBeDefined();
+      expect(result).toBe('Error: Prompt execution failed');
     });
 
     it('should handle prompt loading errors gracefully', async () => {
@@ -1333,10 +1310,10 @@ describe('mcpLoader', () => {
       expect(wrapper.prompts.size).toBe(0);
 
       // Should not have prompt tools
-      expect(wrapper.tools.has('failing-prompt-server_list_prompts')).toBe(
+      expect(('failing-prompt-server_list_prompts' in wrapper.tools)).toBe(
         true
       ); // Empty prompt tools are still created
-      expect(wrapper.tools.has('failing-prompt-server_get_prompt')).toBe(true);
+      expect(('failing-prompt-server_get_prompt' in wrapper.tools)).toBe(true);
     });
 
     it('should use listPrompts and getPrompt methods from wrapper', async () => {
@@ -1458,19 +1435,19 @@ describe('mcpLoader', () => {
       const wrapper = await createMCPClientWrapper(config);
 
       // Check that resource tools were created
-      expect(wrapper.tools.has('resource-server_list_resources')).toBe(true);
-      expect(wrapper.tools.has('resource-server_read_resource')).toBe(true);
+      expect(('resource-server_list_resources' in wrapper.tools)).toBe(true);
+      expect(('resource-server_read_resource' in wrapper.tools)).toBe(true);
 
-      const listResourcesTool = wrapper.tools.get(
+      const listResourcesTool = wrapper.tools[
         'resource-server_list_resources'
-      );
+      ];
       expect(listResourcesTool?.description).toContain(
         'List available resources'
       );
 
-      const readResourceTool = wrapper.tools.get(
+      const readResourceTool = wrapper.tools[
         'resource-server_read_resource'
-      );
+      ];
       expect(readResourceTool?.description).toContain(
         'Read content from a resource'
       );
@@ -1496,15 +1473,15 @@ describe('mcpLoader', () => {
 
       const wrapper = await createMCPClientWrapper(config);
 
-      const listResourcesTool = wrapper.tools.get(
+      const listResourcesTool = wrapper.tools[
         'resource-server_list_resources'
-      );
+      ];
       expect(listResourcesTool).toBeDefined();
 
-      const result = await listResourcesTool!.execute({});
-      expect(result).toHaveProperty('result');
+      const result = await listResourcesTool?.execute?.({}, {} as ToolCallOptions);
+      expect(result).toBeDefined();
 
-      const parsedResult = JSON.parse(result.result);
+      const parsedResult = JSON.parse(result as string);
       expect(parsedResult).toHaveLength(1);
       expect(parsedResult[0].uri).toBe('file:///test.txt');
     });
@@ -1537,18 +1514,18 @@ describe('mcpLoader', () => {
 
       const wrapper = await createMCPClientWrapper(config);
 
-      const readResourceTool = wrapper.tools.get(
+      const readResourceTool = wrapper.tools[
         'resource-server_read_resource'
-      );
+      ];
       expect(readResourceTool).toBeDefined();
 
-      const result = await readResourceTool!.execute({
+      const result = await readResourceTool?.execute?.({
         uri: 'file:///test.txt',
-      });
+      }, {} as ToolCallOptions);
 
-      expect(result).toHaveProperty('result');
+      expect(result).toBeDefined();
 
-      const parsedResult = JSON.parse(result.result);
+      const parsedResult = JSON.parse(result as string);
       expect(parsedResult.contents).toHaveLength(1);
       expect(parsedResult.contents[0].text).toBe(
         'This is the content of the test file'
@@ -1582,17 +1559,17 @@ describe('mcpLoader', () => {
 
       const wrapper = await createMCPClientWrapper(config);
 
-      const readResourceTool = wrapper.tools.get(
+      const readResourceTool = wrapper.tools[
         'resource-server_read_resource'
-      );
+      ];
       expect(readResourceTool).toBeDefined();
 
-      const result = await readResourceTool!.execute({
+      const result = await readResourceTool?.execute?.({
         uri: 'file:///error.txt',
-      });
+      }, {} as ToolCallOptions);
 
-      expect(result).toHaveProperty('result');
-      expect(result.result).toBe('Error: Resource not found');
+      expect(result).toBeDefined();
+      expect(result).toBe('Error: Resource not found');
     });
 
     it('should handle resource loading errors gracefully', async () => {
@@ -1617,10 +1594,10 @@ describe('mcpLoader', () => {
       expect(wrapper.resources.size).toBe(0);
 
       // Should still have resource tools (even if empty)
-      expect(wrapper.tools.has('failing-resource-server_list_resources')).toBe(
+      expect(('failing-resource-server_list_resources' in wrapper.tools)).toBe(
         true
       );
-      expect(wrapper.tools.has('failing-resource-server_read_resource')).toBe(
+      expect(('failing-resource-server_read_resource' in wrapper.tools)).toBe(
         true
       );
     });
@@ -1698,18 +1675,18 @@ describe('mcpLoader', () => {
 
       const wrapper = await createMCPClientWrapper(config);
 
-      const readResourceTool = wrapper.tools.get(
+      const readResourceTool = wrapper.tools[
         'resource-server_read_resource'
-      );
+      ];
       expect(readResourceTool).toBeDefined();
 
-      const result = await readResourceTool!.execute({
+      const result = await readResourceTool?.execute?.({
         uri: 'file:///binary.jpg',
-      });
+      }, {} as ToolCallOptions);
 
-      expect(result).toHaveProperty('result');
+      expect(result).toBeDefined();
 
-      const parsedResult = JSON.parse(result.result);
+      const parsedResult = JSON.parse(result as string);
       expect(parsedResult.contents[0].blob).toBe('base64encodedimagedata');
       expect(parsedResult.contents[0].mimeType).toBe('image/jpeg');
     });
@@ -1923,7 +1900,7 @@ describe('mcpLoader', () => {
         const result = await loadMCPTools([config]);
 
         // Should still succeed with just tools
-        expect(result.tools.size).toBeGreaterThan(0);
+        expect(Object.keys(result.tools).length).toBeGreaterThan(0);
         expect(result.errors.length).toBe(0); // Errors should be handled gracefully
       });
 
@@ -1978,7 +1955,7 @@ describe('mcpLoader', () => {
         const result = await loadMCPTools(serverConfigs);
 
         // All servers should be processed
-        expect(result.tools.size).toBeGreaterThan(0);
+        expect(Object.keys(result.tools).length).toBeGreaterThan(0);
         expect(result.errors.length).toBe(0);
       });
 
@@ -2008,7 +1985,7 @@ describe('mcpLoader', () => {
         expect(result.errors[0].error).toContain('Connection failed');
 
         // Should have no tools from failed server
-        expect(result.tools.size).toBe(0);
+        expect(Object.keys(result.tools).length).toBe(0);
       });
     });
 
@@ -2035,9 +2012,9 @@ describe('mcpLoader', () => {
         const result = await loadMCPTools([config]);
 
         // Should have tools but no prompt/resource tools
-        expect(result.tools.has('tools-only-server_test-tool')).toBe(true);
-        expect(result.tools.has('tools-only-server_list_prompts')).toBe(false);
-        expect(result.tools.has('tools-only-server_list_resources')).toBe(
+        expect(('tools-only-server_test-tool' in result.tools)).toBe(true);
+        expect(('tools-only-server_list_prompts' in result.tools)).toBe(false);
+        expect(('tools-only-server_list_resources' in result.tools)).toBe(
           false
         );
       });
@@ -2068,10 +2045,10 @@ describe('mcpLoader', () => {
         const result = await loadMCPTools([config]);
 
         // Should have prompt and resource tools
-        expect(result.tools.has('full-server_list_prompts')).toBe(true);
-        expect(result.tools.has('full-server_get_prompt')).toBe(true);
-        expect(result.tools.has('full-server_list_resources')).toBe(true);
-        expect(result.tools.has('full-server_read_resource')).toBe(true);
+        expect(('full-server_list_prompts' in result.tools)).toBe(true);
+        expect(('full-server_get_prompt' in result.tools)).toBe(true);
+        expect(('full-server_list_resources' in result.tools)).toBe(true);
+        expect(('full-server_read_resource' in result.tools)).toBe(true);
       });
     });
 
@@ -2101,7 +2078,7 @@ describe('mcpLoader', () => {
 
         // Should successfully load from both servers
         expect(result.errors.length).toBe(0);
-        expect(result.tools.size).toBeGreaterThanOrEqual(0);
+        expect(Object.keys(result.tools).length).toBeGreaterThanOrEqual(0);
       });
 
       it('should handle error recovery without blocking other servers', async () => {
@@ -2122,7 +2099,7 @@ describe('mcpLoader', () => {
         const result = await loadMCPTools(serverConfigs);
 
         // Working server should provide tools
-        expect(result.tools.has('working-server_tool')).toBe(true);
+        expect(('working-server_tool' in result.tools)).toBe(true);
       });
     });
   });
@@ -2134,7 +2111,6 @@ describe('mcpLoader', () => {
         serverName: 'filesystem',
         description: 'Write content to a file',
         execute: vi.fn(),
-        originalExecute: vi.fn(),
         inputSchema: z.object({}),
       };
 
@@ -2328,9 +2304,9 @@ describe('mcpLoader', () => {
         );
 
         // Should have read_file but not write_file or delete_file
-        expect(result.tools.has('filesystem_read_file')).toBe(true);
-        expect(result.tools.has('filesystem_write_file')).toBe(false);
-        expect(result.tools.has('filesystem_delete_file')).toBe(false);
+        expect(('filesystem_read_file' in result.tools)).toBe(true);
+        expect(('filesystem_write_file' in result.tools)).toBe(false);
+        expect(('filesystem_delete_file' in result.tools)).toBe(false);
       });
 
       it('should filter tools based on server-level disabled configuration', async () => {
@@ -2350,9 +2326,9 @@ describe('mcpLoader', () => {
         );
 
         // Should have read_file and delete_file but not write_file
-        expect(result.tools.has('filesystem_read_file')).toBe(true);
-        expect(result.tools.has('filesystem_write_file')).toBe(false);
-        expect(result.tools.has('filesystem_delete_file')).toBe(true);
+        expect(('filesystem_read_file' in result.tools)).toBe(true);
+        expect(('filesystem_write_file' in result.tools)).toBe(false);
+        expect(('filesystem_delete_file' in result.tools)).toBe(true);
       });
 
       it('should work without RuntimeConfiguration parameter (backward compatibility)', async () => {
@@ -2371,9 +2347,9 @@ describe('mcpLoader', () => {
         expect(result).toBeDefined();
         expect(result.tools).toBeDefined();
         // Should have all tools when no filtering is applied
-        expect(result.tools.has('test-server_read_file')).toBe(true);
-        expect(result.tools.has('test-server_write_file')).toBe(true);
-        expect(result.tools.has('test-server_delete_file')).toBe(true);
+        expect(('test-server_read_file' in result.tools)).toBe(true);
+        expect(('test-server_write_file' in result.tools)).toBe(true);
+        expect(('test-server_delete_file' in result.tools)).toBe(true);
       });
 
       it('should handle empty disabled tools configuration', async () => {
@@ -2394,9 +2370,9 @@ describe('mcpLoader', () => {
         );
 
         // Should have all tools when no tools are disabled
-        expect(result.tools.has('test-server_read_file')).toBe(true);
-        expect(result.tools.has('test-server_write_file')).toBe(true);
-        expect(result.tools.has('test-server_delete_file')).toBe(true);
+        expect(('test-server_read_file' in result.tools)).toBe(true);
+        expect(('test-server_write_file' in result.tools)).toBe(true);
+        expect(('test-server_delete_file' in result.tools)).toBe(true);
       });
     });
   });

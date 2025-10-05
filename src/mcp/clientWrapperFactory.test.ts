@@ -21,17 +21,6 @@ import type {
 import { createMockClient } from '../test/helpers/createMocks.js';
 import type { Client } from '@modelcontextprotocol/sdk/client/index.js';
 
-// Mock dependencies
-vi.mock('../mcp/capabilityTools.js', () => ({
-  createPromptTools: vi.fn(),
-  createResourceTools: vi.fn(),
-}));
-
-import {
-  createPromptTools,
-  createResourceTools,
-} from '../mcp/capabilityTools.js';
-
 function createMockTool(name: string, serverName = 'test-server'): WrappedTool {
   return {
     toolName: name,
@@ -39,7 +28,6 @@ function createMockTool(name: string, serverName = 'test-server'): WrappedTool {
     description: `Test tool ${name}`,
     inputSchema: {} as ZodType<unknown, ZodTypeDef, unknown>,
     execute: vi.fn(),
-    originalExecute: vi.fn(),
   };
 }
 
@@ -58,9 +46,6 @@ function createMockResource(uri: string): MCPResource {
 }
 
 describe('Client Wrapper Factory Module', () => {
-  const mockCreatePromptTools = vi.mocked(createPromptTools);
-  const mockCreateResourceTools = vi.mocked(createResourceTools);
-
   const baseConfig: MCPServerConfig = {
     name: 'test-server',
     type: 'stdio',
@@ -96,7 +81,7 @@ describe('Client Wrapper Factory Module', () => {
       expect(wrapper.serverName).toBe('test-server');
       expect(wrapper.serverConfig).toBe(baseConfig);
       expect(wrapper.isConnected).toBe(true);
-      expect(wrapper.tools).toBeInstanceOf(Map);
+      expect(typeof wrapper.tools).toBe('object');
       expect(wrapper.prompts).toBeInstanceOf(Map);
       expect(wrapper.resources).toBeInstanceOf(Map);
       expect(wrapper.listPrompts).toBeInstanceOf(Function);
@@ -118,9 +103,9 @@ describe('Client Wrapper Factory Module', () => {
         []
       );
 
-      expect(wrapper.tools.size).toBe(2);
-      expect(wrapper.tools.get('tool1')).toBe(tools[0]);
-      expect(wrapper.tools.get('tool2')).toBe(tools[1]);
+      expect(Object.keys(wrapper.tools).length).toBe(2);
+      expect(wrapper.tools['tool1']).toBe(tools[0]);
+      expect(wrapper.tools['tool2']).toBe(tools[1]);
     });
 
     it('should handle duplicate tool names by keeping first', () => {
@@ -139,8 +124,8 @@ describe('Client Wrapper Factory Module', () => {
         []
       );
 
-      expect(wrapper.tools.size).toBe(1);
-      expect(wrapper.tools.get('duplicate')).toBe(tools[0]); // First tool kept
+      expect(Object.keys(wrapper.tools).length).toBe(1);
+      expect(wrapper.tools['duplicate']).toBe(tools[0]); // First tool kept
     });
 
     it('should populate prompts map from provided prompts', () => {
@@ -189,12 +174,6 @@ describe('Client Wrapper Factory Module', () => {
       const client = createMockClient();
       const capabilities: ServerCapabilities = { prompts: {} };
       const prompts = [createMockPrompt('test-prompt')];
-      const promptTools = [
-        createMockTool('list_prompts'),
-        createMockTool('get_prompt'),
-      ];
-
-      mockCreatePromptTools.mockReturnValue(promptTools);
 
       const wrapper = createMCPClientWrapperFromData(
         client,
@@ -205,28 +184,19 @@ describe('Client Wrapper Factory Module', () => {
         []
       );
 
-      expect(mockCreatePromptTools).toHaveBeenCalledWith(
-        client,
-        'test-server',
-        prompts
-      );
-      expect(wrapper.tools.size).toBe(2);
-      expect(wrapper.tools.get('test-server_list_prompts')).toBe(
-        promptTools[0]
-      );
-      expect(wrapper.tools.get('test-server_get_prompt')).toBe(promptTools[1]);
+      expect(Object.keys(wrapper.tools).length).toBe(2);
+      expect(wrapper.tools['test-server_list_prompts']).toBeDefined();
+      expect(wrapper.tools['test-server_list_prompts']?.serverName).toBe('test-server');
+      expect(wrapper.tools['test-server_list_prompts']?.toolName).toBe('list_prompts');
+      expect(wrapper.tools['test-server_get_prompt']).toBeDefined();
+      expect(wrapper.tools['test-server_get_prompt']?.serverName).toBe('test-server');
+      expect(wrapper.tools['test-server_get_prompt']?.toolName).toBe('get_prompt');
     });
 
     it('should create resource tools when resources capability is declared', () => {
       const client = createMockClient();
       const capabilities: ServerCapabilities = { resources: {} };
       const resources = [createMockResource('file://test.txt')];
-      const resourceTools = [
-        createMockTool('list_resources'),
-        createMockTool('read_resource'),
-      ];
-
-      mockCreateResourceTools.mockReturnValue(resourceTools);
 
       const wrapper = createMCPClientWrapperFromData(
         client,
@@ -237,18 +207,13 @@ describe('Client Wrapper Factory Module', () => {
         resources
       );
 
-      expect(mockCreateResourceTools).toHaveBeenCalledWith(
-        client,
-        'test-server',
-        resources
-      );
-      expect(wrapper.tools.size).toBe(2);
-      expect(wrapper.tools.get('test-server_list_resources')).toBe(
-        resourceTools[0]
-      );
-      expect(wrapper.tools.get('test-server_read_resource')).toBe(
-        resourceTools[1]
-      );
+      expect(Object.keys(wrapper.tools).length).toBe(2);
+      expect(wrapper.tools['test-server_list_resources']).toBeDefined();
+      expect(wrapper.tools['test-server_list_resources']?.serverName).toBe('test-server');
+      expect(wrapper.tools['test-server_list_resources']?.toolName).toBe('list_resources');
+      expect(wrapper.tools['test-server_read_resource']).toBeDefined();
+      expect(wrapper.tools['test-server_read_resource']?.serverName).toBe('test-server');
+      expect(wrapper.tools['test-server_read_resource']?.toolName).toBe('read_resource');
     });
 
     it('should not create prompt tools when prompts capability is not declared', () => {
@@ -265,8 +230,9 @@ describe('Client Wrapper Factory Module', () => {
         []
       );
 
-      expect(mockCreatePromptTools).not.toHaveBeenCalled();
-      expect(wrapper.tools.size).toBe(0);
+      expect(Object.keys(wrapper.tools).length).toBe(0);
+      expect('test-server_list_prompts' in wrapper.tools).toBe(false);
+      expect('test-server_get_prompt' in wrapper.tools).toBe(false);
     });
 
     it('should not create resource tools when resources capability is not declared', () => {
@@ -283,19 +249,15 @@ describe('Client Wrapper Factory Module', () => {
         resources
       );
 
-      expect(mockCreateResourceTools).not.toHaveBeenCalled();
-      expect(wrapper.tools.size).toBe(0);
+      expect(Object.keys(wrapper.tools).length).toBe(0);
+      expect('test-server_list_resources' in wrapper.tools).toBe(false);
+      expect('test-server_read_resource' in wrapper.tools).toBe(false);
     });
 
     it('should combine regular tools with capability tools', () => {
       const client = createMockClient();
       const capabilities: ServerCapabilities = { prompts: {}, resources: {} };
       const regularTools = [createMockTool('regular-tool')];
-      const promptTools = [createMockTool('prompt-tool')];
-      const resourceTools = [createMockTool('resource-tool')];
-
-      mockCreatePromptTools.mockReturnValue(promptTools);
-      mockCreateResourceTools.mockReturnValue(resourceTools);
 
       const wrapper = createMCPClientWrapperFromData(
         client,
@@ -306,12 +268,13 @@ describe('Client Wrapper Factory Module', () => {
         []
       );
 
-      expect(wrapper.tools.size).toBe(3);
-      expect(wrapper.tools.get('regular-tool')).toBe(regularTools[0]);
-      expect(wrapper.tools.get('test-server_prompt-tool')).toBe(promptTools[0]);
-      expect(wrapper.tools.get('test-server_resource-tool')).toBe(
-        resourceTools[0]
-      );
+      // Should have: 1 regular + 2 prompt tools + 2 resource tools = 5
+      expect(Object.keys(wrapper.tools).length).toBe(5);
+      expect(wrapper.tools['regular-tool']).toBe(regularTools[0]);
+      expect('test-server_list_prompts' in wrapper.tools).toBe(true);
+      expect('test-server_get_prompt' in wrapper.tools).toBe(true);
+      expect('test-server_list_resources' in wrapper.tools).toBe(true);
+      expect('test-server_read_resource' in wrapper.tools).toBe(true);
     });
 
     describe('wrapper methods', () => {
@@ -434,7 +397,7 @@ describe('Client Wrapper Factory Module', () => {
           []
         );
 
-        expect(wrapper.tools.size).toBe(0);
+        expect(Object.keys(wrapper.tools).length).toBe(0);
         expect(wrapper.prompts.size).toBe(0);
         expect(wrapper.resources.size).toBe(0);
       });
@@ -442,9 +405,6 @@ describe('Client Wrapper Factory Module', () => {
       it('should handle capabilities with empty tools arrays', () => {
         const client = createMockClient();
         const capabilities: ServerCapabilities = { prompts: {}, resources: {} };
-
-        mockCreatePromptTools.mockReturnValue([]);
-        mockCreateResourceTools.mockReturnValue([]);
 
         const wrapper = createMCPClientWrapperFromData(
           client,
@@ -455,17 +415,12 @@ describe('Client Wrapper Factory Module', () => {
           []
         );
 
-        expect(wrapper.tools.size).toBe(0);
-        expect(mockCreatePromptTools).toHaveBeenCalledWith(
-          client,
-          'test-server',
-          []
-        );
-        expect(mockCreateResourceTools).toHaveBeenCalledWith(
-          client,
-          'test-server',
-          []
-        );
+        // Should create prompt and resource tools even with empty arrays
+        expect(Object.keys(wrapper.tools).length).toBe(4); // list_prompts, get_prompt, list_resources, read_resource
+        expect('test-server_list_prompts' in wrapper.tools).toBe(true);
+        expect('test-server_get_prompt' in wrapper.tools).toBe(true);
+        expect('test-server_list_resources' in wrapper.tools).toBe(true);
+        expect('test-server_read_resource' in wrapper.tools).toBe(true);
       });
 
       it('should handle server name with special characters in tool keys', () => {
@@ -476,9 +431,6 @@ describe('Client Wrapper Factory Module', () => {
           command: 'test',
         };
         const capabilities: ServerCapabilities = { prompts: {} };
-        const promptTools = [createMockTool('test-tool')];
-
-        mockCreatePromptTools.mockReturnValue(promptTools);
 
         const wrapper = createMCPClientWrapperFromData(
           client,
@@ -489,9 +441,9 @@ describe('Client Wrapper Factory Module', () => {
           []
         );
 
-        expect(
-          wrapper.tools.get('server-with-dashes_and_underscores_test-tool')
-        ).toBe(promptTools[0]);
+        // Should create tools with server name prefix including special characters
+        expect('server-with-dashes_and_underscores_list_prompts' in wrapper.tools).toBe(true);
+        expect('server-with-dashes_and_underscores_get_prompt' in wrapper.tools).toBe(true);
       });
 
       it('should preserve original tool server names', () => {
@@ -510,8 +462,8 @@ describe('Client Wrapper Factory Module', () => {
           []
         );
 
-        expect(wrapper.tools.get('tool1')?.serverName).toBe('original-server');
-        expect(wrapper.tools.get('tool2')?.serverName).toBe('another-server');
+        expect(wrapper.tools['tool1']?.serverName).toBe('original-server');
+        expect(wrapper.tools['tool2']?.serverName).toBe('another-server');
       });
     });
   });

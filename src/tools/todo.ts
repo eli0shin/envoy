@@ -180,41 +180,51 @@ export function getTodoListForTesting(sessionId: string): TodoList | undefined {
  * Creates all todo tools using AI SDK's tool() helper
  */
 export function createTodoTools() {
-  return {
-    todo_write: tool({
-      description:
-        'Use this tool to create and manage a structured task list for your current coding session. This helps you track progress, organize complex tasks, and demonstrate thoroughness to the user.\n\nIMPORTANT: Use proactively when tasks require 3+ steps, when user provides multiple tasks, or after investigation reveals complexity. Update in real-time - mark tasks completed IMMEDIATELY after finishing (do not batch updates). Exactly ONE task should be in_progress at a time.',
-      inputSchema: z.object({
-        todos: z
-          .string()
-          .describe(
-            'The complete todo list in markdown format. Use the following syntax for statuses: - [ ] for pending tasks, - [~] for in-progress tasks, - [x] for completed tasks. Example: "- [ ] Task 1\n- [~] Task 2\n- [x] Task 3"'
-          ),
-      }),
-      execute: async ({ todos }) => {
-        const sessionId = getSessionId();
-        const todoList = getTodoList(sessionId);
-
-        // Parse markdown into todo items
-        todoList.items = parseMarkdownTodos(todos);
-        touchTodoList(sessionId);
-
-        await logTodoOperation(sessionId, 'write', {
-          itemCount: todoList.items.length,
-        });
-
-        return formatTodosAsMarkdown(todoList.items);
-      },
+  const todoWrite = tool({
+    description:
+      'Use this tool to create and manage a structured task list for your current coding session. This helps you track progress, organize complex tasks, and demonstrate thoroughness to the user.\n\nIMPORTANT: Use proactively when tasks require 3+ steps, when user provides multiple tasks, or after investigation reveals complexity. Update in real-time - mark tasks completed IMMEDIATELY after finishing (do not batch updates). Exactly ONE task should be in_progress at a time.',
+    inputSchema: z.object({
+      todos: z
+        .string()
+        .describe(
+          'The complete todo list in markdown format. Use the following syntax for statuses: - [ ] for pending tasks, - [~] for in-progress tasks, - [x] for completed tasks. Example: "- [ ] Task 1\n- [~] Task 2\n- [x] Task 3"'
+        ),
     }),
-    todo_list: tool({
-      description:
-        'List all items in your todo list to review current status: pending (not started), in-progress (actively working on), and completed tasks. Use frequently during multi-step operations to verify what remains and ensure nothing is forgotten.',
-      inputSchema: z.object({}),
-      execute: async () => {
-        const sessionId = getSessionId();
-        const todoList = getTodoList(sessionId);
-        return formatTodosAsMarkdown(todoList.items);
-      },
+    execute: async ({ todos }) => {
+      const sessionId = getSessionId();
+      const todoList = getTodoList(sessionId);
+
+      // Parse markdown into todo items
+      todoList.items = parseMarkdownTodos(todos);
+      touchTodoList(sessionId);
+
+      await logTodoOperation(sessionId, 'write', {
+        itemCount: todoList.items.length,
+      });
+
+      return formatTodosAsMarkdown(todoList.items);
+    },
+  });
+
+  const todoList = tool({
+    description:
+      'List all items in your todo list to review current status: pending (not started), in-progress (actively working on), and completed tasks. Use frequently during multi-step operations to verify what remains and ensure nothing is forgotten.',
+    inputSchema: z.object({}),
+    execute: async () => {
+      const sessionId = getSessionId();
+      const todoList = getTodoList(sessionId);
+      return formatTodosAsMarkdown(todoList.items);
+    },
+  });
+
+  return {
+    todo_write: Object.assign(todoWrite, {
+      serverName: 'built-in',
+      toolName: 'todo_write',
+    }),
+    todo_list: Object.assign(todoList, {
+      serverName: 'built-in',
+      toolName: 'todo_list',
     }),
   };
 }

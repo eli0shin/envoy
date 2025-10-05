@@ -224,7 +224,7 @@ function createFailedWrapper(
   const wrapper: MCPClientWrapper = {
     serverName: config.name,
     serverConfig: config,
-    tools: new Map(),
+    tools: {},
     prompts: new Map(),
     resources: new Map(),
     isConnected: false,

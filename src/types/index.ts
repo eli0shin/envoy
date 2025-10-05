@@ -3,7 +3,7 @@
  * Defines interfaces for MCP server configurations and tool wrappers
  */
 
-import { tool } from 'ai';
+import type { Tool } from 'ai';
 import { z } from 'zod/v3';
 import type { ChildProcess } from 'child_process';
 import type { ModelMessage } from 'ai';
@@ -51,7 +51,7 @@ export type MCPServerConfig = StdioMCPServerConfig | SSEMCPServerConfig;
  * Wrapped tool with logging functionality
  * AI SDK tool with metadata
  */
-export type WrappedTool = ReturnType<typeof tool<unknown, unknown>> & {
+export type WrappedTool = Tool & {
   serverName: string;
   toolName: string;
 };

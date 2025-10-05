@@ -373,7 +373,7 @@ export function createMockMCPClientWrapper(
       command: 'test-command',
       args: [],
     } as MCPServerConfig,
-    tools: new Map<string, WrappedTool>(),
+    tools: {} as Record<string, WrappedTool>,
     prompts: new Map<string, MCPPrompt>(),
     resources: new Map<string, MCPResource>(),
     isConnected: true,
