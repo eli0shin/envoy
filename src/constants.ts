@@ -351,28 +351,7 @@ export function createMCPServersWithConfig(
     servers.push(...fileServers);
   }
 
-  // Add agent spawning server if not disabled
-  if (process.env.AGENT_SPAWNING_DISABLED !== 'true') {
-    const agentSpawnerConfig: MCPServerConfig = {
-      name: 'agent-spawner',
-      type: 'stdio',
-      command: 'npx',
-      args: ['tsx', './src/agentSpawnerServer.ts'],
-      env: {
-        // Pass current environment variables
-        ...(Object.fromEntries(
-          Object.entries(process.env).filter(
-            ([_, value]) => value !== undefined
-          )
-        ) as Record<string, string>),
-        // Always pass runtime configuration as JSON
-        AGENT_RUNTIME_CONFIG: JSON.stringify(runtimeConfig),
-      },
-      description: 'Agent spawning server',
-    };
-
-    servers.unshift(agentSpawnerConfig);
-  }
+  // spawn_agent is now a built-in tool (see src/tools/spawnAgent.ts)
 
   return servers;
 }

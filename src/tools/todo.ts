@@ -218,13 +218,7 @@ export function createTodoTools() {
   });
 
   return {
-    todo_write: Object.assign(todoWrite, {
-      serverName: 'built-in',
-      toolName: 'todo_write',
-    }),
-    todo_list: Object.assign(todoList, {
-      serverName: 'built-in',
-      toolName: 'todo_list',
-    }),
+    todo_write: todoWrite,
+    todo_list: todoList,
   };
 }

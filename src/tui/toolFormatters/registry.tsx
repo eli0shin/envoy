@@ -10,6 +10,7 @@ import { WebSearchToolMessage } from './components/WebSearchToolMessage.js';
 import { CreateDirectoryToolMessage } from './components/CreateDirectoryToolMessage.js';
 import { MoveFileToolMessage } from './components/MoveFileToolMessage.js';
 import { TodoToolMessage } from './components/TodoToolMessage.js';
+import { SpawnAgentToolMessage } from './components/SpawnAgentToolMessage.js';
 import type { ToolRegistry, ToolConfig } from './types.js';
 
 // Helper to convert snake_case to Title Case
@@ -74,6 +75,11 @@ export const toolRegistry: ToolRegistry = {
   todo_list: {
     displayName: 'Todo List',
     component: TodoToolMessage,
+  },
+  // Spawn agent tool
+  spawn_agent: {
+    displayName: 'Spawn Agent',
+    component: SpawnAgentToolMessage,
   },
 };
 

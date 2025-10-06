@@ -3,7 +3,7 @@
  * Handles expensive setup operations that can be cached for reuse
  */
 
-import { tool } from 'ai';
+import { tool, type Tool } from 'ai';
 import { LanguageModelV2 } from '@ai-sdk/provider';
 import { createOpenAI } from '@ai-sdk/openai';
 import { createAnthropic } from '@ai-sdk/anthropic';
@@ -25,13 +25,14 @@ import {
 import type { AuthenticationInfo } from './types/index.js';
 import { ConversationPersistence } from './persistence/ConversationPersistence.js';
 import { createTodoTools } from './tools/todo.js';
+import { createSpawnAgentTool } from './tools/spawnAgent.js';
 
 /**
  * Agent session containing all pre-initialized setup state
  */
 export type AgentSession = {
   model: LanguageModelV2;
-  tools: Record<string, WrappedTool>;
+  tools: Record<string, Tool>;
   systemPrompt: string | string[];
   mcpClients: MCPClientWrapper[];
   authInfo: AuthenticationInfo;
@@ -298,7 +299,8 @@ export async function initializeAgentSession(
 
   // Merge MCP tools and built-in tools
   const todoTools = createTodoTools();
-  const aiSDKTools = { ...tools, ...todoTools };
+  const spawnAgentTool = createSpawnAgentTool(config);
+  const aiSDKTools = { ...tools, ...todoTools, ...spawnAgentTool };
 
   // Initialize model provider
   const { model, authInfo } = await createModelProvider(config);

@@ -3,12 +3,11 @@
  */
 
 import { describe, it, expect, beforeEach } from 'vitest';
-import type { ToolCallOptions } from 'ai';
+import type { ToolCallOptions, Tool } from 'ai';
 import { createTodoTools, clearTodoStorage } from './todo.js';
-import type { WrappedTool } from '../types/index.js';
 
 describe('todo tools', () => {
-  let tools: Record<string, WrappedTool>;
+  let tools: Record<string, Tool>;
 
   beforeEach(() => {
     // Clear storage and create fresh tools
