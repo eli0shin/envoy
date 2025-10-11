@@ -1,4 +1,4 @@
-import { commandRegistry } from './registry.js';
+import { registerCommand } from './registry.js';
 
 // Store callbacks that can be updated
 let clearCallback: (() => void) | null = null;
@@ -6,7 +6,7 @@ let exitCallback: (() => void) | null = null;
 let helpCallback: (() => void) | null = null;
 
 // Register commands immediately when module loads
-commandRegistry.register({
+registerCommand({
   name: 'clear',
   description: 'Clear the conversation history',
   handler: () => {
@@ -17,7 +17,7 @@ commandRegistry.register({
   },
 });
 
-commandRegistry.register({
+registerCommand({
   name: 'help',
   description: 'Show available commands',
   handler: () => {
@@ -26,7 +26,7 @@ commandRegistry.register({
   },
 });
 
-commandRegistry.register({
+registerCommand({
   name: 'exit',
   description: 'Exit the application',
   handler: () => {

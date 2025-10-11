@@ -11,11 +11,13 @@ type StatusBarProps = {
   queuedMessages?: (ModelMessage & { id: string })[];
 };
 
+const EMPTY_QUEUED_MESSAGES: (ModelMessage & { id: string })[] = [];
+
 export function StatusBar({
   status,
   session,
   exitConfirmation,
-  queuedMessages = [],
+  queuedMessages = EMPTY_QUEUED_MESSAGES,
 }: StatusBarProps) {
   const queuedCount = queuedMessages.length;
   let statusText = status === 'PROCESSING' ? 'Working...' : 'Ready';
@@ -44,13 +46,6 @@ export function StatusBar({
 
   const sessionInfo = `${provider} | ${authMethod} | ${modelId}`;
 
-  const StatusText = () => {
-    if (exitConfirmation) {
-      return <span fg={colors.warning}> Press Ctrl+C again to exit</span>;
-    }
-    return <span fg={statusColor}> {statusText}</span>;
-  };
-
   return (
     <box flexDirection="column" flexShrink={0} minHeight={2}>
       <box
@@ -60,7 +55,9 @@ export function StatusBar({
         flexShrink={0}
       >
         <text>
-          <StatusText />
+          {exitConfirmation ?
+            <span fg={colors.warning}> Press Ctrl+C again to exit</span>
+          : <span fg={statusColor}> {statusText}</span>}
         </text>
         <text><span fg={colors.muted}>{sessionInfo} </span></text>
       </box>

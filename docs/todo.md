@@ -11,7 +11,7 @@
 [ ] - support including resources with @ in OpenTUI ui
 [ ] - support including files with @ in OpenTUI ui
 [ ] - Simplify configuration. Few CLI flags, fewer env variables. full config only in config file
-[ ] - ability to interrupt the agent loop
+[x] - ability to interrupt the agent loop
 [ ] - basic tool permissions prompts
 [ ] - ability to set allowed disallowed tools in config
 [ ] - ability to go back in conversation history, will require generating a new session id and writing all of the messages to the new session file

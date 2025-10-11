@@ -1,4 +1,10 @@
-import { createContext, useContext, type ReactNode } from 'react';
+import {
+  createContext,
+  use,
+  useCallback,
+  useMemo,
+  type ReactNode,
+} from 'react';
 import { useKeys, parseKeys } from '../keys/index.js';
 
 type ModalType = 'help' | null;
@@ -31,29 +37,31 @@ export function ModalProvider({
     { scope: 'modal', enabled: () => modalState !== null }
   );
 
-  const showModal = (type: ModalType) => {
-    setModalState(type);
-  };
-
-  const hideModal = () => {
-    setModalState(null);
-  };
-
-  const contextValue: ModalContextType = {
-    currentModal: modalState,
-    showModal,
-    hideModal,
-  };
-
-  return (
-    <ModalContext.Provider value={contextValue}>
-      {children}
-    </ModalContext.Provider>
+  const showModal = useCallback(
+    (type: ModalType) => {
+      setModalState(type);
+    },
+    [setModalState]
   );
+
+  const hideModal = useCallback(() => {
+    setModalState(null);
+  }, [setModalState]);
+
+  const contextValue: ModalContextType = useMemo(
+    () => ({
+      currentModal: modalState,
+      showModal,
+      hideModal,
+    }),
+    [modalState, showModal, hideModal]
+  );
+
+  return <ModalContext value={contextValue}>{children}</ModalContext>;
 }
 
 export function useModalState(): ModalContextType {
-  const context = useContext(ModalContext);
+  const context = use(ModalContext);
   if (!context) {
     throw new Error('useModalState must be used within a ModalProvider');
   }

@@ -13,7 +13,7 @@ import { FileAutocomplete } from './FileAutocomplete.js';
 import { QueuedMessagesList } from './QueuedMessagesList.js';
 import { colors } from '../theme.js';
 import { runAgent } from '../../agent/index.js';
-import { commandRegistry } from '../commands/registry.js';
+import { formatCommandMessage } from '../commands/registry.js';
 import { setCommandCallbacks } from '../commands/builtins.js';
 import '../commands/builtins.js'; // Import to ensure commands are registered
 import { KeyDispatcher } from '../keys/dispatcher.js';
@@ -51,8 +51,6 @@ export function TUIApp({ config, session }: TUIAppProps) {
   >([]);
   const [status, setStatus] = useState<Status>('READY');
   const [modalState, setModalState] = useState<ModalType>(null);
-  const [historyIndex, setHistoryIndex] = useState(-1);
-  const [originalInput, setOriginalInput] = useState('');
   const [exitConfirmation, setExitConfirmation] =
     useState<ExitConfirmationState | null>(null);
   const [abortController, setAbortController] =
@@ -70,27 +68,26 @@ export function TUIApp({ config, session }: TUIAppProps) {
   const statusBarHeight = 2;
   const bottomOffset = inputAreaHeight + statusBarHeight;
 
-  const getUserMessageHistory = useCallback(
-    (messages: (ModelMessage & { id: string })[]): string[] => {
-      return messages
-        .filter((message) => message.role === 'user')
-        .map((message) => {
-          let content =
-            typeof message.content === 'string' ? message.content : '';
+  const getUserMessageHistory = (
+    messages: (ModelMessage & { id: string })[]
+  ): string[] => {
+    return messages
+      .filter((message) => message.role === 'user')
+      .map((message) => {
+        let content =
+          typeof message.content === 'string' ? message.content : '';
 
-          // Apply same parsing as Message.tsx
-          content = content.replace(
-            /<user-command>(.*?)<\/user-command>/gs,
-            '$1'
-          );
-          content = content.replace(/<system-hint>.*?<\/system-hint>/gs, '');
+        // Apply same parsing as Message.tsx
+        content = content.replace(
+          /<user-command>(.*?)<\/user-command>/gs,
+          '$1'
+        );
+        content = content.replace(/<system-hint>.*?<\/system-hint>/gs, '');
 
-          return content.trim();
-        })
-        .filter((content) => content.length > 0);
-    },
-    []
-  );
+        return content.trim();
+      })
+      .filter((content) => content.length > 0);
+  };
 
   const handleExit = useCallback(() => {
     // Clean up MCP server processes before exiting
@@ -191,7 +188,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
   const handleCommandExecute = useCallback(
     (commandInput: string) => {
       // Add command invocation to message history
-      const commandMessage = commandRegistry.formatCommandMessage(commandInput);
+      const commandMessage = formatCommandMessage(commandInput);
       const commandMessageWithId: ModelMessage & { id: string } = {
         ...commandMessage,
         id: `command-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
@@ -263,6 +260,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
         session,
         true,
         (message) => {
+          // eslint-disable-next-line @eslint-react/hooks-extra/no-direct-set-state-in-use-effect -- Processing agent messages in stream callback from queue processing
           setMessages((prev) => {
             return [
               ...prev,
@@ -307,10 +305,6 @@ export function TUIApp({ config, session }: TUIAppProps) {
 
   const handleSendMessage = useCallback(
     async (content: string) => {
-      // Reset history navigation state
-      setHistoryIndex(-1);
-      setOriginalInput('');
-
       // Add user message with our own generated id
       const userMessage: ModelMessage & { id: string } = {
         role: 'user',
@@ -428,10 +422,6 @@ export function TUIApp({ config, session }: TUIAppProps) {
               onSubmit={handleSendMessage}
               onCommandExecute={handleCommandExecute}
               userHistory={getUserMessageHistory(messages)}
-              historyIndex={historyIndex}
-              setHistoryIndex={setHistoryIndex}
-              originalInput={originalInput}
-              setOriginalInput={setOriginalInput}
               queuedMessages={queuedMessages}
               onQueuePop={handleQueuePop}
               onAutocompleteChange={setAutocompleteState}

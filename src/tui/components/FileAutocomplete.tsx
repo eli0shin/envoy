@@ -1,9 +1,18 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTerminalDimensions } from '@opentui/react';
-import { useKeys, parseKeys } from '../keys/index.js';
 import { colors } from '../theme.js';
 import { parseFilePattern } from '../utils/inputParser.js';
 import { fuzzyGitSearch, browseDirectory } from '../utils/fileSearch.js';
+import { useAutocomplete } from '../hooks/useAutocomplete.js';
+
+async function loadFileSuggestions(pattern: string) {
+  const mode = pattern.includes('/') ? 'browse' : 'fuzzy';
+  const results =
+    mode === 'fuzzy' ?
+      await fuzzyGitSearch(pattern)
+    : await browseDirectory(pattern);
+  return results;
+}
 
 type FileAutocompleteProps = {
   inputValue: string;
@@ -18,122 +27,34 @@ export function FileAutocomplete({
   onSelect,
   bottomOffset,
 }: FileAutocompleteProps) {
-  const [suggestions, setSuggestions] = useState<string[]>([]);
-  const [selectedIndex, setSelectedIndex] = useState(0);
   const { height: terminalHeight } = useTerminalDimensions();
 
-  const filePattern = parseFilePattern(inputValue, cursorPosition);
-  const shouldShowAutocomplete = filePattern !== null && suggestions.length > 0;
+  // Parse file pattern from input
+  const filePattern = useMemo(
+    () => parseFilePattern(inputValue, cursorPosition),
+    [inputValue, cursorPosition]
+  );
 
-  // Update suggestions when file pattern changes
-  useEffect(() => {
-    if (!filePattern) {
-      setSuggestions([]);
-      return;
-    }
-
-    // Reset selection immediately when pattern changes
-    setSelectedIndex(0);
-
-    const loadSuggestions = async () => {
-      try {
-        const mode = filePattern.pattern.includes('/') ? 'browse' : 'fuzzy';
-        const results =
-          mode === 'fuzzy' ?
-            await fuzzyGitSearch(filePattern.pattern)
-          : await browseDirectory(filePattern.pattern);
-        setSuggestions(results);
-      } catch (error) {
-        setSuggestions([]);
-      }
-    };
-
-    loadSuggestions();
-    // Only re-run when the actual pattern string changes, not the object reference
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [filePattern?.pattern]);
-
-  // Handle tab completion
-  const handleTabComplete = useCallback(() => {
-    if (shouldShowAutocomplete && suggestions.length > 0 && filePattern) {
-      const selected = suggestions[selectedIndex];
+  // Handle selection callback
+  const handleSelect = useCallback(
+    (selected: string) => {
+      if (!filePattern) return;
       // Add space after completion if path doesn't end with / (i.e., it's a file)
       const completion =
         selected.endsWith('/') ? `@${selected}` : `@${selected} `;
       onSelect(completion, filePattern.startIndex, filePattern.endIndex);
-      return true;
-    }
-    return false;
-  }, [
-    shouldShowAutocomplete,
-    suggestions,
-    selectedIndex,
-    filePattern,
-    onSelect,
-  ]);
-
-  // Handle arrow key navigation
-  const handleArrowKey = useCallback(
-    (direction: 'up' | 'down') => {
-      if (!shouldShowAutocomplete || suggestions.length === 0) {
-        return false;
-      }
-
-      if (direction === 'up') {
-        setSelectedIndex((prev) =>
-          prev > 0 ? prev - 1 : suggestions.length - 1
-        );
-      } else {
-        setSelectedIndex((prev) =>
-          prev < suggestions.length - 1 ? prev + 1 : 0
-        );
-      }
-      return true;
     },
-    [shouldShowAutocomplete, suggestions]
+    [filePattern, onSelect]
   );
 
-  // Keybindings for autocomplete
-  useKeys(
-    (key) => {
-      if (!shouldShowAutocomplete) return false;
-      return (
-        parseKeys(
-          key,
-          'command.accept',
-          () => {
-            handleTabComplete();
-          },
-          'autocomplete'
-        ) ||
-        parseKeys(
-          key,
-          'command.prev',
-          () => {
-            handleArrowKey('up');
-          },
-          'autocomplete'
-        ) ||
-        parseKeys(
-          key,
-          'command.next',
-          () => {
-            handleArrowKey('down');
-          },
-          'autocomplete'
-        ) ||
-        parseKeys(
-          key,
-          'command.close',
-          () => {
-            setSuggestions([]);
-          },
-          'autocomplete'
-        )
-      );
-    },
-    { scope: 'autocomplete', enabled: () => shouldShowAutocomplete }
-  );
+  // Use autocomplete hook
+  const { suggestions, selectedIndex, shouldShowAutocomplete } =
+    useAutocomplete({
+      trigger: filePattern?.pattern ?? null,
+      loadSuggestions: loadFileSuggestions,
+      onSelect: handleSelect,
+      enabled: true,
+    });
 
   if (!shouldShowAutocomplete) {
     return null;

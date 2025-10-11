@@ -3,9 +3,10 @@ import { useRenderer } from '@opentui/react';
 import { MultiLineInput } from './MultiLineInput';
 import { useModalState } from './ModalProvider.js';
 import { colors } from '../theme.js';
-import { commandRegistry } from '../commands/registry.js';
+import { executeCommand } from '../commands/registry.js';
 import { parseFilePattern } from '../utils/inputParser.js';
 import type { ModelMessage } from 'ai';
+import { useMessageHistory } from '../hooks/useMessageHistory.js';
 
 export type AutocompleteState = {
   showCommand: boolean;
@@ -22,10 +23,6 @@ type InputAreaProps = {
   onSubmit: (message: string) => void;
   onCommandExecute: (commandInput: string, result?: string) => void;
   userHistory: string[];
-  historyIndex: number;
-  setHistoryIndex: (index: number) => void;
-  originalInput: string;
-  setOriginalInput: (input: string) => void;
   queuedMessages: (ModelMessage & { id: string })[];
   onQueuePop: () => string | null;
   onAutocompleteChange: (state: AutocompleteState) => void;
@@ -37,10 +34,6 @@ export function InputArea({
   onSubmit,
   onCommandExecute,
   userHistory,
-  historyIndex,
-  setHistoryIndex,
-  originalInput,
-  setOriginalInput,
   queuedMessages,
   onQueuePop,
   onAutocompleteChange,
@@ -49,6 +42,14 @@ export function InputArea({
   const { currentModal } = useModalState();
   const disabled = currentModal !== null;
   const renderer = useRenderer();
+
+  // Use message history hook
+  const history = useMessageHistory({
+    currentValue: value,
+    onChange,
+    onQueuePop,
+    queuedMessagesCount: queuedMessages.length,
+  });
 
   // Use refs to avoid recreating listener on every cursor/value change
   const cursorPositionRef = useRef(cursorPosition);
@@ -141,53 +142,9 @@ export function InputArea({
 
   const handleInputArrowKey = useCallback(
     (direction: 'up' | 'down', shouldHandleHistory: boolean): boolean => {
-      if (direction === 'up' && (historyIndex === -1 ? shouldHandleHistory : true)) {
-        // Check for queued messages first when on first line
-        if (historyIndex === -1 && shouldHandleHistory && queuedMessages.length > 0) {
-          const queuedContent = onQueuePop();
-          if (queuedContent) {
-            onChange(queuedContent);
-            return true;
-          }
-        }
-
-        // Save original input when first entering history mode
-        if (historyIndex === -1) {
-          setOriginalInput(value);
-        }
-
-        const newIndex = historyIndex + 1;
-        if (newIndex < userHistory.length) {
-          const messageToLoad = userHistory[userHistory.length - 1 - newIndex];
-          onChange(messageToLoad);
-          setHistoryIndex(newIndex);
-          return true;
-        }
-      } else if (direction === 'down' && historyIndex >= 0 && shouldHandleHistory) {
-        const newIndex = historyIndex - 1;
-        setHistoryIndex(newIndex);
-
-        if (newIndex >= 0) {
-          onChange(userHistory[userHistory.length - 1 - newIndex]);
-        } else {
-          onChange(originalInput);
-        }
-        return true;
-      }
-
-      return false;
+      return history.navigate(direction, userHistory, shouldHandleHistory);
     },
-    [
-      userHistory,
-      historyIndex,
-      setHistoryIndex,
-      value,
-      originalInput,
-      setOriginalInput,
-      queuedMessages.length,
-      onQueuePop,
-      onChange,
-    ]
+    [history, userHistory]
   );
 
   const handleInputChange = useCallback((newValue: string) => {
@@ -195,29 +152,33 @@ export function InputArea({
     // Do NOT reset history on input change - only on submit
   }, [onChange]);
 
-  const handleSubmit = (submittedValue: string) => {
-    if (disabled) return;
+  const handleSubmit = useCallback(
+    (submittedValue: string) => {
+      if (disabled) return;
 
-    const trimmed = submittedValue.trim();
+      const trimmed = submittedValue.trim();
 
-    // Check if it's a command
-    const { isCommand, result } = commandRegistry.execute(trimmed);
+      // Check if it's a command
+      const { isCommand, result } = executeCommand(trimmed);
 
-    if (isCommand) {
-      // Execute command and notify parent
-      onCommandExecute(trimmed, result);
+      if (isCommand) {
+        // Execute command and notify parent
+        onCommandExecute(trimmed, result);
 
-      // If command returns a string, also send it as a user message
-      if (result) {
-        onSubmit(result);
+        // If command returns a string, also send it as a user message
+        if (result) {
+          onSubmit(result);
+        }
+      } else {
+        // Regular message or invalid command - send to agent
+        onSubmit(trimmed);
       }
-    } else {
-      // Regular message or invalid command - send to agent
-      onSubmit(trimmed);
-    }
 
-    onChange('');
-  };
+      onChange('');
+      history.reset(); // Reset history navigation state
+    },
+    [disabled, onCommandExecute, onSubmit, onChange, history]
+  );
 
   return (
     <box flexDirection="column" flexShrink={0} minHeight={3}>

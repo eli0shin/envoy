@@ -49,24 +49,82 @@ function getIndentForDepth(depth: number): string {
   return '  '.repeat(depth);
 }
 
-function tokenToReactElements(token: Token, listDepth: number = 0, key?: string, compact: boolean = false): ReactNode {
-  const baseKey = key || `token-${Math.random()}`;
+type TokenToReactElementsProps = {
+  token: Token;
+  listDepth?: number;
+  tokenKey: string;
+  compact?: boolean;
+  isLast?: boolean;
+  key?: string;
+};
+
+// Generate a stable key from token content
+function getTokenKey(token: Token, fallback: string): string {
+  const raw =
+    ('raw' in token && token.raw) ||
+    ('text' in token && (token as { text?: string }).text) ||
+    '';
+  if (raw) {
+    // Use first 50 chars of content + fallback for uniqueness
+    return `${fallback}-${raw.slice(0, 50).replace(/\s+/g, '-')}`;
+  }
+  return fallback;
+}
+
+function TokenToReactElements({
+  token,
+  listDepth = 0,
+  tokenKey,
+  compact = false,
+  isLast = false,
+}: TokenToReactElementsProps): ReactNode {
+  const key = tokenKey;
 
   switch (token.type) {
     case 'text': {
       const textToken = token as Token & { tokens?: Token[] };
       if (textToken.tokens && textToken.tokens.length > 0) {
-        return <span key={baseKey}>{textToken.tokens.map((t, i) => tokenToReactElements(t, listDepth, `${baseKey}-${i}`, compact))}</span>;
+        return (
+          <span key={key}>
+            {textToken.tokens.map((t) => {
+              const tKey = getTokenKey(t, key);
+              return (
+                <TokenToReactElements
+                  key={tKey}
+                  token={t}
+                  tokenKey={tKey}
+                  listDepth={listDepth}
+                  compact={compact}
+                />
+              );
+            })}
+          </span>
+        );
       }
-      return <span key={baseKey} fg={colors.text}>{token.text}</span>;
+      return (
+        <span key={key} fg={colors.text}>
+          {token.text}
+        </span>
+      );
     }
 
     case 'strong': {
       const strongToken = token as Tokens.Strong;
       return (
-        <b key={baseKey}>
+        <b key={key}>
           <span fg={colors.text}>
-            {strongToken.tokens.map((t, i) => tokenToReactElements(t, listDepth, `${baseKey}-${i}`, compact))}
+            {strongToken.tokens.map((t) => {
+              const tKey = getTokenKey(t, key);
+              return (
+                <TokenToReactElements
+                  key={tKey}
+                  token={t}
+                  tokenKey={tKey}
+                  listDepth={listDepth}
+                  compact={compact}
+                />
+              );
+            })}
           </span>
         </b>
       );
@@ -75,8 +133,19 @@ function tokenToReactElements(token: Token, listDepth: number = 0, key?: string,
     case 'em': {
       const emToken = token as Tokens.Em;
       return (
-        <i key={baseKey}>
-          {emToken.tokens.map((t, i) => tokenToReactElements(t, listDepth, `${baseKey}-${i}`, compact))}
+        <i key={key}>
+          {emToken.tokens.map((t) => {
+            const tKey = getTokenKey(t, key);
+            return (
+              <TokenToReactElements
+                key={tKey}
+                token={t}
+                tokenKey={tKey}
+                listDepth={listDepth}
+                compact={compact}
+              />
+            );
+          })}
         </i>
       );
     }
@@ -84,8 +153,19 @@ function tokenToReactElements(token: Token, listDepth: number = 0, key?: string,
     case 'del': {
       const delToken = token as Tokens.Del;
       return (
-        <span key={baseKey}>
-          {delToken.tokens.map((t, i) => tokenToReactElements(t, listDepth, `${baseKey}-${i}`, compact))}
+        <span key={key}>
+          {delToken.tokens.map((t) => {
+            const tKey = getTokenKey(t, key);
+            return (
+              <TokenToReactElements
+                key={tKey}
+                token={t}
+                tokenKey={tKey}
+                listDepth={listDepth}
+                compact={compact}
+              />
+            );
+          })}
         </span>
       );
     }
@@ -93,7 +173,7 @@ function tokenToReactElements(token: Token, listDepth: number = 0, key?: string,
     case 'codespan': {
       const codespanToken = token as Tokens.Codespan;
       return (
-        <span key={baseKey} bg={colors.codeBackground} fg={colors.code}>
+        <span key={key} bg={colors.codeBackground} fg={colors.code}>
           {` ${codespanToken.text} `}
         </span>
       );
@@ -102,11 +182,11 @@ function tokenToReactElements(token: Token, listDepth: number = 0, key?: string,
     case 'code': {
       const codeToken = token as Tokens.Code;
       return (
-        <span key={baseKey}>
+        <span key={key}>
           <span bg={colors.codeBackground} fg={colors.code}>
-            {`\n${codeToken.text}\n`}
+            {codeToken.text}
           </span>
-          <span fg={colors.text}>{'\n'}</span>
+          {!isLast && <span fg={colors.text}>{'\n'}</span>}
         </span>
       );
     }
@@ -119,14 +199,22 @@ function tokenToReactElements(token: Token, listDepth: number = 0, key?: string,
         : level === 2 ? colors.header2
         : colors.header3;
 
-      const content = headingToken.tokens.map((t, i) => tokenToReactElements(t, listDepth, `${baseKey}-${i}`, compact));
-
       return (
-        <span key={baseKey}>
+        <span key={key}>
           <b>
-            <span fg={headerColor}>{content}</span>
+            <span fg={headerColor}>
+              {headingToken.tokens.map((t) => (
+                <TokenToReactElements
+                  key={getTokenKey(t, key)}
+                  token={t}
+                  tokenKey={getTokenKey(t, key)}
+                  listDepth={listDepth}
+                  compact={compact}
+                />
+              ))}
+            </span>
           </b>
-          <span fg={colors.text}>{'\n'}</span>
+          {!isLast && <span fg={colors.text}>{'\n'}</span>}
         </span>
       );
     }
@@ -135,12 +223,6 @@ function tokenToReactElements(token: Token, listDepth: number = 0, key?: string,
       const listToken = token as Tokens.List;
       const elements: ReactNode[] = [];
 
-      // For top-level lists, start on a new line (unless compact mode)
-      if (listDepth === 0 && !compact) {
-        elements.push(<span key={`${baseKey}-nl`} fg={colors.text}>{'\n'}</span>);
-      }
-
-      /* eslint-disable react/no-array-index-key -- List item position is semantically important */
       listToken.items.forEach((item, itemIndex) => {
         const itemElements: ReactNode[] = [];
         const nestedElements: ReactNode[] = [];
@@ -149,56 +231,114 @@ function tokenToReactElements(token: Token, listDepth: number = 0, key?: string,
         const rawItem = (item as { raw?: string }).raw || '';
         const isInProgress = rawItem.includes('[⟳]');
 
-        item.tokens.forEach((itemToken, tokenIndex) => {
+        item.tokens.forEach((itemToken) => {
           if (itemToken.type === 'paragraph') {
             const paraToken = itemToken as Tokens.Paragraph;
             itemElements.push(
-              ...paraToken.tokens.map((t, i) => {
-                // Filter out [⟳] marker from text tokens
-                if (isInProgress && t.type === 'text') {
-                  const textToken = t as Tokens.Text;
-                  const cleanedText = textToken.text.replace(/\[⟳\]\s*/, '');
-                  if (cleanedText) {
-                    return tokenToReactElements(
-                      { ...textToken, text: cleanedText, raw: cleanedText },
-                      listDepth,
-                      `${baseKey}-item${itemIndex}-${tokenIndex}-${i}`,
-                      compact
-                    );
+              ...paraToken.tokens
+                .map((t) => {
+                  const tKey = getTokenKey(t, key);
+                  // Filter out [⟳] marker from text tokens
+                  if (isInProgress && t.type === 'text') {
+                    const textToken = t as Tokens.Text;
+                    const cleanedText = textToken.text.replace(/\[⟳\]\s*/, '');
+                    if (cleanedText) {
+                      const cleanedToken = {
+                        ...textToken,
+                        text: cleanedText,
+                        raw: cleanedText,
+                      };
+                      const cleanedKey = getTokenKey(cleanedToken, key);
+                      return (
+                        <TokenToReactElements
+                          key={cleanedKey}
+                          token={cleanedToken}
+                          tokenKey={cleanedKey}
+                          listDepth={listDepth}
+                          compact={compact}
+                        />
+                      );
+                    }
+                    return null;
                   }
-                  return null;
-                }
-                return tokenToReactElements(t, listDepth, `${baseKey}-item${itemIndex}-${tokenIndex}-${i}`, compact);
-              }).filter(Boolean)
+                  return (
+                    <TokenToReactElements
+                      key={tKey}
+                      token={t}
+                      tokenKey={tKey}
+                      listDepth={listDepth}
+                      compact={compact}
+                    />
+                  );
+                })
+                .filter(Boolean)
             );
           } else if (itemToken.type === 'list') {
+            const nestedKey = getTokenKey(itemToken, key);
             nestedElements.push(
-              tokenToReactElements(itemToken, listDepth + 1, `${baseKey}-item${itemIndex}-nested${tokenIndex}`, compact)
+              <TokenToReactElements
+                key={nestedKey}
+                token={itemToken}
+                tokenKey={nestedKey}
+                listDepth={listDepth + 1}
+                compact={compact}
+              />
             );
-          } else if (itemToken.type === 'text' && 'tokens' in itemToken && itemToken.tokens) {
+          } else if (
+            itemToken.type === 'text' &&
+            'tokens' in itemToken &&
+            itemToken.tokens
+          ) {
             const textToken = itemToken as Token & { tokens?: Token[] };
             itemElements.push(
-              ...(textToken.tokens || []).map((t, i) => {
-                // Filter out [⟳] marker from text tokens
-                if (isInProgress && t.type === 'text') {
-                  const textToken = t as Tokens.Text;
-                  const cleanedText = textToken.text.replace(/\[⟳\]\s*/, '');
-                  if (cleanedText) {
-                    return tokenToReactElements(
-                      { ...textToken, text: cleanedText, raw: cleanedText },
-                      listDepth,
-                      `${baseKey}-item${itemIndex}-${tokenIndex}-${i}`,
-                      compact
-                    );
+              ...(textToken.tokens || [])
+                .map((t) => {
+                  const tKey = getTokenKey(t, key);
+                  // Filter out [⟳] marker from text tokens
+                  if (isInProgress && t.type === 'text') {
+                    const textToken = t as Tokens.Text;
+                    const cleanedText = textToken.text.replace(/\[⟳\]\s*/, '');
+                    if (cleanedText) {
+                      const cleanedToken = {
+                        ...textToken,
+                        text: cleanedText,
+                        raw: cleanedText,
+                      };
+                      const cleanedKey = getTokenKey(cleanedToken, key);
+                      return (
+                        <TokenToReactElements
+                          key={cleanedKey}
+                          token={cleanedToken}
+                          tokenKey={cleanedKey}
+                          listDepth={listDepth}
+                          compact={compact}
+                        />
+                      );
+                    }
+                    return null;
                   }
-                  return null;
-                }
-                return tokenToReactElements(t, listDepth, `${baseKey}-item${itemIndex}-${tokenIndex}-${i}`, compact);
-              }).filter(Boolean)
+                  return (
+                    <TokenToReactElements
+                      key={tKey}
+                      token={t}
+                      tokenKey={tKey}
+                      listDepth={listDepth}
+                      compact={compact}
+                    />
+                  );
+                })
+                .filter(Boolean)
             );
           } else {
+            const itemKey = getTokenKey(itemToken, key);
             itemElements.push(
-              tokenToReactElements(itemToken, listDepth, `${baseKey}-item${itemIndex}-${tokenIndex}`, compact)
+              <TokenToReactElements
+                key={itemKey}
+                token={itemToken}
+                tokenKey={itemKey}
+                listDepth={listDepth}
+                compact={compact}
+              />
             );
           }
         });
@@ -214,47 +354,68 @@ function tokenToReactElements(token: Token, listDepth: number = 0, key?: string,
           bullet = getBulletForDepth(listDepth, listToken.ordered, itemIndex);
         }
 
-        // Add newline before each item except the first one at depth 0
-        if (itemIndex > 0 || listDepth > 0) {
-          elements.push(<span key={`${baseKey}-item${itemIndex}-nl`} fg={colors.text}>{'\n'}</span>);
-        }
-
         elements.push(
-          <span key={`${baseKey}-item${itemIndex}`}>
+          // eslint-disable-next-line react/no-array-index-key, @eslint-react/no-array-index-key -- itemIndex is stable and semantically important for list items
+          <span key={`${key}-item${itemIndex}`}>
             <span fg={colors.text}>{indent}</span>
             <span fg={colors.list}>{bullet}</span>
             {itemElements}
+            {nestedElements.length > 0 && (
+              <span fg={colors.text}>{'\n'}</span>
+            )}
             {nestedElements}
           </span>
         );
-      });
-      /* eslint-enable react/no-array-index-key */
 
-      // Add blank line after top-level lists
-      if (listDepth === 0 && !compact) {
-        elements.push(<span key={`${baseKey}-trailing-nl`} fg={colors.text}>{'\n'}</span>);
+        // Add newline after each item (unless it has nested elements, which add their own newlines)
+        if (nestedElements.length === 0) {
+          elements.push(
+            // eslint-disable-next-line react/no-array-index-key, @eslint-react/no-array-index-key -- itemIndex is stable and semantically important for list items
+            <span key={`${key}-item${itemIndex}-nl`} fg={colors.text}>
+              {'\n'}
+            </span>
+          );
+        }
+      });
+
+      // Remove the last newline if this is the last element in the markdown
+      if (isLast && elements.length > 0) {
+        elements.pop();
       }
 
-      return <span key={baseKey}>{elements}</span>;
+      return <span key={key}>{elements}</span>;
     }
 
     case 'link': {
       const linkToken = token as Tokens.Link;
-      const linkContent = linkToken.tokens.map((t, i) => tokenToReactElements(t, listDepth, `${baseKey}-${i}`, compact));
+      const linkContent = linkToken.tokens.map((t) => {
+        const tKey = getTokenKey(t, key);
+        return (
+          <TokenToReactElements
+            key={tKey}
+            token={t}
+            tokenKey={tKey}
+            listDepth={listDepth}
+            compact={compact}
+          />
+        );
+      });
 
       // In terminal, show both link text and URL
-      const textContent = linkToken.tokens.map(t => t.type === 'text' ? (t as Tokens.Text).text : '').join('');
+      const textContent = linkToken.tokens
+        .map((t) => (t.type === 'text' ? (t as Tokens.Text).text : ''))
+        .join('');
 
       if (textContent === linkToken.href) {
         return (
-          <u key={baseKey}>
+          <u key={key}>
             <span fg={colors.link}>{linkToken.href}</span>
           </u>
         );
       }
 
       return (
-        <span key={baseKey}>
+        <span key={key}>
           <u>
             <span fg={colors.link}>{linkContent}</span>
           </u>
@@ -266,48 +427,83 @@ function tokenToReactElements(token: Token, listDepth: number = 0, key?: string,
     case 'paragraph': {
       const paragraphToken = token as Tokens.Paragraph;
       return (
-        <span key={baseKey}>
-          {paragraphToken.tokens.map((t, i) => tokenToReactElements(t, listDepth, `${baseKey}-${i}`, compact))}
-          <span fg={colors.text}>{'\n'}</span>
+        <span key={key}>
+          {paragraphToken.tokens.map((t) => {
+            const tKey = getTokenKey(t, key);
+            return (
+              <TokenToReactElements
+                key={tKey}
+                token={t}
+                tokenKey={tKey}
+                listDepth={listDepth}
+                compact={compact}
+              />
+            );
+          })}
+          {!isLast && <span fg={colors.text}>{'\n'}</span>}
         </span>
       );
     }
 
     case 'hr': {
       return (
-        <span key={baseKey}>
-          <span fg={colors.text}>{'\n'}</span>
+        <span key={key}>
           <span fg={colors.quote}>{'─'.repeat(60)}</span>
-          <span fg={colors.text}>{'\n'}</span>
+          {!isLast && <span fg={colors.text}>{'\n'}</span>}
         </span>
       );
     }
 
     case 'space': {
       // Normalize multiple blank lines to single newline
-      return <span key={baseKey} fg={colors.text}>{'\n'}</span>;
+      return !isLast ?
+          <span key={key} fg={colors.text}>
+            {'\n'}
+          </span>
+        : null;
     }
 
     case 'br': {
-      return <span key={baseKey} fg={colors.text}>{'\n'}</span>;
+      return !isLast ?
+          <span key={key} fg={colors.text}>
+            {'\n'}
+          </span>
+        : null;
     }
 
     case 'blockquote': {
       const blockquoteToken = token as Tokens.Blockquote;
-      const content = blockquoteToken.tokens.map((t, i) => tokenToReactElements(t, listDepth, `${baseKey}-${i}`, compact));
+      const content = blockquoteToken.tokens.map((t) => {
+        const tKey = getTokenKey(t, key);
+        return (
+          <TokenToReactElements
+            key={tKey}
+            token={t}
+            tokenKey={tKey}
+            listDepth={listDepth}
+            compact={compact}
+          />
+        );
+      });
 
       // Get text content for admonition detection
       const getText = (tokens: Token[]): string => {
-        return tokens.map(t => {
-          if (t.type === 'text') return (t as Tokens.Text).text;
-          if (t.type === 'paragraph') return getText((t as Tokens.Paragraph).tokens);
-          if ('tokens' in t && Array.isArray(t.tokens)) return getText(t.tokens);
-          return '';
-        }).join('');
+        return tokens
+          .map((t) => {
+            if (t.type === 'text') return (t as Tokens.Text).text;
+            if (t.type === 'paragraph')
+              return getText((t as Tokens.Paragraph).tokens);
+            if ('tokens' in t && Array.isArray(t.tokens))
+              return getText(t.tokens);
+            return '';
+          })
+          .join('');
       };
 
       const quoteText = getText(blockquoteToken.tokens);
-      const admonitionMatch = quoteText.match(/^\[!(NOTE|WARNING|ERROR|SUCCESS|INFO|TIP|CAUTION)\](.*)/is);
+      const admonitionMatch = quoteText.match(
+        /^\[!(NOTE|WARNING|ERROR|SUCCESS|INFO|TIP|CAUTION)\](.*)/is
+      );
 
       if (admonitionMatch) {
         const [, type, admonitionContent] = admonitionMatch;
@@ -341,20 +537,22 @@ function tokenToReactElements(token: Token, listDepth: number = 0, key?: string,
         const contentLines = admonitionContent.trim().split('\n');
 
         return (
-          <span key={baseKey}>
+          <span key={key}>
+            <span
+              bg={admonitionColor}
+              fg={themeColors.admonitionText}
+            >{`${icon}${typeUpper}`}</span>
             <span fg={colors.text}>{'\n'}</span>
-            <span bg={admonitionColor} fg={themeColors.admonitionText}>{`${icon}${typeUpper}`}</span>
-            <span fg={colors.text}>{'\n'}</span>
-            {/* eslint-disable react/no-array-index-key -- Line position is semantically important */}
             {contentLines.map((line, i) => (
-              <span key={i}>
+              <span key={i}> {/* eslint-disable-line react/no-array-index-key, @eslint-react/no-array-index-key -- Line position is semantically important */}
                 <span fg={admonitionColor}>{'│ '}</span>
                 <span fg={colors.text}>{line}</span>
-                {i < contentLines.length - 1 && <span fg={colors.text}>{'\n'}</span>}
+                {i < contentLines.length - 1 && (
+                  <span fg={colors.text}>{'\n'}</span>
+                )}
               </span>
             ))}
-            {/* eslint-enable react/no-array-index-key */}
-            <span fg={colors.text}>{'\n'}</span>
+            {!isLast && <span fg={colors.text}>{'\n'}</span>}
           </span>
         );
       }
@@ -363,18 +561,15 @@ function tokenToReactElements(token: Token, listDepth: number = 0, key?: string,
       const lines = quoteText.split('\n');
 
       return (
-        <span key={baseKey}>
-          <span fg={colors.text}>{'\n'}</span>
-          {/* eslint-disable react/no-array-index-key -- Line position is semantically important */}
+        <span key={key}>
           {lines.map((line, i) => (
-            <span key={i}>
+            <span key={i}> {/* eslint-disable-line react/no-array-index-key, @eslint-react/no-array-index-key -- Line position is semantically important */}
               <span fg={colors.quoteBorder}>{'│ '}</span>
               <span fg={colors.quote}>{line}</span>
               {i < lines.length - 1 && <span fg={colors.text}>{'\n'}</span>}
             </span>
           ))}
-          {/* eslint-enable react/no-array-index-key */}
-          <span fg={colors.text}>{'\n'}</span>
+          {!isLast && <span fg={colors.text}>{'\n'}</span>}
         </span>
       );
     }
@@ -383,27 +578,39 @@ function tokenToReactElements(token: Token, listDepth: number = 0, key?: string,
       const tableToken = token as Tokens.Table;
 
       // Process header and rows
-      const headerRow = tableToken.header.map(cell => {
+      const headerRow = tableToken.header.map((cell) => {
         const tokens = cell.tokens;
-        return tokens.map(t => {
-          if (t.type === 'text') return (t as Tokens.Text).text;
-          if ('tokens' in t && Array.isArray(t.tokens)) {
-            return t.tokens.map(st => st.type === 'text' ? (st as Tokens.Text).text : '').join('');
-          }
-          return '';
-        }).join('');
-      });
-
-      const dataRows = tableToken.rows.map(row =>
-        row.map(cell => {
-          const tokens = cell.tokens;
-          const text = tokens.map(t => {
+        return tokens
+          .map((t) => {
             if (t.type === 'text') return (t as Tokens.Text).text;
             if ('tokens' in t && Array.isArray(t.tokens)) {
-              return t.tokens.map(st => st.type === 'text' ? (st as Tokens.Text).text : '').join('');
+              return t.tokens
+                .map((st) =>
+                  st.type === 'text' ? (st as Tokens.Text).text : ''
+                )
+                .join('');
             }
             return '';
-          }).join('');
+          })
+          .join('');
+      });
+
+      const dataRows = tableToken.rows.map((row) =>
+        row.map((cell) => {
+          const tokens = cell.tokens;
+          const text = tokens
+            .map((t) => {
+              if (t.type === 'text') return (t as Tokens.Text).text;
+              if ('tokens' in t && Array.isArray(t.tokens)) {
+                return t.tokens
+                  .map((st) =>
+                    st.type === 'text' ? (st as Tokens.Text).text : ''
+                  )
+                  .join('');
+              }
+              return '';
+            })
+            .join('');
           return { text, tokens };
         })
       );
@@ -435,59 +642,71 @@ function tokenToReactElements(token: Token, listDepth: number = 0, key?: string,
 
       const topBorder =
         box.topLeft +
-        colWidths.map(w => box.horizontal.repeat(w + 2)).join(box.topTee) +
+        colWidths.map((w) => box.horizontal.repeat(w + 2)).join(box.topTee) +
         box.topRight;
 
       const headerSeparator =
         box.leftTee +
-        colWidths.map(w => box.horizontal.repeat(w + 2)).join(box.cross) +
+        colWidths.map((w) => box.horizontal.repeat(w + 2)).join(box.cross) +
         box.rightTee;
 
       const bottomBorder =
         box.bottomLeft +
-        colWidths.map(w => box.horizontal.repeat(w + 2)).join(box.bottomTee) +
+        colWidths.map((w) => box.horizontal.repeat(w + 2)).join(box.bottomTee) +
         box.bottomRight;
 
       return (
-        <span key={baseKey}>
-          <span fg={colors.text}>{'\n'}</span>
+        <span key={key}>
           <span fg={colors.quote}>{topBorder}</span>
           <span fg={colors.text}>{'\n'}</span>
           <span fg={colors.quote}>{box.vertical + ' '}</span>
-          {/* eslint-disable react/no-array-index-key -- Column position is semantically important */}
           {headerRow.map((header, i) => (
-            <span key={i}>
+            <span key={i}> {/* eslint-disable-line react/no-array-index-key, @eslint-react/no-array-index-key -- Column position is semantically important */}
               <b>
                 <span fg={colors.header2}>{header.padEnd(colWidths[i])}</span>
               </b>
-              {i < headerRow.length - 1 && <span fg={colors.quote}>{' ' + box.vertical + ' '}</span>}
+              {i < headerRow.length - 1 && (
+                <span fg={colors.quote}>{' ' + box.vertical + ' '}</span>
+              )}
             </span>
           ))}
-          {/* eslint-enable react/no-array-index-key */}
           <span fg={colors.quote}>{' ' + box.vertical}</span>
           <span fg={colors.text}>{'\n'}</span>
           <span fg={colors.quote}>{headerSeparator}</span>
           <span fg={colors.text}>{'\n'}</span>
-          {/* eslint-disable react/no-array-index-key -- Row position is semantically important */}
           {dataRows.map((row, rowIndex) => (
-            <span key={rowIndex}>
+            <span key={rowIndex}> {/* eslint-disable-line react/no-array-index-key, @eslint-react/no-array-index-key -- Row position is semantically important */}
               <span fg={colors.quote}>{box.vertical + ' '}</span>
               {row.map((cell, colIndex) => (
-                <span key={colIndex}>
-                  {cell.tokens.map((t, i) => tokenToReactElements(t, listDepth, `${baseKey}-r${rowIndex}-c${colIndex}-${i}`, compact))}
+                <span key={colIndex}> {/* eslint-disable-line react/no-array-index-key, @eslint-react/no-array-index-key -- Column position is semantically important */}
+                  {cell.tokens.map((t) => {
+                    const tKey = getTokenKey(t, key);
+                    return (
+                      <TokenToReactElements
+                        key={tKey}
+                        token={t}
+                        tokenKey={tKey}
+                        listDepth={listDepth}
+                        compact={compact}
+                      />
+                    );
+                  })}
                   {cell.text.length < colWidths[colIndex] && (
-                    <span fg={colors.text}>{' '.repeat(colWidths[colIndex] - cell.text.length)}</span>
+                    <span fg={colors.text}>
+                      {' '.repeat(colWidths[colIndex] - cell.text.length)}
+                    </span>
                   )}
-                  {colIndex < row.length - 1 && <span fg={colors.quote}>{' ' + box.vertical + ' '}</span>}
+                  {colIndex < row.length - 1 && (
+                    <span fg={colors.quote}>{' ' + box.vertical + ' '}</span>
+                  )}
                 </span>
               ))}
               <span fg={colors.quote}>{' ' + box.vertical}</span>
               <span fg={colors.text}>{'\n'}</span>
             </span>
           ))}
-          {/* eslint-enable react/no-array-index-key */}
           <span fg={colors.quote}>{bottomBorder}</span>
-          <span fg={colors.text}>{'\n'}</span>
+          {!isLast && <span fg={colors.text}>{'\n'}</span>}
         </span>
       );
     }
@@ -498,7 +717,11 @@ function tokenToReactElements(token: Token, listDepth: number = 0, key?: string,
         : 'text' in token ? (token as Token & { text?: string }).text
         : '';
       if (rawText) {
-        return <span key={baseKey} fg={colors.text}>{rawText}</span>;
+        return (
+          <span key={key} fg={colors.text}>
+            {rawText}
+          </span>
+        );
       }
       return null;
     }
@@ -510,7 +733,10 @@ type MarkdownProps = {
   compact?: boolean;
 };
 
-export function Markdown({ content, compact = false }: MarkdownProps): ReactNode {
+export function Markdown({
+  content,
+  compact = false,
+}: MarkdownProps): ReactNode {
   try {
     if (content === '') {
       return null;
@@ -522,7 +748,22 @@ export function Markdown({ content, compact = false }: MarkdownProps): ReactNode
     const processedContent = content.replace(/^(\s*-\s*)\[~\]/gm, '$1[⟳]');
 
     const tokens = marked.lexer(processedContent);
-    return <span>{tokens.map((token, i) => tokenToReactElements(token, 0, `root-${i}`, compact))}</span>;
+    return (
+      <span>
+        {tokens.map((token, i) => {
+          const tokenKey = getTokenKey(token, `root-${i}`);
+          return (
+            <TokenToReactElements
+              key={tokenKey}
+              token={token}
+              tokenKey={tokenKey}
+              compact={compact}
+              isLast={i === tokens.length - 1}
+            />
+          );
+        })}
+      </span>
+    );
   } catch (error) {
     // Fallback to plain text if parsing fails
     return <span fg={colors.text}>{content}</span>;

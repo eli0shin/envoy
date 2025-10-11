@@ -1,10 +1,11 @@
-import { useState, useRef, useEffect, useMemo } from 'react';
+import { useRef, useEffect, useMemo } from 'react';
 import { useTerminalDimensions } from '@opentui/react';
 import type { InputRenderable } from '@opentui/core';
 import { colors } from '../theme.js';
 import { useKeys, parseKeys } from '../keys/index.js';
 import { usePrefixState } from '../keys/prefixContext.js';
 import { copyToClipboard, pasteFromClipboard } from '../clipboard.js';
+import { useCursorPosition } from '../hooks/useCursorPosition.js';
 
 type MultiLineInputProps = {
   value: string;
@@ -36,9 +37,6 @@ export function MultiLineInput({
   disabled = false,
 }: MultiLineInputProps) {
   const { activePrefix } = usePrefixState();
-  // Track which line is being edited and cursor position
-  const [editingLine, setEditingLine] = useState(0);
-  const [cursorPosition, setCursorPosition] = useState(0);
   const inputRef = useRef<InputRenderable | null>(null);
 
   // Separate concerns: input focus vs key handler enablement
@@ -54,34 +52,19 @@ export function MultiLineInput({
   // Calculate available width for text (terminal width minus prompt area and padding)
   const availableTextWidth = terminalWidth - 6; // 3 for " > " prompt + 3 for padding/borders
 
-  // Helper to calculate absolute cursor position in the full text
-  const getAbsoluteCursorPosition = (
-    lineIndex: number,
-    positionInLine: number
-  ): number => {
-    let position = 0;
-    for (let i = 0; i < lineIndex; i++) {
-      position += (lines[i] || '').length + 1; // +1 for newline character
-    }
-    position += positionInLine;
-    return position;
-  };
-
-  // Helper to update cursor position and notify parent
-  const updateCursorPosition = (
-    newCursorPosition: number,
-    newEditingLine?: number
-  ) => {
-    setCursorPosition(newCursorPosition);
-    if (onCursorChange) {
-      const lineToUse = newEditingLine ?? editingLine;
-      const absolutePosition = getAbsoluteCursorPosition(
-        lineToUse,
-        newCursorPosition
-      );
-      onCursorChange(absolutePosition);
-    }
-  };
+  // Use cursor position hook
+  const {
+    editingLine,
+    setEditingLine,
+    cursorPosition,
+    setCursorPosition,
+    getAbsoluteCursorPosition,
+    updateCursorPosition,
+  } = useCursorPosition({
+    lines,
+    externalCursorPosition,
+    onCursorChange,
+  });
 
   // Sync cursor position to the actual input element
   useEffect(() => {
@@ -91,30 +74,6 @@ export function MultiLineInput({
       inputRef.current.cursorPosition = cursorPosition;
     }
   }, [cursorPosition, shouldDisableTextInput, editingLine]); // Added editingLine to ensure effect runs when changing lines
-
-  // Handle external cursor position changes (e.g., from file autocomplete)
-  useEffect(() => {
-    if (externalCursorPosition === undefined || externalCursorPosition < 0)
-      return;
-
-    // When cursor position is set externally, update our internal tracking
-    // Find which line and position the cursor should be at based on the full text position
-    let position = 0;
-    for (let i = 0; i < lines.length; i++) {
-      const lineLength = (lines[i] || '').length;
-      if (position + lineLength >= externalCursorPosition) {
-        // Cursor is on this line
-        const posInLine = Math.min(
-          externalCursorPosition - position,
-          lineLength
-        );
-        setEditingLine(i);
-        setCursorPosition(posInLine);
-        break;
-      }
-      position += lineLength + 1; // +1 for newline
-    }
-  }, [externalCursorPosition, lines]); // React to external cursor position changes
 
   // Find the best split point (last word boundary that fits)
   const findSplitPoint = (text: string, maxWidth: number): number => {
@@ -379,7 +338,7 @@ export function MultiLineInput({
       <box flexGrow={1} flexDirection="column" flexShrink={0}>
         {lines.map((line, index) => (
           <box
-            key={`line-${index}`} /* eslint-disable-line react/no-array-index-key -- Line position is semantically important for multi-line input */
+            key={`line-${index}`} // eslint-disable-line react/no-array-index-key, @eslint-react/no-array-index-key -- Line position is semantically important
             height={1}
           >
             {index === editingLine ?

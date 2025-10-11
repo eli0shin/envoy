@@ -53,8 +53,7 @@ export function QueuedMessagesList({
             flexDirection="column"
           >
             {lines.map((line, lineIndex) => (
-              // eslint-disable-next-line react/no-array-index-key
-              <box key={`${message.id}-line-${lineIndex}`} height={1}>
+              <box key={`${message.id}-line-${lineIndex}`} height={1}> {/* eslint-disable-line react/no-array-index-key, @eslint-react/no-array-index-key -- Line position is semantically important */}
                 <text>
                   <span fg={colors.muted}>
                     {lineIndex === 0 ? '> ' : '  '}

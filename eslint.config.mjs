@@ -5,11 +5,13 @@ import esPlugin from 'eslint-plugin-es';
 import importPlugin from 'eslint-plugin-import';
 import reactHooksPlugin from 'eslint-plugin-react-hooks';
 import reactPlugin from 'eslint-plugin-react';
+import eslintReact from '@eslint-react/eslint-plugin';
 
 export default tseslint.config(
   eslint.configs.recommended,
   tseslint.configs.recommended,
   reactPlugin.configs.flat.recommended,
+  eslintReact.configs['recommended-typescript'],
   {
     languageOptions: {
       globals: {
@@ -66,6 +68,12 @@ export default tseslint.config(
       'react/react-in-jsx-scope': 'off',
       'react/no-unknown-property': 'off', // Let TypeScript handle prop validation
       'react/prop-types': 'off', // We use TypeScript for prop validation
+      '@eslint-react/no-unnecessary-use-callback': 'error',
+      '@eslint-react/no-unnecessary-use-memo': 'error',
+      '@eslint-react/no-unnecessary-use-prefix': 'error',
+      '@eslint-react/no-unnecessary-key': 'error',
+      '@eslint-react/hooks-extra/no-direct-set-state-in-use-effect': 'error',
+      '@eslint-react/no-nested-component-definitions': 'error',
     },
   },
   {

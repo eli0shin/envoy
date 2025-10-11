@@ -1,4 +1,11 @@
-import { createContext, useContext, useState, type ReactNode } from 'react';
+import {
+  createContext,
+  use,
+  useCallback,
+  useMemo,
+  useState,
+  type ReactNode,
+} from 'react';
 
 // Module-level state for non-React code - using object for stable reference
 const moduleState = {
@@ -34,20 +41,21 @@ export function KeysProvider({ children }: { children: ReactNode }) {
   const [activePrefix, setActivePrefix] = useState<string | null>(null);
 
   // Enhanced setter that updates both module and React state
-  const setActivePrefixState = (name: string | null) => {
+  const setActivePrefixState = useCallback((name: string | null) => {
     moduleState.activePrefix = name;
     setActivePrefix(name);
-  };
+  }, []);
 
-  return (
-    <PrefixContext.Provider value={{ activePrefix, setActivePrefixState }}>
-      {children}
-    </PrefixContext.Provider>
+  const contextValue = useMemo(
+    () => ({ activePrefix, setActivePrefixState }),
+    [activePrefix, setActivePrefixState]
   );
+
+  return <PrefixContext value={contextValue}>{children}</PrefixContext>;
 }
 
 export function usePrefixState(): PrefixContextValue {
-  const ctx = useContext(PrefixContext);
+  const ctx = use(PrefixContext);
   if (!ctx) throw new Error('usePrefixState must be used within KeysProvider');
   return ctx;
 }

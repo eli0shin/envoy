@@ -1,8 +1,6 @@
-import { useRef, useEffect } from 'react';
 import { Message } from './Message.js';
 import type { ModelMessage } from 'ai';
-import type { ScrollBoxRenderable } from '@opentui/core';
-import { useKeys, parseKeys } from '../keys/index.js';
+import { useScrollBox } from '../hooks/useScrollBox.js';
 
 type MessageListProps = {
   messages: (ModelMessage & { id: string })[];
@@ -60,29 +58,7 @@ function processMessagesWithToolAggregation(
       continue;
     }
 
-    // Check if message has only text/reasoning parts (no tool calls)
-    const hasOnlyTextContent = parts.every(
-      (part) =>
-        part?.type === 'text' ||
-        part?.type === 'reasoning' ||
-        !part ||
-        typeof part !== 'object'
-    );
-
-    if (hasOnlyTextContent) {
-      const textContent = parts
-        .filter((part) => part && typeof part === 'object' && 'text' in part && part.text)
-        .map((part) => (part as { text: string }).text)
-        .join('\n');
-      renderableMessages.push({
-        id: message.id,
-        role: message.role,
-        content: textContent,
-      });
-      continue;
-    }
-
-    // Message has tool calls - process each part
+    // Process each content part separately to preserve type information
     for (let partIndex = 0; partIndex < parts.length; partIndex++) {
       const part = parts[partIndex];
 
@@ -194,78 +170,12 @@ function processMessagesWithToolAggregation(
 }
 
 export function MessageList({ messages, width }: MessageListProps) {
-  const scrollBoxRef = useRef<ScrollBoxRenderable>(null);
-
-  const scrollToBottom = () => {
-    if (scrollBoxRef.current) {
-      const maxScrollTop =
-        scrollBoxRef.current.scrollHeight -
-        scrollBoxRef.current.viewport.height;
-      scrollBoxRef.current.scrollTop = Math.max(0, maxScrollTop);
-    }
-  };
-
-  const scrollBy = (delta: number) => {
-    if (!scrollBoxRef.current) return;
-    const maxScrollTop =
-      scrollBoxRef.current.scrollHeight - scrollBoxRef.current.viewport.height;
-    scrollBoxRef.current.scrollTop = Math.max(
-      0,
-      Math.min(maxScrollTop, scrollBoxRef.current.scrollTop + delta)
-    );
-  };
-
-  const scrollPage = (direction: 1 | -1) => {
-    if (!scrollBoxRef.current) return;
-    const page = Math.max(
-      1,
-      Math.floor(scrollBoxRef.current.viewport.height * 0.9)
-    );
-    scrollBy(direction * page);
-  };
-
-  const scrollTop = () => {
-    if (!scrollBoxRef.current) return;
-    scrollBoxRef.current.scrollTop = 0;
-  };
-
-  const scrollBottom = () => {
-    scrollToBottom();
-  };
-
-  useEffect(() => {
-    setImmediate(() => {
-      scrollToBottom();
-    });
-  }, [messages]);
-
-  // Keybindings for scrolling the messages area
-  useKeys(
-    (key) => {
-      return (
-        parseKeys(
-          key,
-          'messages.scrollPageUp',
-          () => scrollPage(-1),
-          'messages'
-        ) ||
-        parseKeys(
-          key,
-          'messages.scrollPageDown',
-          () => scrollPage(1),
-          'messages'
-        ) ||
-        parseKeys(key, 'messages.scrollTop', () => scrollTop(), 'messages') ||
-        parseKeys(
-          key,
-          'messages.scrollBottom',
-          () => scrollBottom(),
-          'messages'
-        )
-      );
-    },
-    { scope: 'messages', enabled: true }
-  );
+  const { scrollBoxRef } = useScrollBox({
+    autoScrollOnChange: true,
+    scrollDependencies: [messages],
+    keybindingsScope: 'messages',
+    enableKeybindings: true,
+  });
 
   const processedMessages = processMessagesWithToolAggregation(messages);
 

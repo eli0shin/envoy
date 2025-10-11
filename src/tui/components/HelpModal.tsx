@@ -1,12 +1,12 @@
 import { useTerminalDimensions } from '@opentui/react';
 import { Modal } from './Modal.js';
 import { colors } from '../theme.js';
-import { commandRegistry } from '../commands/registry.js';
+import { getAllCommands } from '../commands/registry.js';
 import { getKeyboardShortcuts } from '../keys/display.js';
 
 export function HelpModal() {
   const { width } = useTerminalDimensions();
-  const commands = commandRegistry.getAll();
+  const commands = getAllCommands();
   const shortcuts = getKeyboardShortcuts();
 
   // Calculate content height: commands + shortcuts + headers + footer + min scrollbox space

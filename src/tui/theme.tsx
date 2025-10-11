@@ -54,8 +54,9 @@ function UserContent({ content }: { content: string }) {
       <span fg={colors.primary}>&gt; </span>
       {lines[0]}
       {lines.slice(1).map((line, i) => (
-        // eslint-disable-next-line react/no-array-index-key
-        <span key={i}>{`\n  ${line}`}</span>
+        <span key={i}> {/* eslint-disable-line react/no-array-index-key, @eslint-react/no-array-index-key -- Line position is semantically important */}
+          {`\n  ${line}`}
+        </span>
       ))}
     </span>
   );
@@ -76,8 +77,9 @@ function QueuedUserContent({ content }: { content: string }) {
     <span fg={colors.muted}>
       &gt; {lines[0]}
       {lines.slice(1).map((line, i) => (
-        // eslint-disable-next-line react/no-array-index-key
-        <span key={i}>{`\n  ${line}`}</span>
+        <span key={i}> {/* eslint-disable-line react/no-array-index-key, @eslint-react/no-array-index-key -- Line position is semantically important */}
+          {`\n  ${line}`}
+        </span>
       ))}
     </span>
   );
@@ -87,7 +89,7 @@ function AssistantReasoningContent({ content }: { content: string }) {
   return (
     <i>
       <span fg={colors.reasoningText}>
-        <Markdown content={content} />
+        {content}
       </span>
     </i>
   );
@@ -102,16 +104,14 @@ function AssistantToolContent({ content }: { content: string }) {
           if (line.startsWith('[ERROR]')) {
             const errorLine = line.substring(7);
             return (
-              // eslint-disable-next-line react/no-array-index-key
-              <span key={i} fg={colors.error}>
+              <span key={i} fg={colors.error}> {/* eslint-disable-line react/no-array-index-key, @eslint-react/no-array-index-key -- Line position is semantically important */}
                 {errorLine}
                 {i < lines.length - 1 ? '\n' : ''}
               </span>
             );
           }
           return (
-            // eslint-disable-next-line react/no-array-index-key
-            <span key={i} fg={colors.accent}>
+            <span key={i} fg={colors.accent}> {/* eslint-disable-line react/no-array-index-key, @eslint-react/no-array-index-key -- Line position is semantically important */}
               {line}
               {i < lines.length - 1 ? '\n' : ''}
             </span>
