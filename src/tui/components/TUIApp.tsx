@@ -429,7 +429,7 @@ export function TUIApp({ config, session }: TUIAppProps) {
             <StatusBar
               status={status}
               session={session}
-              exitConfirmation={!!exitConfirmation}
+              exitConfirmation={Boolean(exitConfirmation)}
               queuedMessages={queuedMessages}
             />
           </box>
