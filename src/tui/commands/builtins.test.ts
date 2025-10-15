@@ -1,5 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { commandRegistry } from './registry.js';
+import {
+  getAllCommands,
+  getCommandSuggestions,
+  executeCommand,
+} from './registry.js';
 import { setCommandCallbacks } from './builtins.js';
 import './builtins.js'; // Import to trigger registration
 
@@ -20,7 +24,7 @@ describe('Built-in Commands Registration', () => {
     });
   });
   it('should have commands registered when module loads', () => {
-    const all = commandRegistry.getAll();
+    const all = getAllCommands();
 
     expect(all.length).toBeGreaterThan(0);
     expect(all.map((c) => c.name)).toContain('clear');
@@ -29,7 +33,7 @@ describe('Built-in Commands Registration', () => {
   });
 
   it("should return suggestions for '/' input", () => {
-    const suggestions = commandRegistry.getSuggestions('/');
+    const suggestions = getCommandSuggestions('/');
 
     expect(suggestions.length).toBe(3);
     expect(suggestions.map((s) => s.name)).toContain('clear');
@@ -38,14 +42,14 @@ describe('Built-in Commands Registration', () => {
   });
 
   it('should return filtered suggestions for partial input', () => {
-    const suggestions = commandRegistry.getSuggestions('/cl');
+    const suggestions = getCommandSuggestions('/cl');
 
     expect(suggestions.length).toBe(1);
     expect(suggestions[0].name).toBe('clear');
   });
 
   it('help command should call help callback and return undefined', () => {
-    const result = commandRegistry.execute('/help');
+    const result = executeCommand('/help');
 
     expect(result.isCommand).toBe(true);
     expect(result.result).toBeUndefined();
@@ -53,7 +57,7 @@ describe('Built-in Commands Registration', () => {
   });
 
   it('clear command should work but return undefined', () => {
-    const result = commandRegistry.execute('/clear');
+    const result = executeCommand('/clear');
 
     expect(result.isCommand).toBe(true);
     expect(result.result).toBeUndefined();

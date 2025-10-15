@@ -32,7 +32,10 @@ export function getCommandSuggestions(prefix: string): Command[] {
   );
 }
 
-export function parseCommand(input: string): { command: Command | undefined; args: string[] } {
+export function parseCommand(input: string): {
+  command: Command | undefined;
+  args: string[];
+} {
   if (!input.startsWith('/')) {
     return { command: undefined, args: [] };
   }
@@ -70,4 +73,9 @@ export function formatCommandMessage(commandInput: string): ModelMessage {
     role: 'user',
     content: `<user-command>${commandInput}</user-command><system-hint>Note: This is a command executed by the user. Do not respond to this command.</system-hint>`,
   };
+}
+
+// For testing only - clears all registered commands
+export function clearCommands(): void {
+  commands.clear();
 }

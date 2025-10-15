@@ -1,11 +1,18 @@
 import { describe, it, expect, beforeEach } from 'vitest';
-import { CommandRegistry } from './registry.js';
+import {
+  registerCommand,
+  getCommand,
+  getAllCommands,
+  getCommandSuggestions,
+  parseCommand,
+  executeCommand,
+  clearCommands,
+} from './registry.js';
 
-describe('CommandRegistry', () => {
-  let registry: CommandRegistry;
-
+describe('Command Registry (Functional API)', () => {
   beforeEach(() => {
-    registry = new CommandRegistry();
+    // Clear all commands before each test for isolation
+    clearCommands();
   });
 
   describe('basic registration and retrieval', () => {
@@ -16,8 +23,8 @@ describe('CommandRegistry', () => {
         handler: () => 'test result',
       };
 
-      registry.register(testCommand);
-      const retrieved = registry.get('test');
+      registerCommand(testCommand);
+      const retrieved = getCommand('test');
 
       expect(retrieved).toBeDefined();
       expect(retrieved?.name).toBe('test');
@@ -25,23 +32,23 @@ describe('CommandRegistry', () => {
     });
 
     it('should return all registered commands', () => {
-      registry.register({
+      registerCommand({
         name: 'cmd1',
         description: 'Command 1',
         handler: () => {},
       });
-      registry.register({
+      registerCommand({
         name: 'cmd2',
         description: 'Command 2',
         handler: () => {},
       });
-      registry.register({
+      registerCommand({
         name: 'cmd3',
         description: 'Command 3',
         handler: () => {},
       });
 
-      const all = registry.getAll();
+      const all = getAllCommands();
       expect(all).toHaveLength(3);
       expect(all.map((c) => c.name)).toEqual(['cmd1', 'cmd2', 'cmd3']);
     });
@@ -49,17 +56,17 @@ describe('CommandRegistry', () => {
 
   describe('getSuggestions', () => {
     beforeEach(() => {
-      registry.register({
+      registerCommand({
         name: 'clear',
         description: 'Clear screen',
         handler: () => {},
       });
-      registry.register({
+      registerCommand({
         name: 'help',
         description: 'Show help',
         handler: () => {},
       });
-      registry.register({
+      registerCommand({
         name: 'exit',
         description: 'Exit app',
         handler: () => {},
@@ -67,7 +74,7 @@ describe('CommandRegistry', () => {
     });
 
     it("should return ALL commands when input is just '/'", () => {
-      const suggestions = registry.getSuggestions('/');
+      const suggestions = getCommandSuggestions('/');
 
       expect(suggestions).toHaveLength(3);
       expect(suggestions.map((s) => s.name)).toContain('clear');
@@ -76,27 +83,27 @@ describe('CommandRegistry', () => {
     });
 
     it('should return ALL commands when input is empty string', () => {
-      const suggestions = registry.getSuggestions('');
+      const suggestions = getCommandSuggestions('');
 
       expect(suggestions).toHaveLength(3);
     });
 
     it('should filter commands when partial name provided after slash', () => {
-      const suggestions = registry.getSuggestions('/cl');
+      const suggestions = getCommandSuggestions('/cl');
 
       expect(suggestions).toHaveLength(1);
       expect(suggestions[0].name).toBe('clear');
     });
 
     it('should filter commands when partial name provided after slash', () => {
-      const suggestions = registry.getSuggestions('/e');
+      const suggestions = getCommandSuggestions('/e');
 
       expect(suggestions).toHaveLength(1);
       expect(suggestions[0].name).toBe('exit');
     });
 
     it('should return empty array when no matches', () => {
-      const suggestions = registry.getSuggestions('/xyz');
+      const suggestions = getCommandSuggestions('/xyz');
 
       expect(suggestions).toHaveLength(0);
     });
@@ -104,7 +111,7 @@ describe('CommandRegistry', () => {
 
   describe('parse', () => {
     beforeEach(() => {
-      registry.register({
+      registerCommand({
         name: 'test',
         description: 'Test',
         handler: () => {},
@@ -112,7 +119,7 @@ describe('CommandRegistry', () => {
     });
 
     it('should parse command with args', () => {
-      const result = registry.parse('/test arg1 arg2');
+      const result = parseCommand('/test arg1 arg2');
 
       expect(result.command).toBeDefined();
       expect(result.command?.name).toBe('test');
@@ -120,7 +127,7 @@ describe('CommandRegistry', () => {
     });
 
     it('should return undefined command for non-slash input', () => {
-      const result = registry.parse('test');
+      const result = parseCommand('test');
 
       expect(result.command).toBeUndefined();
       expect(result.args).toEqual([]);
@@ -129,13 +136,13 @@ describe('CommandRegistry', () => {
 
   describe('execute', () => {
     it('should execute command and return result', () => {
-      registry.register({
+      registerCommand({
         name: 'test',
         description: 'Test',
-        handler: (args) => `Result: ${args.join(', ')}`,
+        handler: (args: string[]) => `Result: ${args.join(', ')}`,
       });
 
-      const result = registry.execute('/test arg1 arg2');
+      const result = executeCommand('/test arg1 arg2');
 
       expect(result.isCommand).toBe(true);
       expect(result.result).toBe('Result: arg1, arg2');
@@ -143,13 +150,13 @@ describe('CommandRegistry', () => {
     });
 
     it('should handle commands that return undefined', () => {
-      registry.register({
+      registerCommand({
         name: 'void',
         description: 'Void command',
         handler: () => undefined,
       });
 
-      const result = registry.execute('/void');
+      const result = executeCommand('/void');
 
       expect(result.isCommand).toBe(true);
       expect(result.result).toBeUndefined();
@@ -157,7 +164,7 @@ describe('CommandRegistry', () => {
     });
 
     it('should treat non-command input as not a command', () => {
-      const result = registry.execute('just a message');
+      const result = executeCommand('just a message');
 
       expect(result.isCommand).toBe(false);
       expect(result.result).toBeUndefined();

@@ -7,6 +7,7 @@ import { executeCommand } from '../commands/registry.js';
 import { parseFilePattern } from '../utils/inputParser.js';
 import type { ModelMessage } from 'ai';
 import { useMessageHistory } from '../hooks/useMessageHistory.js';
+import type { PasteEvent } from '@opentui/core';
 
 export type AutocompleteState = {
   showCommand: boolean;
@@ -67,8 +68,10 @@ export function InputArea({
 
   // Listen for paste events from the terminal
   useEffect(() => {
-    const handlePaste = (pastedText: string) => {
+    const handlePaste = (event: PasteEvent) => {
       if (disabledRef.current) return;
+
+      const pastedText = event.text;
 
       // Insert pasted text at cursor position
       const currentCursor = cursorPositionRef.current;
@@ -89,10 +92,13 @@ export function InputArea({
     };
   }, [renderer]);
 
-  const handleCommandSelect = useCallback((command: string) => {
-    onChange(command);
-    setCursorPosition(command.length);
-  }, [onChange]);
+  const handleCommandSelect = useCallback(
+    (command: string) => {
+      onChange(command);
+      setCursorPosition(command.length);
+    },
+    [onChange]
+  );
 
   const handleFileSelect = useCallback(
     (replacement: string, start: number, end: number) => {
@@ -138,7 +144,15 @@ export function InputArea({
     } else {
       onAutocompleteChange(null);
     }
-  }, [showCommandAutocomplete, showFileAutocomplete, value, cursorPosition, handleCommandSelect, handleFileSelect, onAutocompleteChange]);
+  }, [
+    showCommandAutocomplete,
+    showFileAutocomplete,
+    value,
+    cursorPosition,
+    handleCommandSelect,
+    handleFileSelect,
+    onAutocompleteChange,
+  ]);
 
   const handleInputArrowKey = useCallback(
     (direction: 'up' | 'down', shouldHandleHistory: boolean): boolean => {
@@ -147,10 +161,13 @@ export function InputArea({
     [history, userHistory]
   );
 
-  const handleInputChange = useCallback((newValue: string) => {
-    onChange(newValue);
-    // Do NOT reset history on input change - only on submit
-  }, [onChange]);
+  const handleInputChange = useCallback(
+    (newValue: string) => {
+      onChange(newValue);
+      // Do NOT reset history on input change - only on submit
+    },
+    [onChange]
+  );
 
   const handleSubmit = useCallback(
     (submittedValue: string) => {
@@ -182,7 +199,11 @@ export function InputArea({
 
   return (
     <box flexDirection="column" flexShrink={0} minHeight={3}>
-      <box flexDirection="column" backgroundColor={colors.backgrounds.input} flexShrink={0}>
+      <box
+        flexDirection="column"
+        backgroundColor={colors.backgrounds.input}
+        flexShrink={0}
+      >
         <box height={1}>
           <text> </text>
         </box>
