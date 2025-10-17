@@ -402,13 +402,14 @@ export function createMockMCPClientWrapper(
  * Creates a mock fetch function with common response patterns
  * Used for HTTP/fetch mock centralization
  */
-export function createMockFetch(defaultResponse?: Response) {
+export function createMockFetch(defaultResponse?: Response): typeof fetch {
   const mockFetch = vi.fn();
   if (defaultResponse) {
     mockFetch.mockResolvedValue(defaultResponse);
   }
+  (mockFetch as unknown as typeof fetch).preconnect = fetch.preconnect;
   vi.stubGlobal('fetch', mockFetch);
-  return mockFetch;
+  return mockFetch as unknown as typeof fetch;
 }
 
 /**

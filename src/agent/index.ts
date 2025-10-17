@@ -18,8 +18,10 @@ import { GENERATION_TIMEOUT_MS, MAX_GENERATION_RETRIES } from '../constants.js';
 import { AgentResult } from '../types/index.js';
 
 import { RuntimeConfiguration } from '../config/types.js';
-import { logger } from '../logger.js';
+import { logger, getProjectConversationFile } from '../logger.js';
 import { AgentSession } from '../agentSession.js';
+import { executePostToolUseHooks } from '../hooks/postToolUse.js';
+import { ConversationPersistence } from '../persistence/ConversationPersistence.js';
 import { transformMessagesForAnthropic } from './utils/messageTransform.js';
 import { ContentExtractor } from './utils/ContentExtractor.js';
 import {
@@ -125,7 +127,7 @@ export async function runAgent(
         // Combine user abort signal with timeout signal
         const combinedAbortSignal = AbortSignal.any([
           abortSignal,
-          AbortSignal.timeout(GENERATION_TIMEOUT_MS)
+          AbortSignal.timeout(GENERATION_TIMEOUT_MS),
         ]);
 
         const result = generateText({
@@ -167,6 +169,78 @@ export async function runAgent(
 
         // Persist conversation messages
         await session.conversationPersistence?.persistMessages(messages);
+
+        // Execute PostToolUse hooks for each tool that was used
+        if (toolResults.length > 0) {
+          const projectIdentifier =
+            ConversationPersistence.getProjectIdentifier(process.cwd());
+          const conversationPath =
+            session.conversationPersistence ?
+              getProjectConversationFile(
+                projectIdentifier,
+                session.conversationPersistence.getSessionId()
+              )
+            : undefined;
+
+          for (const toolResult of toolResults) {
+            const hookResult = await executePostToolUseHooks(
+              config,
+              session.conversationPersistence?.getSessionId() || 'no-session',
+              conversationPath,
+              toolResult.toolName,
+              toolResult.input,
+              toolResult.output
+            );
+
+            // Handle stop request
+            if (!hookResult.shouldContinue) {
+              logger.info('Hook requested stop', {
+                stopReason: hookResult.stopReason,
+              });
+
+              return {
+                success: false,
+                error: hookResult.stopReason || 'Stopped by hook',
+                toolCallsCount,
+                executionTime: Date.now() - startTime,
+                messages,
+                responseMessages: response?.messages || [],
+              };
+            }
+
+            // Add additional context to next LLM request
+            for (const context of hookResult.additionalContexts) {
+              const contextMessage: ModelMessage = {
+                role: 'user',
+                content: context,
+              };
+              messages.push(contextMessage);
+
+              // Notify interactive UI of new message
+              if (onMessageUpdate) {
+                onMessageUpdate(contextMessage);
+              }
+
+              // Log as context injection
+              if (!config.json) {
+                logger.logUserStep(context);
+              }
+            }
+
+            // Display system messages to user
+            for (const sysMsg of hookResult.systemMessages) {
+              logger.warn('Hook system message', { message: sysMsg });
+            }
+
+            // Log observational output (only present if hook didn't set suppressOutput: true)
+            for (const output of hookResult.observationalOutput) {
+              logger.debug('Hook observational output', { output });
+            }
+          }
+
+          // Persist any new context messages from hooks
+          await session.conversationPersistence?.persistMessages(messages);
+        }
 
         // Debug logging for termination decision
         logger.debug('Evaluating termination conditions', {
@@ -298,7 +372,7 @@ export async function runAgent(
     };
   } catch (error) {
     const executionTime = Date.now() - startTime;
-    
+
     // Handle AbortError specially - user-initiated cancellation
     if (error instanceof Error && error.name === 'AbortError') {
       logger.info('Agent execution cancelled by user', {

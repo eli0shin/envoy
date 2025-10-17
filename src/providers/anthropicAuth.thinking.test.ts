@@ -23,7 +23,7 @@ const mockFetch = createMockFetch();
 describe('Anthropic Auth Thinking Integration', () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockFetch.mockResolvedValue(createMockResponse({}));
+    vi.mocked(mockFetch).mockResolvedValue(createMockResponse({}));
   });
 
   afterEach(() => {
@@ -87,7 +87,7 @@ describe('Anthropic Auth Thinking Integration', () => {
       );
 
       // Should not have x-api-key when using OAuth
-      const calledHeaders = mockFetch.mock.calls[0][1].headers;
+      const calledHeaders = vi.mocked(mockFetch).mock.calls[0][1]!.headers;
       expect(calledHeaders).not.toHaveProperty('x-api-key');
     });
 
@@ -211,7 +211,7 @@ describe('Anthropic Auth Thinking Integration', () => {
       );
 
       // Should not have authorization header when OAuth failed
-      const calledHeaders = mockFetch.mock.calls[0][1].headers;
+      const calledHeaders = vi.mocked(mockFetch).mock.calls[0][1]!.headers;
       expect(calledHeaders).not.toHaveProperty('authorization');
     });
   });
@@ -323,7 +323,7 @@ describe('Anthropic Auth Thinking Integration', () => {
       );
 
       // Should not add any auth headers
-      const calledHeaders = mockFetch.mock.calls[0][1].headers;
+      const calledHeaders = vi.mocked(mockFetch).mock.calls[0][1]!.headers;
       expect(calledHeaders).not.toHaveProperty('x-api-key');
       expect(calledHeaders).not.toHaveProperty('authorization');
     });
