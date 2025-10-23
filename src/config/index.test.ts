@@ -84,9 +84,7 @@ describe('Configuration Schema Validation', () => {
 
     const result = validateConfig(config);
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain(
-      'mcpServers.stdio_server.command: Required'
-    );
+    expect(result.errors).toEqual(['mcpServers.stdio_server: Invalid input']);
   });
 
   it('should require url for sse servers', () => {
@@ -101,7 +99,7 @@ describe('Configuration Schema Validation', () => {
 
     const result = validateConfig(config);
     expect(result.valid).toBe(false);
-    expect(result.errors).toContain('mcpServers.sse_server.url: Required');
+    expect(result.errors).toEqual(['mcpServers.sse_server: Invalid input']);
   });
 });
 

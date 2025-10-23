@@ -8,36 +8,35 @@ import {
   StdioMCPServerConfig,
   SSEMCPServerConfig,
 } from '../types/index.js';
+import {
+  ProviderConfigSchema,
+  AnthropicProviderConfigSchema,
+  GoogleProviderConfigSchema,
+  SystemPromptConfigSchema,
+  SessionStartHookSchema,
+  PostToolUseHookSchema,
+  HookConfigSchema,
+  TUIKeybindingsSchema,
+  TUIKeybindingActionMapSchema,
+} from './schema.js';
+import type { z } from 'zod/v3';
 
 /**
  * Provider-specific configuration
  */
-export type ProviderConfig = {
-  apiKey?: string;
-  model?: string;
-  baseURL?: string;
-};
+export type ProviderConfig = z.infer<typeof ProviderConfigSchema>;
 
 /**
  * Extended Anthropic provider configuration with authentication options
  */
-export type AnthropicProviderConfig = ProviderConfig & {
-  authType?: 'x-api-key' | 'bearer' | 'oauth'; // Default: 'x-api-key'
-  customHeaders?: Record<string, string>; // Additional headers
-  disableDefaultAuth?: boolean; // Skip default auth headers
-  enableOAuth?: boolean; // Enable OAuth authentication
-  preferOAuth?: boolean; // Try OAuth first, fall back to API key
-  oauthHeaders?: Record<string, string>; // OAuth-specific headers
-};
+export type AnthropicProviderConfig = z.infer<
+  typeof AnthropicProviderConfigSchema
+>;
 
 /**
  * Extended Google provider configuration with authentication options
  */
-export type GoogleProviderConfig = ProviderConfig & {
-  authType?: 'api-key' | 'bearer'; // Default: 'api-key'
-  customHeaders?: Record<string, string>; // Additional headers
-  disableDefaultAuth?: boolean; // Skip default auth headers
-};
+export type GoogleProviderConfig = z.infer<typeof GoogleProviderConfigSchema>;
 
 /**
  * AI providers configuration
@@ -63,10 +62,7 @@ export type SystemPromptMode = 'replace' | 'append' | 'prepend';
 /**
  * System prompt configuration
  */
-export type SystemPromptConfig = {
-  mode: SystemPromptMode;
-  value: string; // Either text content or file path
-};
+export type SystemPromptConfig = z.infer<typeof SystemPromptConfigSchema>;
 
 /**
  * Conversation persistence configuration
@@ -98,19 +94,69 @@ export type ToolsConfig = {
 };
 
 /**
+ * SessionStart hook configuration
+ */
+export type SessionStartHook = z.infer<typeof SessionStartHookSchema>;
+
+/**
+ * PostToolUse hook configuration
+ */
+export type PostToolUseHook = z.infer<typeof PostToolUseHookSchema>;
+
+/**
+ * Hooks configuration
+ */
+export type HookConfig = z.infer<typeof HookConfigSchema>;
+
+/**
+ * SessionStart hook input passed via stdin
+ */
+export type SessionStartInput = {
+  session_id: string;
+  transcript_path?: string; // absolute path to JSONL (omit if not available)
+  cwd: string;
+  hook_event_name: 'SessionStart';
+  source: 'startup' | 'resume' | 'clear';
+  permission_mode?: string;
+};
+
+/**
+ * PostToolUse hook input passed via stdin
+ */
+export type PostToolUseInput = {
+  session_id: string;
+  transcript_path?: string; // absolute path to JSONL (omit if not available)
+  cwd: string;
+  hook_event_name: 'PostToolUse';
+  tool_name: string;
+  tool_input: unknown;
+  tool_response: unknown;
+};
+
+/**
+ * PostToolUse hook output parsed from stdout
+ */
+export type PostToolUseOutput = {
+  continue?: boolean; // default: true
+  stopReason?: string;
+  suppressOutput?: boolean; // default: false
+  decision?: 'block'; // provides automated feedback to Claude
+  reason?: string; // explanation shown when decision: "block"
+  systemMessage?: string; // warning message shown to user
+  hookSpecificOutput?: {
+    hookEventName: 'PostToolUse';
+    additionalContext?: string; // context added to next Claude prompt
+  };
+};
+
+/**
  * Keybindings configuration for the TUI
  * Mapping: scope -> action -> one or more descriptors
  */
-export type TUIKeybindingActionMap = Record<string, string | string[]>;
-export type TUIKeybindings = Partial<
-  Record<
-    'global' | 'modal' | 'autocomplete' | 'input' | 'messages',
-    TUIKeybindingActionMap
-  >
-> & {
-  prefixes?: Record<string, string | string[]>;
-  prefixCancel?: string | string[];
-};
+export type TUIKeybindingActionMap = z.infer<
+  typeof TUIKeybindingActionMapSchema
+>;
+export type TUIKeybindings = z.infer<typeof TUIKeybindingsSchema>;
 
 /**
  * Enhanced MCP server configuration with additional options
@@ -136,6 +182,7 @@ export type Configuration = {
   agent?: AgentConfig;
   tools?: ToolsConfig;
   keybindings?: TUIKeybindings;
+  hooks?: HookConfig;
 };
 
 /**
