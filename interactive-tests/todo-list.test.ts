@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach } from 'bun:test';
 import {
   createCliSession,
   launchCli,
@@ -43,9 +43,9 @@ describe('Todo List Functionality', () => {
     const output = capturePane(session, 100);
 
     // Assert that todo items are displayed with correct icons
-    expect(output).toContain('☐'); // pending icon
+    expect(output).toContain('○'); // pending icon
     expect(output).toContain('◐'); // in-progress icon
-    expect(output).toContain('☑'); // completed icon
+    expect(output).toContain('●'); // completed icon
 
     // Assert that task names appear
     expect(output).toContain('pending task');
