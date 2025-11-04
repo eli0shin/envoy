@@ -305,6 +305,10 @@ export function createMockAgentSession(
       details: { envVarName: 'ANTHROPIC_API_KEY' },
     },
     conversationPersistence: undefined,
+    provider: {
+      name: 'anthropic',
+      model: 'claude-sonnet-4-20250514',
+    },
     ...overrides,
   };
 }

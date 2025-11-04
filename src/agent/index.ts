@@ -13,7 +13,6 @@ import {
   NoSuchToolError,
   stepCountIs,
 } from 'ai';
-import type { LanguageModelV2 } from '@ai-sdk/provider';
 import { GENERATION_TIMEOUT_MS, MAX_GENERATION_RETRIES } from '../constants.js';
 import { AgentResult } from '../types/index.js';
 
@@ -30,10 +29,10 @@ import {
 } from './thinking/ThinkingProcessor.js';
 
 export function createThinkingProviderOptions(
-  model: LanguageModelV2,
+  providerName: string,
   message?: string
 ): ThinkingProviderResult {
-  return ThinkingProcessor.createThinkingProviderOptions(model, message);
+  return ThinkingProcessor.createThinkingProviderOptions(providerName, message);
 }
 
 /**
@@ -120,7 +119,7 @@ export async function runAgent(
 
         // Get thinking options
         const { providerOptions, headers } = createThinkingProviderOptions(
-          model,
+          session.provider.name,
           typeof userMessage === 'string' ? userMessage : ''
         );
 
