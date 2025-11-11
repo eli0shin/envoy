@@ -12,15 +12,64 @@ import type {
 } from '../config/types.js';
 
 /**
+ * Maps Claude Code tool names to envoy tool names
+ * This allows hooks to use Claude Code tool names in matchers for cross-compatibility
+ */
+const CLAUDE_CODE_TOOL_ALIASES: Record<string, string[]> = {
+  filesystem_write_file: ['Write'],
+  filesystem_edit_file: ['Edit'],
+  filesystem_read_text_file: ['Read'],
+  filesystem_read_media_file: ['Read'],
+  filesystem_read_multiple_files: ['Read'],
+  filesystem_list_directory: ['Glob'],
+  filesystem_list_directory_with_sizes: ['Glob'],
+  filesystem_search_files: ['Grep'],
+  shell_run_command: ['Bash'],
+  'brave-search_brave_web_search': ['WebSearch'],
+  todo_write: ['TodoWrite'],
+  spawn_agent: ['Task'],
+};
+
+/**
  * Combined result from all PostToolUse hooks
  */
 export type CombinedPostToolUseResult = {
   shouldContinue: boolean; // false if any hook said continue: false
   stopReason?: string; // from first hook that stopped
-  additionalContexts: string[]; // all additionalContext values from hookSpecificOutput
-  systemMessages: string[]; // all systemMessage values
-  observationalOutput: string[]; // plain text outputs (only if !suppressOutput)
+  additionalContexts: string[]; // all hook output to send to Claude
 };
+
+/**
+ * Normalize tool input to ensure both 'path' and 'file_path' are available
+ * AI SDK filesystem tools use 'path' but Claude Code expects 'file_path'
+ * This ensures hooks work regardless of which format they expect
+ */
+function normalizeToolInput(toolInput: unknown): unknown {
+  if (!toolInput || typeof toolInput !== 'object') {
+    return toolInput;
+  }
+
+  const input = toolInput as Record<string, unknown>;
+  const hasPath = 'path' in input;
+  const hasFilePath = 'file_path' in input;
+
+  // If we have one but not the other, add the missing one
+  if (hasPath && !hasFilePath) {
+    return {
+      ...input,
+      file_path: input.path,
+    };
+  }
+
+  if (hasFilePath && !hasPath) {
+    return {
+      ...input,
+      path: input.file_path,
+    };
+  }
+
+  return toolInput;
+}
 
 /**
  * Execute all PostToolUse hooks that match the given tool name
@@ -47,16 +96,23 @@ export async function executePostToolUseHooks(
     return {
       shouldContinue: true,
       additionalContexts: [],
-      systemMessages: [],
-      observationalOutput: [],
     };
   }
 
   // Find hooks with matchers that match the tool name (regex test)
+  // Test against both the actual tool name and its Claude Code aliases
   const matchingHooks = hooks.filter((hook) => {
     try {
       const regex = new RegExp(hook.matcher);
-      return regex.test(toolName);
+
+      // Test against actual tool name
+      if (regex.test(toolName)) {
+        return true;
+      }
+
+      // Test against Claude Code aliases
+      const aliases = CLAUDE_CODE_TOOL_ALIASES[toolName] || [];
+      return aliases.some((alias) => regex.test(alias));
     } catch {
       // Invalid regex (should have been caught by config validation)
       logger.warn('Invalid regex in PostToolUse hook matcher', {
@@ -70,8 +126,6 @@ export async function executePostToolUseHooks(
     return {
       shouldContinue: true,
       additionalContexts: [],
-      systemMessages: [],
-      observationalOutput: [],
     };
   }
 
@@ -82,19 +136,21 @@ export async function executePostToolUseHooks(
   const result: CombinedPostToolUseResult = {
     shouldContinue: true,
     additionalContexts: [],
-    systemMessages: [],
-    observationalOutput: [],
   };
 
   // Execute hooks sequentially in config order
   for (const hook of matchingHooks) {
+    // Normalize tool_input for hooks that expect Claude Code format
+    // AI SDK filesystem tools use 'path' but Claude Code uses 'file_path'
+    const normalizedToolInput = normalizeToolInput(toolInput);
+
     const input: PostToolUseInput = {
       session_id: sessionId,
       transcript_path: conversationPath,
       cwd: process.cwd(),
       hook_event_name: 'PostToolUse',
       tool_name: toolName,
-      tool_input: toolInput,
+      tool_input: normalizedToolInput,
       tool_response: toolResponse,
     };
 
@@ -120,6 +176,8 @@ export async function executePostToolUseHooks(
       command: hook.command,
       exitCode: execResult.exitCode,
       duration,
+      stdout: execResult.stdout,
+      stderr: execResult.stderr,
     });
 
     // Try to parse stdout as JSON
@@ -136,7 +194,7 @@ export async function executePostToolUseHooks(
     }
 
     if (parsedOutput) {
-      // Handle structured JSON output
+      // Handle structured JSON output according to Claude Code hooks spec
 
       // Check if we should continue
       if (parsedOutput.continue === false) {
@@ -150,29 +208,21 @@ export async function executePostToolUseHooks(
         break;
       }
 
+      // When decision is "block", the reason is automatically sent to Claude
+      if (parsedOutput.decision === 'block' && parsedOutput.reason) {
+        result.additionalContexts.push(parsedOutput.reason);
+      }
+
       // Collect additionalContext from hookSpecificOutput
-      if (
-        parsedOutput.hookSpecificOutput?.hookEventName === 'PostToolUse' &&
-        parsedOutput.hookSpecificOutput.additionalContext
-      ) {
+      if (parsedOutput.hookSpecificOutput?.additionalContext) {
         result.additionalContexts.push(
           parsedOutput.hookSpecificOutput.additionalContext
         );
       }
-
-      // Collect systemMessage
-      if (parsedOutput.systemMessage) {
-        result.systemMessages.push(parsedOutput.systemMessage);
-      }
-
-      // Add to observational output if not suppressed
-      if (!parsedOutput.suppressOutput && execResult.stdout.trim()) {
-        result.observationalOutput.push(execResult.stdout.trim());
-      }
     } else {
-      // Plain text output - add to observational output
+      // Plain text output - send to Claude as additional context
       if (execResult.stdout.trim()) {
-        result.observationalOutput.push(execResult.stdout.trim());
+        result.additionalContexts.push(execResult.stdout.trim());
       }
     }
   }

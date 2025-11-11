@@ -211,7 +211,7 @@ export async function runAgent(
             for (const context of hookResult.additionalContexts) {
               const contextMessage: ModelMessage = {
                 role: 'user',
-                content: context,
+                content: `<post_tool_use_hook>\n${context}\n</post_tool_use_hook>`,
               };
               messages.push(contextMessage);
 
@@ -224,16 +224,6 @@ export async function runAgent(
               if (!config.json) {
                 logger.logUserStep(context);
               }
-            }
-
-            // Display system messages to user
-            for (const sysMsg of hookResult.systemMessages) {
-              logger.warn('Hook system message', { message: sysMsg });
-            }
-
-            // Log observational output (only present if hook didn't set suppressOutput: true)
-            for (const output of hookResult.observationalOutput) {
-              logger.debug('Hook observational output', { output });
             }
           }
 

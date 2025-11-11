@@ -13,6 +13,8 @@ type ShellResult = {
 
 type ShellCommand = {
   cwd(dir: string): ShellCommand;
+  env(vars: Record<string, string>): ShellCommand;
+  quiet(): ShellCommand;
   nothrow(): Promise<ShellResult>;
 };
 
@@ -32,10 +34,18 @@ export function $(
     | undefined;
 
   let cwdPath = process.cwd();
+  let envVars = process.env;
 
   const command: ShellCommand = {
     cwd(dir: string) {
       cwdPath = dir;
+      return command;
+    },
+    env(vars: Record<string, string>) {
+      envVars = vars;
+      return command;
+    },
+    quiet() {
       return command;
     },
     async nothrow(): Promise<ShellResult> {
@@ -43,6 +53,7 @@ export function $(
         // Use shell: true to let the shell handle argument parsing
         const proc = spawn(commandString, {
           cwd: cwdPath,
+          env: envVars as NodeJS.ProcessEnv,
           stdio: ['pipe', 'pipe', 'pipe'],
           shell: true,
         });

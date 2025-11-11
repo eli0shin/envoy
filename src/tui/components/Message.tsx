@@ -1,4 +1,7 @@
-import { MessageContent as MessageContentComponent, formatBackground } from '../theme.js';
+import {
+  MessageContent as MessageContentComponent,
+  formatBackground,
+} from '../theme.js';
 import { getToolConfig } from '../toolFormatters/index.js';
 import { ErrorBoundary } from './ErrorBoundary.js';
 import type { ModelMessage } from 'ai';
@@ -88,9 +91,25 @@ export function Message({
     return content;
   };
 
+  const isHookFeedback = (message: ModelMessage): boolean => {
+    const content = typeof message.content === 'string' ? message.content : '';
+    return message.role === 'user' && content.includes('<post_tool_use_hook>');
+  };
+
+  const extractHookContent = (content: string): string => {
+    const match = content.match(
+      /<post_tool_use_hook>\n?(.*?)\n?<\/post_tool_use_hook>/s
+    );
+    return match ? match[1].trim() : content;
+  };
+
   const displayContent = getDisplayContent(message);
-  const backgroundColor = formatBackground(message.role);
-  const verticalPadding = message.role === 'user' ? 1 : 0;
+  const isHook = isHookFeedback(message);
+  const backgroundColor =
+    isHook ? 'transparent' : formatBackground(message.role);
+  const verticalPadding = message.role === 'user' && !isHook ? 1 : 0;
+  const finalContent =
+    isHook ? extractHookContent(displayContent) : displayContent;
 
   return (
     <box paddingBottom={1}>
@@ -105,7 +124,7 @@ export function Message({
           <MessageContentComponent
             role={message.role}
             contentType={contentType}
-            content={displayContent}
+            content={finalContent}
             isQueued={isQueued}
           />
         </text>

@@ -44,6 +44,8 @@ export async function executeHookCommand(
 
     const proc = await $`${{ raw: commandString }} < ${stdinResponse}`
       .cwd(input.cwd)
+      .env({ ...process.env, CLAUDE_PLUGIN_ROOT: input.cwd })
+      .quiet()
       .nothrow();
 
     return {

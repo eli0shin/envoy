@@ -69,6 +69,19 @@ export function mergeConfigurations(configs: Configuration[]): Configuration {
     if (config.tools) {
       result.tools = { ...result.tools, ...config.tools };
     }
+    if (config.hooks) {
+      result.hooks = {
+        ...result.hooks,
+        SessionStart: [
+          ...(result.hooks?.SessionStart || []),
+          ...(config.hooks.SessionStart || []),
+        ],
+        PostToolUse: [
+          ...(result.hooks?.PostToolUse || []),
+          ...(config.hooks.PostToolUse || []),
+        ],
+      };
+    }
   }
 
   return result;

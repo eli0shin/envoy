@@ -33,7 +33,7 @@ describe('executePostToolUseHooks', () => {
         {}
       );
 
-      expect(result.observationalOutput).toContain('matched');
+      expect(result.additionalContexts).toContain('matched');
     });
 
     it('should support regex patterns in matcher', async () => {
@@ -58,7 +58,7 @@ describe('executePostToolUseHooks', () => {
         {}
       );
 
-      expect(result1.observationalOutput).toContain('matched');
+      expect(result1.additionalContexts).toContain('matched');
 
       const result2 = await executePostToolUseHooks(
         config,
@@ -69,7 +69,7 @@ describe('executePostToolUseHooks', () => {
         {}
       );
 
-      expect(result2.observationalOutput).toContain('matched');
+      expect(result2.additionalContexts).toContain('matched');
     });
 
     it('should not match tools that do not match the pattern', async () => {
@@ -94,7 +94,7 @@ describe('executePostToolUseHooks', () => {
         {}
       );
 
-      expect(result.observationalOutput).toHaveLength(0);
+      expect(result.additionalContexts).toHaveLength(0);
     });
   });
 
@@ -129,10 +129,10 @@ describe('executePostToolUseHooks', () => {
         {}
       );
 
-      expect(result.observationalOutput).toHaveLength(3);
-      expect(result.observationalOutput[0]).toContain('hook 1');
-      expect(result.observationalOutput[1]).toContain('hook 2');
-      expect(result.observationalOutput[2]).toContain('hook 3');
+      expect(result.additionalContexts).toHaveLength(3);
+      expect(result.additionalContexts[0]).toContain('hook 1');
+      expect(result.additionalContexts[1]).toContain('hook 2');
+      expect(result.additionalContexts[2]).toContain('hook 3');
     });
   });
 
@@ -186,8 +186,8 @@ describe('executePostToolUseHooks', () => {
         {}
       );
 
-      expect(result.observationalOutput).toHaveLength(1);
-      expect(result.observationalOutput[0]).toBe('plain text output');
+      expect(result.additionalContexts).toHaveLength(1);
+      expect(result.additionalContexts[0]).toBe('plain text output');
     });
   });
 
@@ -226,41 +226,6 @@ describe('executePostToolUseHooks', () => {
     });
   });
 
-  describe('systemMessage collection', () => {
-    it('should collect systemMessage values', async () => {
-      const config: RuntimeConfiguration = {
-        ...baseConfig,
-        hooks: {
-          PostToolUse: [
-            {
-              matcher: '.*',
-              command:
-                'node -e "console.log(JSON.stringify({ systemMessage: \'Warning 1\' }))"',
-            },
-            {
-              matcher: '.*',
-              command:
-                'node -e "console.log(JSON.stringify({ systemMessage: \'Warning 2\' }))"',
-            },
-          ],
-        },
-      };
-
-      const result = await executePostToolUseHooks(
-        config,
-        'test-session',
-        undefined,
-        'test_tool',
-        {},
-        {}
-      );
-
-      expect(result.systemMessages).toHaveLength(2);
-      expect(result.systemMessages[0]).toBe('Warning 1');
-      expect(result.systemMessages[1]).toBe('Warning 2');
-    });
-  });
-
   describe('continue: false handling', () => {
     it('should detect continue: false and stop processing', async () => {
       const config: RuntimeConfiguration = {
@@ -296,8 +261,8 @@ describe('executePostToolUseHooks', () => {
       expect(result.shouldContinue).toBe(false);
       expect(result.stopReason).toBe('Test stop');
       // Should only have output from first two hooks, not third
-      expect(result.observationalOutput).toHaveLength(1);
-      expect(result.observationalOutput[0]).toContain('hook 1');
+      expect(result.additionalContexts).toHaveLength(1);
+      expect(result.additionalContexts[0]).toContain('hook 1');
     });
 
     it('should use default stopReason if not provided', async () => {
@@ -325,63 +290,6 @@ describe('executePostToolUseHooks', () => {
 
       expect(result.shouldContinue).toBe(false);
       expect(result.stopReason).toBe('Stopped by hook');
-    });
-  });
-
-  describe('suppressOutput flag', () => {
-    it('should respect suppressOutput flag', async () => {
-      const config: RuntimeConfiguration = {
-        ...baseConfig,
-        hooks: {
-          PostToolUse: [
-            {
-              matcher: '.*',
-              command:
-                "node -e \"console.log(JSON.stringify({ suppressOutput: true, hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: 'context' } }))\"",
-            },
-          ],
-        },
-      };
-
-      const result = await executePostToolUseHooks(
-        config,
-        'test-session',
-        undefined,
-        'test_tool',
-        {},
-        {}
-      );
-
-      // Should have additionalContext but no observational output
-      expect(result.additionalContexts).toHaveLength(1);
-      expect(result.observationalOutput).toHaveLength(0);
-    });
-
-    it('should include output when suppressOutput is false', async () => {
-      const config: RuntimeConfiguration = {
-        ...baseConfig,
-        hooks: {
-          PostToolUse: [
-            {
-              matcher: '.*',
-              command:
-                "node -e \"console.log(JSON.stringify({ suppressOutput: false, hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: 'context' } }))\"",
-            },
-          ],
-        },
-      };
-
-      const result = await executePostToolUseHooks(
-        config,
-        'test-session',
-        undefined,
-        'test_tool',
-        {},
-        {}
-      );
-
-      expect(result.additionalContexts).toHaveLength(1);
-      expect(result.observationalOutput).toHaveLength(1);
     });
   });
 
@@ -417,9 +325,9 @@ describe('executePostToolUseHooks', () => {
       );
 
       // Should have output from hooks 1 and 3
-      expect(result.observationalOutput).toHaveLength(2);
-      expect(result.observationalOutput[0]).toContain('hook 1');
-      expect(result.observationalOutput[1]).toContain('hook 3');
+      expect(result.additionalContexts).toHaveLength(2);
+      expect(result.additionalContexts[0]).toContain('hook 1');
+      expect(result.additionalContexts[1]).toContain('hook 3');
     });
 
     it('should handle command not found errors', async () => {
@@ -449,8 +357,8 @@ describe('executePostToolUseHooks', () => {
       );
 
       // Should continue and execute second hook
-      expect(result.observationalOutput).toHaveLength(1);
-      expect(result.observationalOutput[0]).toContain('after error');
+      expect(result.additionalContexts).toHaveLength(1);
+      expect(result.additionalContexts[0]).toContain('after error');
     });
   });
 
@@ -478,10 +386,10 @@ describe('executePostToolUseHooks', () => {
         { result: 'success' }
       );
 
-      expect(result.observationalOutput).toHaveLength(1);
-      expect(result.observationalOutput[0]).toContain('test_tool');
-      expect(result.observationalOutput[0]).toContain('{"arg":"value"}');
-      expect(result.observationalOutput[0]).toContain('{"result":"success"}');
+      expect(result.additionalContexts).toHaveLength(1);
+      expect(result.additionalContexts[0]).toContain('test_tool');
+      expect(result.additionalContexts[0]).toContain('{"arg":"value"}');
+      expect(result.additionalContexts[0]).toContain('{"result":"success"}');
     });
   });
 
@@ -503,8 +411,7 @@ describe('executePostToolUseHooks', () => {
 
       expect(result.shouldContinue).toBe(true);
       expect(result.additionalContexts).toHaveLength(0);
-      expect(result.systemMessages).toHaveLength(0);
-      expect(result.observationalOutput).toHaveLength(0);
+      expect(result.additionalContexts).toHaveLength(0);
     });
 
     it('should return default result when no hooks match', async () => {
@@ -531,8 +438,7 @@ describe('executePostToolUseHooks', () => {
 
       expect(result.shouldContinue).toBe(true);
       expect(result.additionalContexts).toHaveLength(0);
-      expect(result.systemMessages).toHaveLength(0);
-      expect(result.observationalOutput).toHaveLength(0);
+      expect(result.additionalContexts).toHaveLength(0);
     });
   });
 });
