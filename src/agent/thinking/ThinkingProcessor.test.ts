@@ -3,9 +3,8 @@
  * Tests real behavior with actual message inputs and provider models
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { ThinkingProcessor } from './ThinkingProcessor.js';
-import type { LanguageModelV2 } from '@ai-sdk/provider';
 
 // Mock only the constants to control max budgets in tests
 vi.mock('../../constants.js', () => ({
@@ -20,48 +19,11 @@ vi.mock('../../constants.js', () => ({
 }));
 
 describe('ThinkingProcessor Module', () => {
-  let anthropicModel: LanguageModelV2;
-  let openaiModel: LanguageModelV2;
-  let googleModel: LanguageModelV2;
-  let unknownModel: LanguageModelV2;
-
-  beforeEach(() => {
-    anthropicModel = {
-      modelId: 'claude-3-5-sonnet-20241022',
-      provider: {
-        toString: vi.fn().mockReturnValue('anthropic'),
-      },
-    } as unknown as LanguageModelV2;
-
-    openaiModel = {
-      modelId: 'gpt-4o',
-      provider: {
-        toString: vi.fn().mockReturnValue('openai'),
-      },
-    } as unknown as LanguageModelV2;
-
-    googleModel = {
-      modelId: 'gemini-1.5-pro',
-      provider: {
-        toString: vi.fn().mockReturnValue('google'),
-      },
-    } as unknown as LanguageModelV2;
-
-    unknownModel = {
-      modelId: 'unknown-model',
-      provider: {
-        toString: vi.fn().mockReturnValue('unknown-provider'),
-      },
-    } as unknown as LanguageModelV2;
-
-    vi.clearAllMocks();
-  });
-
   describe('createThinkingProviderOptions', () => {
     describe('no thinking triggers', () => {
       it('should return empty options for message without thinking keywords', () => {
         const result = ThinkingProcessor.createThinkingProviderOptions(
-          anthropicModel,
+          'anthropic',
           'What is the capital of France?'
         );
 
@@ -73,7 +35,7 @@ describe('ThinkingProcessor Module', () => {
 
       it('should return interleaved headers for anthropic with "step by step"', () => {
         const result = ThinkingProcessor.createThinkingProviderOptions(
-          anthropicModel,
+          'anthropic',
           'Explain this step by step'
         );
 
@@ -85,7 +47,7 @@ describe('ThinkingProcessor Module', () => {
 
       it('should ignore interleaved for non-anthropic providers', () => {
         const result = ThinkingProcessor.createThinkingProviderOptions(
-          googleModel,
+          'google',
           'Explain this step by step'
         );
 
@@ -99,7 +61,7 @@ describe('ThinkingProcessor Module', () => {
     describe('anthropic provider', () => {
       it('should handle low thinking level with "think"', () => {
         const result = ThinkingProcessor.createThinkingProviderOptions(
-          anthropicModel,
+          'anthropic',
           'Can you think about this problem?'
         );
 
@@ -118,7 +80,7 @@ describe('ThinkingProcessor Module', () => {
 
       it('should handle medium thinking level with "think deeply"', () => {
         const result = ThinkingProcessor.createThinkingProviderOptions(
-          anthropicModel,
+          'anthropic',
           'Please think deeply about this issue'
         );
 
@@ -137,7 +99,7 @@ describe('ThinkingProcessor Module', () => {
 
       it('should handle high thinking level with "ultrathink"', () => {
         const result = ThinkingProcessor.createThinkingProviderOptions(
-          anthropicModel,
+          'anthropic',
           'I need you to ultrathink this complex problem'
         );
 
@@ -156,7 +118,7 @@ describe('ThinkingProcessor Module', () => {
 
       it('should cap budget at anthropic max and include interleaved headers', () => {
         const result = ThinkingProcessor.createThinkingProviderOptions(
-          anthropicModel,
+          'anthropic',
           'Please think harder about this step by step'
         );
 
@@ -177,7 +139,7 @@ describe('ThinkingProcessor Module', () => {
     describe('openai provider', () => {
       it('should handle low reasoning effort', () => {
         const result = ThinkingProcessor.createThinkingProviderOptions(
-          openaiModel,
+          'openai',
           'Can you think about this?'
         );
 
@@ -193,7 +155,7 @@ describe('ThinkingProcessor Module', () => {
 
       it('should handle medium reasoning effort', () => {
         const result = ThinkingProcessor.createThinkingProviderOptions(
-          openaiModel,
+          'openai',
           'Please think deeply about this'
         );
 
@@ -209,7 +171,7 @@ describe('ThinkingProcessor Module', () => {
 
       it('should handle high reasoning effort and ignore interleaved', () => {
         const result = ThinkingProcessor.createThinkingProviderOptions(
-          openaiModel,
+          'openai',
           'Think harder about this step by step'
         );
 
@@ -227,7 +189,7 @@ describe('ThinkingProcessor Module', () => {
     describe('google provider', () => {
       it('should handle low thinking budget', () => {
         const result = ThinkingProcessor.createThinkingProviderOptions(
-          googleModel,
+          'google',
           'Please think about this problem'
         );
 
@@ -243,7 +205,7 @@ describe('ThinkingProcessor Module', () => {
 
       it('should handle medium thinking budget', () => {
         const result = ThinkingProcessor.createThinkingProviderOptions(
-          googleModel,
+          'google',
           'Can you megathink this issue?'
         );
 
@@ -259,7 +221,7 @@ describe('ThinkingProcessor Module', () => {
 
       it('should cap at google max budget for high level', () => {
         const result = ThinkingProcessor.createThinkingProviderOptions(
-          googleModel,
+          'google',
           'Please think super hard about this'
         );
 
@@ -277,7 +239,7 @@ describe('ThinkingProcessor Module', () => {
     describe('edge cases', () => {
       it('should handle no message provided', () => {
         const result =
-          ThinkingProcessor.createThinkingProviderOptions(anthropicModel);
+          ThinkingProcessor.createThinkingProviderOptions('anthropic');
 
         expect(result).toEqual({
           providerOptions: {},
@@ -285,40 +247,26 @@ describe('ThinkingProcessor Module', () => {
         });
       });
 
-      it('should handle unknown provider (defaults to anthropic)', () => {
+      it('should handle unknown provider (returns empty options)', () => {
         const result = ThinkingProcessor.createThinkingProviderOptions(
-          unknownModel,
+          'unknown-provider',
           'Please think harder about this'
         );
 
         expect(result).toEqual({
-          providerOptions: {
-            anthropic: {
-              thinking: {
-                type: 'enabled',
-                budgetTokens: 31999, // High level from "think harder"
-              },
-            },
-          },
+          providerOptions: {},
           headers: {},
         });
       });
 
-      it('should handle null model gracefully (defaults to anthropic)', () => {
+      it('should handle empty string provider gracefully (returns empty options)', () => {
         const result = ThinkingProcessor.createThinkingProviderOptions(
-          null as unknown as LanguageModelV2,
+          '',
           'think about this'
         );
 
         expect(result).toEqual({
-          providerOptions: {
-            anthropic: {
-              thinking: {
-                type: 'enabled',
-                budgetTokens: 4000, // Low level from "think"
-              },
-            },
-          },
+          providerOptions: {},
           headers: {},
         });
       });

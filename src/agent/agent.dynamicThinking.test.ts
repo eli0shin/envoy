@@ -29,8 +29,7 @@ describe('Agent Dynamic Thinking Integration', () => {
     });
 
     it('should return no thinking options for messages without keywords', () => {
-      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModelV2;
-      const result = createThinkingProviderOptions(model, 'Hello world');
+      const result = createThinkingProviderOptions('anthropic', 'Hello world');
 
       expect(result).toEqual({
         providerOptions: {},
@@ -39,9 +38,8 @@ describe('Agent Dynamic Thinking Integration', () => {
     });
 
     it('should enable low thinking for "think" keyword', () => {
-      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModelV2;
       const result = createThinkingProviderOptions(
-        model,
+        'anthropic',
         'Please think about this problem'
       );
 
@@ -59,9 +57,8 @@ describe('Agent Dynamic Thinking Integration', () => {
     });
 
     it('should enable medium thinking for "megathink" keyword', () => {
-      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModelV2;
       const result = createThinkingProviderOptions(
-        model,
+        'anthropic',
         'Megathink about this complex problem'
       );
 
@@ -79,9 +76,8 @@ describe('Agent Dynamic Thinking Integration', () => {
     });
 
     it('should enable high thinking for "think harder" keyword', () => {
-      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModelV2;
       const result = createThinkingProviderOptions(
-        model,
+        'anthropic',
         'Think harder about this'
       );
 
@@ -99,9 +95,8 @@ describe('Agent Dynamic Thinking Integration', () => {
     });
 
     it('should enable high thinking for "ultrathink" keyword', () => {
-      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModelV2;
       const result = createThinkingProviderOptions(
-        model,
+        'anthropic',
         'Ultrathink this problem'
       );
 
@@ -119,9 +114,8 @@ describe('Agent Dynamic Thinking Integration', () => {
     });
 
     it('should enable interleaved header for "step by step" without thinking', () => {
-      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModelV2;
       const result = createThinkingProviderOptions(
-        model,
+        'anthropic',
         'Solve this step by step'
       );
 
@@ -132,9 +126,8 @@ describe('Agent Dynamic Thinking Integration', () => {
     });
 
     it('should enable both thinking and interleaved for combined keywords', () => {
-      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModelV2;
       const result = createThinkingProviderOptions(
-        model,
+        'anthropic',
         'Megathink step by step'
       );
 
@@ -152,10 +145,9 @@ describe('Agent Dynamic Thinking Integration', () => {
     });
 
     it('should respect budget caps for Anthropic', () => {
-      const model = { modelId: 'claude-3-5-sonnet-20241022' } as LanguageModelV2;
       // Using think harder which requests 32k tokens, but should be capped at 24576
       const result = createThinkingProviderOptions(
-        model,
+        'anthropic',
         'Think harder about this'
       );
 
@@ -170,10 +162,8 @@ describe('Agent Dynamic Thinking Integration', () => {
 
     describe('OpenAI provider', () => {
       it('should map thinking levels to reasoning efforts', () => {
-        const model = { modelId: 'gpt-4' } as LanguageModelV2;
-
         const lowResult = createThinkingProviderOptions(
-          model,
+          'openai',
           'think about this'
         );
         expect(lowResult).toEqual({
@@ -184,7 +174,7 @@ describe('Agent Dynamic Thinking Integration', () => {
         });
 
         const mediumResult = createThinkingProviderOptions(
-          model,
+          'openai',
           'megathink about this'
         );
         expect(mediumResult).toEqual({
@@ -195,7 +185,7 @@ describe('Agent Dynamic Thinking Integration', () => {
         });
 
         const highResult = createThinkingProviderOptions(
-          model,
+          'openai',
           'think harder about this'
         );
         expect(highResult).toEqual({
@@ -207,9 +197,8 @@ describe('Agent Dynamic Thinking Integration', () => {
       });
 
       it('should not set interleaved headers for OpenAI', () => {
-        const model = { modelId: 'gpt-4' } as LanguageModelV2;
         const result = createThinkingProviderOptions(
-          model,
+          'openai',
           'think step by step'
         );
 
@@ -224,10 +213,8 @@ describe('Agent Dynamic Thinking Integration', () => {
 
     describe('Google provider', () => {
       it('should map thinking levels to budgets', () => {
-        const model = { modelId: 'gemini-pro' } as LanguageModelV2;
-
         const lowResult = createThinkingProviderOptions(
-          model,
+          'google',
           'think about this'
         );
         expect(lowResult).toEqual({
@@ -238,7 +225,7 @@ describe('Agent Dynamic Thinking Integration', () => {
         });
 
         const mediumResult = createThinkingProviderOptions(
-          model,
+          'google',
           'megathink about this'
         );
         expect(mediumResult).toEqual({
@@ -249,7 +236,7 @@ describe('Agent Dynamic Thinking Integration', () => {
         });
 
         const highResult = createThinkingProviderOptions(
-          model,
+          'google',
           'think harder about this'
         );
         expect(highResult).toEqual({
@@ -261,9 +248,8 @@ describe('Agent Dynamic Thinking Integration', () => {
       });
 
       it('should not set interleaved headers for Google', () => {
-        const model = { modelId: 'gemini-pro' } as LanguageModelV2;
         const result = createThinkingProviderOptions(
-          model,
+          'google',
           'think step by step'
         );
 
@@ -291,7 +277,14 @@ describe('Agent Dynamic Thinking Integration', () => {
         json: false,
       } as RuntimeConfiguration;
 
-      await runAgent('Just a regular message', mockConfig, mockSession, false, undefined, AbortSignal.timeout(30000));
+      await runAgent(
+        'Just a regular message',
+        mockConfig,
+        mockSession,
+        false,
+        undefined,
+        AbortSignal.timeout(30000)
+      );
 
       expect(vi.mocked(generateText)).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -309,7 +302,14 @@ describe('Agent Dynamic Thinking Integration', () => {
         json: false,
       } as RuntimeConfiguration;
 
-      await runAgent('Think about this problem', mockConfig, mockSession, false, undefined, AbortSignal.timeout(30000));
+      await runAgent(
+        'Think about this problem',
+        mockConfig,
+        mockSession,
+        false,
+        undefined,
+        AbortSignal.timeout(30000)
+      );
 
       expect(vi.mocked(generateText)).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -334,7 +334,14 @@ describe('Agent Dynamic Thinking Integration', () => {
         json: false,
       } as RuntimeConfiguration;
 
-      await runAgent('Solve this step by step', mockConfig, mockSession, false, undefined, AbortSignal.timeout(30000));
+      await runAgent(
+        'Solve this step by step',
+        mockConfig,
+        mockSession,
+        false,
+        undefined,
+        AbortSignal.timeout(30000)
+      );
 
       expect(vi.mocked(generateText)).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -358,7 +365,14 @@ describe('Agent Dynamic Thinking Integration', () => {
         { role: 'user', content: 'Think harder about this complex problem' }, // This should trigger high thinking
       ];
 
-      await runAgent(conversationMessages, mockConfig, mockSession, false, undefined, AbortSignal.timeout(30000));
+      await runAgent(
+        conversationMessages,
+        mockConfig,
+        mockSession,
+        false,
+        undefined,
+        AbortSignal.timeout(30000)
+      );
 
       // Should use the last user message ("Think harder...") for thinking analysis
       expect(vi.mocked(generateText)).toHaveBeenCalledWith(

@@ -3,10 +3,8 @@
  * Handles provider-specific thinking configuration and options
  */
 
-import type { LanguageModelV2 } from '@ai-sdk/provider';
 import { THINKING_CONFIG } from '../../constants.js';
 import { analyzeMessageForThinking } from '../../thinking/dynamicThinkingAnalyzer.js';
-import { ContentExtractor } from '../utils/ContentExtractor.js';
 
 export type ThinkingProviderResult = {
   providerOptions: Record<string, unknown>;
@@ -15,14 +13,12 @@ export type ThinkingProviderResult = {
 
 export class ThinkingProcessor {
   /**
-   * Create provider options for thinking based on model and message analysis
+   * Create provider options for thinking based on provider name and message analysis
    */
   static createThinkingProviderOptions(
-    model: LanguageModelV2,
+    providerName: string,
     message?: string
   ): ThinkingProviderResult {
-    const providerType = ContentExtractor.getProviderType(model);
-
     // Analyze message for thinking requirements
     const analysis =
       message !== undefined ?
@@ -37,7 +33,7 @@ export class ThinkingProcessor {
       };
     }
 
-    switch (providerType) {
+    switch (providerName) {
       case 'anthropic':
         return {
           providerOptions: {

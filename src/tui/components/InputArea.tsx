@@ -82,7 +82,10 @@ export function InputArea({
       onChangeRef.current(newValue);
 
       // Move cursor to end of pasted text
-      setCursorPosition(currentCursor + pastedText.length);
+      // Use setTimeout to ensure the value update completes before setting cursor
+      setTimeout(() => {
+        setCursorPosition(currentCursor + pastedText.length);
+      }, 0);
     };
 
     renderer.keyInput.on('paste', handlePaste);
@@ -95,7 +98,10 @@ export function InputArea({
   const handleCommandSelect = useCallback(
     (command: string) => {
       onChange(command);
-      setCursorPosition(command.length);
+      // Use setTimeout to ensure the value update completes before setting cursor
+      setTimeout(() => {
+        setCursorPosition(command.length);
+      }, 0);
     },
     [onChange]
   );

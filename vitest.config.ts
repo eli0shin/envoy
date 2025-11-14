@@ -1,6 +1,12 @@
 import { defineConfig } from 'vitest/config';
+import { resolve } from 'path';
 
 export default defineConfig({
+  resolve: {
+    alias: {
+      bun: resolve(__dirname, './src/test/mocks/bun-mock.ts'),
+    },
+  },
   test: {
     // Set Node.js as the test environment (equivalent to Jest's testEnvironment: 'node')
     environment: 'node',

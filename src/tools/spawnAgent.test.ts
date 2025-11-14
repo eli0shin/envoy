@@ -20,7 +20,10 @@ vi.mock('../agentSession.js', () => ({
 }));
 
 import { runAgent } from '../agent/index.js';
-import { initializeAgentSession, cleanupAgentSession } from '../agentSession.js';
+import {
+  initializeAgentSession,
+  cleanupAgentSession,
+} from '../agentSession.js';
 
 describe('spawn agent tool', () => {
   let tools: Record<string, Tool>;
@@ -50,6 +53,9 @@ describe('spawn agent tool', () => {
         method: 'api-key',
         source: 'environment',
         details: {},
+      },
+      provider: {
+        name: 'anthropic',
       },
     });
 
@@ -104,7 +110,6 @@ describe('spawn agent tool', () => {
       expect(configArg.agent.systemPrompt).toBeUndefined();
     });
 
-
     it('should handle errors gracefully', async () => {
       vi.mocked(runAgent).mockRejectedValue(new Error('Test error'));
 
@@ -152,7 +157,10 @@ describe('spawn agent tool', () => {
     });
 
     it('should NOT have MCP metadata', () => {
-      const tool = tools.spawn_agent as Tool & { serverName?: string; toolName?: string };
+      const tool = tools.spawn_agent as Tool & {
+        serverName?: string;
+        toolName?: string;
+      };
       expect(tool.serverName).toBeUndefined();
       expect(tool.toolName).toBeUndefined();
     });

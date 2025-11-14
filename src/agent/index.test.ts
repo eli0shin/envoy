@@ -186,10 +186,7 @@ vi.mock('../agentSession.js', () => ({
 import { generateText } from 'ai';
 import { createMockGenerateTextResult } from '../test/helpers/createMocks.js';
 import { openai } from '@ai-sdk/openai';
-import {
-  loadMCPTools,
-  loadMCPServersWithClients,
-} from '../mcp/loader.js';
+import { loadMCPTools, loadMCPServersWithClients } from '../mcp/loader.js';
 
 const mockGenerateText = generateText as ReturnType<typeof vi.fn>;
 const mockOpenAI = openai as unknown as ReturnType<typeof vi.fn>;
@@ -223,6 +220,10 @@ function createMockAgentSession(): AgentSession {
         envVarName: 'OPENROUTER_API_KEY',
       },
     },
+    provider: {
+      name: 'openrouter',
+      model: 'mock-model',
+    },
   };
 }
 
@@ -235,7 +236,14 @@ async function runAgentWithMockSession(
   try {
     // First call initializeAgentSession to trigger mocks
     const session = await initializeAgentSession(config);
-    return await runAgent(message, config, session, isInteractive, undefined, AbortSignal.timeout(30000));
+    return await runAgent(
+      message,
+      config,
+      session,
+      isInteractive,
+      undefined,
+      AbortSignal.timeout(30000)
+    );
   } catch (error) {
     // If session initialization fails, return error result
     const errorMessage =

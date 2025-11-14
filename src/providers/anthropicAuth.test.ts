@@ -22,8 +22,8 @@ vi.mock('../auth/index.js', () => ({
 
 describe('createAnthropicAuthFetch', () => {
   beforeEach(() => {
-    mockFetch.mockClear();
-    mockFetch.mockResolvedValue(createMockResponse({}));
+    vi.mocked(mockFetch).mockClear();
+    vi.mocked(mockFetch).mockResolvedValue(createMockResponse({}));
     vi.clearAllMocks();
   });
 
@@ -45,8 +45,8 @@ describe('createAnthropicAuthFetch', () => {
         })
       );
 
-      const [, options] = mockFetch.mock.calls[0];
-      const headers = new Headers(options.headers);
+      const [, options] = vi.mocked(mockFetch).mock.calls[0];
+      const headers = new Headers(options!.headers);
       expect(headers.get('x-api-key')).toBe('test-api-key');
       expect(headers.get('Authorization')).toBeNull();
     });
@@ -64,8 +64,8 @@ describe('createAnthropicAuthFetch', () => {
         },
       });
 
-      const [, options] = mockFetch.mock.calls[0];
-      const headers = new Headers(options.headers);
+      const [, options] = vi.mocked(mockFetch).mock.calls[0];
+      const headers = new Headers(options!.headers);
       expect(headers.get('x-api-key')).toBe('test-api-key');
       expect(headers.get('Content-Type')).toBe('application/json');
       expect(headers.get('User-Agent')).toBe('test-agent');
@@ -81,8 +81,8 @@ describe('createAnthropicAuthFetch', () => {
 
       await authFetch('https://api.anthropic.com/v1/messages');
 
-      const [, options] = mockFetch.mock.calls[0];
-      const headers = new Headers(options.headers);
+      const [, options] = vi.mocked(mockFetch).mock.calls[0];
+      const headers = new Headers(options!.headers);
       expect(headers.get('Authorization')).toBe('Bearer test-api-key');
       expect(headers.get('x-api-key')).toBeNull();
     });
@@ -99,8 +99,8 @@ describe('createAnthropicAuthFetch', () => {
         },
       });
 
-      const [, options] = mockFetch.mock.calls[0];
-      const headers = new Headers(options.headers);
+      const [, options] = vi.mocked(mockFetch).mock.calls[0];
+      const headers = new Headers(options!.headers);
       expect(headers.get('Authorization')).toBe('Bearer test-api-key');
       expect(headers.get('Content-Type')).toBe('application/json');
     });
@@ -119,8 +119,8 @@ describe('createAnthropicAuthFetch', () => {
 
       await authFetch('https://api.anthropic.com/v1/messages');
 
-      const [, options] = mockFetch.mock.calls[0];
-      const headers = new Headers(options.headers);
+      const [, options] = vi.mocked(mockFetch).mock.calls[0];
+      const headers = new Headers(options!.headers);
       expect(headers.get('x-api-key')).toBe('test-api-key');
       expect(headers.get('X-Custom-Header')).toBe('custom-value');
       expect(headers.get('X-Request-ID')).toBe('request-123');
@@ -137,8 +137,8 @@ describe('createAnthropicAuthFetch', () => {
 
       await authFetch('https://api.anthropic.com/v1/messages');
 
-      const [, options] = mockFetch.mock.calls[0];
-      const headers = new Headers(options.headers);
+      const [, options] = vi.mocked(mockFetch).mock.calls[0];
+      const headers = new Headers(options!.headers);
       expect(headers.get('Authorization')).toBe('Bearer test-api-key');
       expect(headers.get('X-Proxy-Token')).toBe('proxy-token');
       expect(headers.get('x-api-key')).toBeNull();
@@ -159,8 +159,8 @@ describe('createAnthropicAuthFetch', () => {
         },
       });
 
-      const [, options] = mockFetch.mock.calls[0];
-      const headers = new Headers(options.headers);
+      const [, options] = vi.mocked(mockFetch).mock.calls[0];
+      const headers = new Headers(options!.headers);
       expect(headers.get('Content-Type')).toBe('application/custom');
     });
   });
@@ -175,8 +175,8 @@ describe('createAnthropicAuthFetch', () => {
 
       await authFetch('https://api.anthropic.com/v1/messages');
 
-      const [, options] = mockFetch.mock.calls[0];
-      const headers = new Headers(options.headers);
+      const [, options] = vi.mocked(mockFetch).mock.calls[0];
+      const headers = new Headers(options!.headers);
       expect(headers.get('x-api-key')).toBeNull();
       expect(headers.get('Authorization')).toBeNull();
     });
@@ -190,8 +190,8 @@ describe('createAnthropicAuthFetch', () => {
 
       await authFetch('https://api.anthropic.com/v1/messages');
 
-      const [, options] = mockFetch.mock.calls[0];
-      const headers = new Headers(options.headers);
+      const [, options] = vi.mocked(mockFetch).mock.calls[0];
+      const headers = new Headers(options!.headers);
       expect(headers.get('Authorization')).toBeNull();
       expect(headers.get('x-api-key')).toBeNull();
     });
@@ -208,8 +208,8 @@ describe('createAnthropicAuthFetch', () => {
 
       await authFetch('https://api.anthropic.com/v1/messages');
 
-      const [, options] = mockFetch.mock.calls[0];
-      const headers = new Headers(options.headers);
+      const [, options] = vi.mocked(mockFetch).mock.calls[0];
+      const headers = new Headers(options!.headers);
       expect(headers.get('x-api-key')).toBeNull();
       expect(headers.get('Authorization')).toBeNull();
       expect(headers.get('X-Custom-Auth')).toBe('custom-auth-token');
@@ -290,8 +290,8 @@ describe('createAnthropicAuthFetch', () => {
 
       await authFetch('https://api.anthropic.com/v1/messages');
 
-      const [, options] = mockFetch.mock.calls[0];
-      const headers = new Headers(options.headers);
+      const [, options] = vi.mocked(mockFetch).mock.calls[0];
+      const headers = new Headers(options!.headers);
       expect(headers.get('authorization')).toBe('Bearer oauth-access-token');
       expect(headers.get('Anthropic-Beta')).toBe(
         'claude-code-20250219,oauth-2025-04-20,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14'
@@ -310,8 +310,8 @@ describe('createAnthropicAuthFetch', () => {
 
       await authFetch('https://api.anthropic.com/v1/messages');
 
-      const [, options] = mockFetch.mock.calls[0];
-      const headers = new Headers(options.headers);
+      const [, options] = vi.mocked(mockFetch).mock.calls[0];
+      const headers = new Headers(options!.headers);
       expect(headers.get('x-api-key')).toBe('fallback-api-key');
       expect(headers.get('authorization')).toBeNull();
     });
@@ -327,8 +327,8 @@ describe('createAnthropicAuthFetch', () => {
 
       await authFetch('https://api.anthropic.com/v1/messages');
 
-      const [, options] = mockFetch.mock.calls[0];
-      const headers = new Headers(options.headers);
+      const [, options] = vi.mocked(mockFetch).mock.calls[0];
+      const headers = new Headers(options!.headers);
       expect(headers.get('x-api-key')).toBe('fallback-api-key');
       expect(headers.get('authorization')).toBeNull();
     });
@@ -347,8 +347,8 @@ describe('createAnthropicAuthFetch', () => {
         },
       });
 
-      const [, options] = mockFetch.mock.calls[0];
-      const headers = new Headers(options.headers);
+      const [, options] = vi.mocked(mockFetch).mock.calls[0];
+      const headers = new Headers(options!.headers);
       expect(headers.get('authorization')).toBe('Bearer oauth-token');
       // OAuth should merge the original anthropic-beta header with OAuth headers
       expect(headers.get('anthropic-beta')).toBe(
@@ -389,7 +389,7 @@ describe('createAnthropicAuthFetch', () => {
   describe('error handling', () => {
     it('should propagate fetch errors', async () => {
       const error = new Error('Network error');
-      mockFetch.mockRejectedValue(error);
+      vi.mocked(mockFetch).mockRejectedValue(error);
 
       const authFetch = createAnthropicAuthFetch({
         apiKey: 'test-api-key',
@@ -403,7 +403,7 @@ describe('createAnthropicAuthFetch', () => {
 
     it('should return responses as-is', async () => {
       const mockResponse = createMockResponse({ result: 'success' });
-      mockFetch.mockResolvedValue(mockResponse);
+      vi.mocked(mockFetch).mockResolvedValue(mockResponse);
 
       const authFetch = createAnthropicAuthFetch({
         apiKey: 'test-api-key',

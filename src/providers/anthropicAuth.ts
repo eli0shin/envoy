@@ -6,11 +6,6 @@
 import { AnthropicOAuth } from '../auth/index.js';
 import { logger } from '../logger.js';
 
-type FetchFunction = (
-  input: string | URL | Request,
-  init?: RequestInit
-) => Promise<Response>;
-
 type AuthOptions = {
   apiKey?: string;
   authType: 'x-api-key' | 'bearer' | 'oauth';
@@ -26,10 +21,13 @@ type AuthOptions = {
  * Creates a custom fetch function that handles different authentication methods
  * for the Anthropic API, including Bearer tokens, OAuth, and custom headers
  */
-export function createAnthropicAuthFetch(options: AuthOptions): FetchFunction {
+export function createAnthropicAuthFetch(options: AuthOptions): typeof fetch {
   const baseFetch = options.baseFetch || fetch;
 
-  return async (input: string | URL | Request, init: RequestInit = {}) => {
+  async function anthropicFetch(
+    input: string | URL | Request,
+    init: RequestInit = {}
+  ) {
     // Preserve existing headers from AI SDK (including anthropic-version)
     const headers: Record<string, string> = {
       ...(init.headers as Record<string, string>),
@@ -170,24 +168,8 @@ export function createAnthropicAuthFetch(options: AuthOptions): FetchFunction {
       ...init,
       headers,
     });
-  };
-}
+  }
+  anthropicFetch.preconnect = fetch.preconnect;
 
-// REAL headers that we want on the request
-// {
-//     "Anthropic-Beta": [
-//       "claude-code-20250219,oauth-2025-04-20,interleaved-thinking-2025-05-14,fine-grained-tool-streaming-2025-05-14"
-//     ],
-//     "Anthropic-Dangerous-Direct-Browser-Access": [
-//       "true"
-//     ],
-//     "Anthropic-Version": [
-//       "2023-06-01"
-//     ],
-//     "User-Agent": [
-//       "claude-cli/1.0.119 (external, cli)"
-//     ],
-//     "X-App": [
-//       "cli"
-//     ],
-//   }
+  return anthropicFetch;
+}

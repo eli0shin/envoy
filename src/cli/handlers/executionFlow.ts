@@ -38,6 +38,7 @@ import {
   getProjectConversationDirectory,
   getProjectConversationFile,
 } from '../../logger.js';
+import { executeSessionStartHooks } from '../../hooks/sessionStart.js';
 import { ConversationPersistence } from '../../persistence/ConversationPersistence.js';
 import { ProcessManager } from '../../mcp/processManager.js';
 import type { CLIOptions, MCPClientWrapper } from '../../types/index.js';
@@ -527,6 +528,31 @@ export async function main(): Promise<void> {
           `Error during resource processing: ${error instanceof Error ? error.message : String(error)}`
         );
       }
+    }
+
+    // Execute SessionStart hooks
+    const projectIdentifier = ConversationPersistence.getProjectIdentifier(
+      process.cwd()
+    );
+    const conversationPath =
+      agentSession.conversationPersistence ?
+        getProjectConversationFile(
+          projectIdentifier,
+          agentSession.conversationPersistence.getSessionId()
+        )
+      : undefined;
+
+    const hookOutput = await executeSessionStartHooks(
+      configResult.config,
+      agentSession.conversationPersistence?.getSessionId() || 'no-session',
+      conversationPath,
+      'startup'
+    );
+
+    // Prepend hook output to message if present
+    if (hookOutput) {
+      enhancedMessage = `${hookOutput}\n\n${enhancedMessage}`;
+      logger.debug('Added SessionStart hook output to message');
     }
 
     logger.info('Starting agent execution', {

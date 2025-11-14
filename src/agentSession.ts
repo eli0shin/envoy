@@ -15,8 +15,13 @@ import { createCertificateAwareFetch } from './providers/certificateAwareFetch.j
 import { AnthropicOAuth } from './auth/index.js';
 import { loadMCPServersWithClients } from './mcp/loader.js';
 import { buildSystemPrompt } from './constants.js';
-import { MCPClientWrapper, WrappedTool } from './types/index.js';
+import { MCPClientWrapper } from './types/index.js';
 import { RuntimeConfiguration } from './config/types.js';
+import type {
+  ProviderConfig,
+  AnthropicProviderConfig,
+  GoogleProviderConfig,
+} from './config/types.js';
 import { logger } from './logger.js';
 import {
   getMCPServersFromConfig,
@@ -28,6 +33,17 @@ import { createTodoTools } from './tools/todo.js';
 import { createSpawnAgentTool } from './tools/spawnAgent.js';
 
 /**
+ * Session provider configuration with name
+ */
+export type SessionProvider = (
+  | ProviderConfig
+  | AnthropicProviderConfig
+  | GoogleProviderConfig
+) & {
+  name: string;
+};
+
+/**
  * Agent session containing all pre-initialized setup state
  */
 export type AgentSession = {
@@ -37,14 +53,17 @@ export type AgentSession = {
   mcpClients: MCPClientWrapper[];
   authInfo: AuthenticationInfo;
   conversationPersistence?: ConversationPersistence;
+  provider: SessionProvider;
 };
 
 /**
  * Helper function to create model provider based on configuration
  */
-async function createModelProvider(
-  config: RuntimeConfiguration
-): Promise<{ model: LanguageModelV2; authInfo: AuthenticationInfo }> {
+async function createModelProvider(config: RuntimeConfiguration): Promise<{
+  model: LanguageModelV2;
+  authInfo: AuthenticationInfo;
+  provider: SessionProvider;
+}> {
   const defaultProvider = config.providers.default;
   const providerConfig =
     config.providers[defaultProvider as keyof typeof config.providers];
@@ -90,7 +109,14 @@ async function createModelProvider(
       const openaiProvider = createOpenAI({
         fetch: certificateAwareFetch,
       });
-      return { model: openaiProvider(model), authInfo: openaiAuthInfo };
+      return {
+        model: openaiProvider(model),
+        authInfo: openaiAuthInfo,
+        provider: {
+          name: defaultProvider,
+          ...(typeof providerConfig === 'object' ? providerConfig : {}),
+        },
+      };
     }
     case 'openrouter': {
       logger.debug('Creating OpenRouter provider', {
@@ -108,7 +134,14 @@ async function createModelProvider(
           envVarName: 'OPENROUTER_API_KEY',
         },
       };
-      return { model: openrouter.chat(model), authInfo: openrouterAuthInfo };
+      return {
+        model: openrouter.chat(model),
+        authInfo: openrouterAuthInfo,
+        provider: {
+          name: defaultProvider,
+          ...(typeof providerConfig === 'object' ? providerConfig : {}),
+        },
+      };
     }
     case 'anthropic': {
       const anthropicConfig = config.providers.anthropic;
@@ -191,7 +224,14 @@ async function createModelProvider(
         authInfo,
       });
 
-      return { model: anthropicProvider(model), authInfo };
+      return {
+        model: anthropicProvider(model),
+        authInfo,
+        provider: {
+          name: defaultProvider,
+          ...(anthropicConfig || {}),
+        },
+      };
     }
     case 'google': {
       const googleConfig = config.providers.google;
@@ -252,7 +292,14 @@ async function createModelProvider(
         authInfo: googleAuthInfo,
       });
 
-      return { model: googleProvider(model), authInfo: googleAuthInfo };
+      return {
+        model: googleProvider(model),
+        authInfo: googleAuthInfo,
+        provider: {
+          name: defaultProvider,
+          ...(googleConfig || {}),
+        },
+      };
     }
     default:
       logger.error('Unsupported provider specified', {
@@ -303,7 +350,7 @@ export async function initializeAgentSession(
   const aiSDKTools = { ...tools, ...todoTools, ...spawnAgentTool };
 
   // Initialize model provider
-  const { model, authInfo } = await createModelProvider(config);
+  const { model, authInfo, provider } = await createModelProvider(config);
 
   // Build system prompt
   const systemPromptContent = await loadSystemPromptContent(
@@ -389,6 +436,7 @@ Today's date: ${new Date().toISOString().split('T')[0]}
     mcpClients,
     authInfo,
     conversationPersistence,
+    provider,
   };
 }
 

@@ -59,7 +59,9 @@ describe('AnthropicOAuth', () => {
         expires_in: 3600,
       };
 
-      mockFetch.mockResolvedValue(createMockResponse(mockTokenResponse));
+      vi.mocked(mockFetch).mockResolvedValue(
+        createMockResponse(mockTokenResponse)
+      );
 
       const mockCredentialStoreSet = vi.mocked(CredentialStore.set);
 
@@ -83,7 +85,9 @@ describe('AnthropicOAuth', () => {
     });
 
     it('should throw error on failed token exchange', async () => {
-      mockFetch.mockResolvedValue(createMockResponse('Invalid code', 400));
+      vi.mocked(mockFetch).mockResolvedValue(
+        createMockResponse('Invalid code', 400)
+      );
 
       await expect(
         AnthropicOAuth.exchange('invalid-code', 'test-verifier')
@@ -124,7 +128,9 @@ describe('AnthropicOAuth', () => {
         .mockResolvedValueOnce(expiredCredentials)
         .mockResolvedValueOnce(expiredCredentials); // Called again in refreshToken
 
-      mockFetch.mockResolvedValue(createMockResponse(mockTokenResponse));
+      vi.mocked(mockFetch).mockResolvedValue(
+        createMockResponse(mockTokenResponse)
+      );
 
       const token = await AnthropicOAuth.getAccessToken();
       expect(token).toBe('new-access-token');
