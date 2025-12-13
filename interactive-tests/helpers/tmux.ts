@@ -70,6 +70,13 @@ export function sendNewline(session: TmuxSession): void {
 }
 
 /**
+ * Send Tab key for autocomplete
+ */
+export function sendTab(session: TmuxSession): void {
+  execSync(`tmux send-keys -t '${session.paneId}' Tab`);
+}
+
+/**
  * Send a control key sequence (e.g., 'C-c', 'C-u', 'escape')
  */
 export function sendControlKey(
@@ -84,14 +91,10 @@ export function sendControlKey(
 /**
  * Capture the current pane content
  */
-export function capturePane(
-  session: TmuxSession,
-  lines: number = 50
-): string {
-  return execSync(
-    `tmux capture-pane -t '${session.paneId}' -p -S -${lines}`,
-    { encoding: 'utf-8' }
-  );
+export function capturePane(session: TmuxSession, lines: number = 50): string {
+  return execSync(`tmux capture-pane -t '${session.paneId}' -p -S -${lines}`, {
+    encoding: 'utf-8',
+  });
 }
 
 /**

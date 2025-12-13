@@ -44,12 +44,14 @@ export function createCertificateAwareFetch() {
   const agent = createGlobalAgent();
 
   if (agent) {
-    return (input: string | URL | Request, init?: RequestInit) => {
+    const customFetch = (input: string | URL | Request, init?: RequestInit) => {
       return fetch(input, {
         ...init,
         dispatcher: agent as unknown as RequestInit['dispatcher'], // Use unknown cast for undici compatibility
       });
     };
+    customFetch.preconnect = fetch.preconnect;
+    return customFetch;
   }
 
   return fetch; // Use default fetch if no certificates needed
